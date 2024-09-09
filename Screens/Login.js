@@ -1,10 +1,16 @@
-
-import { View, Text, StyleSheet, Image, Animated, TouchableOpacity } from 'react-native';
-import React, { useState, useEffect, useRef } from 'react';
-import { Video } from 'expo-av';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Animated,
+  TouchableOpacity,
+} from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { Video } from "expo-av";
 import icon from "../assets/Match matters logo.png";
 // import icon from "../assets/Match matters logo (1).png";
-import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon from "react-native-vector-icons/FontAwesome";
 
 export default function Login({ navigation }) {
   const [showSignInOptions, setShowSignInOptions] = useState(false);
@@ -20,8 +26,8 @@ export default function Login({ navigation }) {
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
-   <Video
-        source={require('../assets/sv1.mp4')} 
+      <Video
+        source={require("../assets/sv1.mp4")}
         rate={1.0}
         volume={1.0}
         isMuted={false}
@@ -36,11 +42,9 @@ export default function Login({ navigation }) {
           <Text style={styles.tagLine}>(Tagline For match matters)</Text>
         </View>
 
-     
-
         {!showSignInOptions ? (
           <View style={styles.buttonWrapper}>
-               <TouchableOpacity onPress={() => navigation.navigate("LastScreen")}>
+            <TouchableOpacity onPress={() => navigation.navigate("LastScreen")}>
               <View style={styles.button}>
                 <Text style={styles.buttonText}>Trial</Text>
               </View>
@@ -58,26 +62,28 @@ export default function Login({ navigation }) {
           </View>
         ) : (
           <View style={styles.buttonWrapper}>
-            <TouchableOpacity onPress={() => console.log("Sign in with Apple")}>
+            {/* <TouchableOpacity onPress={() => console.log("Sign in with Apple")}>
               <View style={styles.appleButton}>
                 <Icon name="apple" size={20} color="#fff" />
                 <Text style={styles.buttonText}>Sign in with Apple</Text>
               </View>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
-            <TouchableOpacity onPress={() => navigation.navigate("SignEmail")}>
+            <TouchableOpacity onPress={() => navigation.navigate("EmailLogin")}>
               <View style={styles.googleButton}>
                 <Icon name="google" size={20} color="#000" />
-                <Text style={{ ...styles.buttonText, color: "#000" }}>Sign in with Google</Text>
+                <Text style={{ ...styles.buttonText, color: "#000" }}>
+                  Sign in with Google
+                </Text>
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => console.log("Sign in with Facebook")}>
+            {/* <TouchableOpacity onPress={() => console.log("Sign in with Facebook")}>
               <View style={styles.button}>
                 <Icon name="facebook" size={20} color="#fff" />
                 <Text style={styles.buttonText}>Sign in with Facebook</Text>
               </View>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <TouchableOpacity onPress={() => navigation.navigate("SignNumber")}>
               <View style={styles.phoneButton}>
@@ -86,7 +92,9 @@ export default function Login({ navigation }) {
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setShowSignInOptions(false)}>
               <View style={styles.backButton}>
-                <Text style={{ ...styles.buttonText, color: "black" }}>Back</Text>
+                <Text style={{ ...styles.buttonText, color: "black" }}>
+                  Back
+                </Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -99,15 +107,15 @@ export default function Login({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   overlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   logoWrapper: {
-    position: 'absolute',
+    position: "absolute",
     top: 90,
     paddingHorizontal: 20,
     justifyContent: "center",
@@ -120,15 +128,15 @@ const styles = StyleSheet.create({
   },
   tagLine: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   buttonWrapper: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 60,
-    width: '100%',
+    width: "100%",
   },
   button: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: "#BF1013",
     height: 50,
     marginHorizontal: 50,
@@ -138,7 +146,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   button1: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: "#fff",
     height: 50,
     marginHorizontal: 50,
@@ -148,7 +156,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   appleButton: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: "#1e1e1e",
     height: 50,
     marginHorizontal: 50,
@@ -158,9 +166,9 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   googleButton: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: "#fff",
-    borderColor: '#C0C0C0',
+    borderColor: "#C0C0C0",
     borderWidth: 1,
     height: 50,
     marginHorizontal: 50,
@@ -170,7 +178,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   phoneButton: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: "#702963",
     height: 50,
     marginHorizontal: 50,
@@ -191,13 +199,13 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 20,
     fontWeight: "500",
-    color: 'white',
+    color: "white",
     marginLeft: 10,
   },
   buttonText1: {
     fontSize: 20,
     fontWeight: "500",
-    color: '#BF1013',
+    color: "#BF1013",
     marginLeft: 10,
   },
 });
