@@ -15,6 +15,7 @@ export default function EmailLogin({ navigation }) {
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
+    console.log("API URL:", API_URL);
     if (!emailId || !password) {
       alert("Please enter both email and password.");
       return;

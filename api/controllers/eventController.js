@@ -129,8 +129,30 @@ const getAllEvents = async (req, res) => {
   }
 };
 
+const getEventById = async (req, res) => {
+  try {
+    const { id } = req.params; // Get event ID from request parameters
+
+    if (!id) {
+      return res.status(400).json({ error: "Event ID is required" });
+    }
+
+    const event = await Event.findById(id);
+
+    if (!event) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    res.status(200).json(event);
+  } catch (error) {
+    console.error("Error fetching event by ID:", error.message, error.stack);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   createEvent,
   getUserEvents,
   getAllEvents,
+  getEventById, // Export the new function
 };

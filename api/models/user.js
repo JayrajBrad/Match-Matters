@@ -28,6 +28,10 @@ const userSchema = new Schema({
     type: Number,
     required: true,
   },
+  birthdate: {
+    type: Date, // Use Date type for storing ISO date strings
+    required: true,
+  },
   gender: {
     type: String,
     required: true,

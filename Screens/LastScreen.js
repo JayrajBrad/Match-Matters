@@ -58,7 +58,9 @@ export default function PreferenceScreen({ navigation }) {
         "Password",
         "Name",
         "Age",
+
         "Photos",
+
         "Preference",
       ];
 
@@ -83,6 +85,7 @@ export default function PreferenceScreen({ navigation }) {
       "firstName",
       "lastName",
       "age",
+      "birthdate",
       "gender",
     ];
     for (const field of requiredFields) {
@@ -114,7 +117,7 @@ export default function PreferenceScreen({ navigation }) {
     try {
       const response = await axios.post(`${API_URL}/user/register`, userData, {
         headers: { "Content-Type": "application/json" },
-        timeout: 10000,
+        timeout: 20000,
       });
 
       console.log("Response from server:", response.data);
