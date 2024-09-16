@@ -17,6 +17,7 @@ exports.registerUser = async (req, res) => {
       firstName,
       lastName,
       age,
+      birthdate,
       gender,
       selectedPreferences = [],
       images = [],
@@ -40,6 +41,7 @@ exports.registerUser = async (req, res) => {
       firstName,
       lastName,
       age,
+      birthdate,
       gender,
       selectedPreferences, // Optional field, will default to an empty array
       images, // Optional field, will default to an empty array
@@ -69,6 +71,7 @@ exports.registerUser = async (req, res) => {
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         age: newUser.age,
+        birthdate: newUser.birthdate,
         gender: newUser.gender,
         selectedPreferences: newUser.selectedPreferences,
         images: newUser.images,
@@ -81,53 +84,6 @@ exports.registerUser = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-// Login User with Password Verification and Token Generation
-// exports.loginUser = async (req, res) => {
-//   try {
-//     const { emailId, password } = req.body;
-
-//     // Check if the user exists
-//     const user = await User.findOne({ emailId });
-//     if (!user) {
-//       return res
-//         .status(404)
-//         .json({ success: false, message: "User not found" });
-//     }
-
-//     // Compare the provided password with the hashed password stored in the database
-//     const isPasswordValid = await bcrypt.compare(password, user.password);
-//     if (!isPasswordValid) {
-//       return res
-//         .status(401)
-//         .json({ success: false, message: "Invalid password" });
-//     }
-
-//     // Generate a JWT token with the user's ID as the payload
-//     const token = jwt.sign(
-//       { userId: user._id, isAdmin: user.isAdmin },
-//       JWT_SECRET,
-//       {
-//         expiresIn: "7d", // Token expiration time
-//       }
-//     );
-
-//     // Respond with the token and user details
-//     res.status(200).json({
-//       success: true,
-//       message: "Login successful",
-//       token, // Send the JWT token in the response
-//       user: {
-//         _id: user._id,
-//         emailId: user.emailId,
-//         // Include other user details if necessary
-//       },
-//     });
-//   } catch (error) {
-//     console.error("Error logging in user:", error.message, error.stack);
-//     res.status(500).json({ success: false, message: "Internal Server Error" });
-//   }
-// };
 
 // Login User with Password Verification and Token Generation
 exports.loginUser = async (req, res) => {
@@ -187,6 +143,7 @@ exports.loginUser = async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         age: user.age,
+        birthdate: user.birthdate,
         gender: user.gender,
         selectedPreferences: user.selectedPreferences,
         images: user.images,

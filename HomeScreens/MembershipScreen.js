@@ -170,151 +170,302 @@
 
 // export default ChooseLocationScreen;
 
-import React, { useState, useEffect } from "react";
+// import React, { useState, useEffect } from "react";
+// import {
+//   View,
+//   Text,
+//   TextInput,
+//   StyleSheet,
+//   TouchableOpacity,
+//   Image,
+//   FlatList,
+// } from "react-native";
+// import { MaterialCommunityIcons } from "@expo/vector-icons";
+// import axios from "axios";
+// import { API_URL } from "@env";
+
+// const ChooseLocationScreen = ({ navigation }) => {
+//   const [search, setSearch] = useState("");
+//   const [events, setEvents] = useState([]);
+//   const [filteredEvents, setFilteredEvents] = useState([]);
+
+//   useEffect(() => {
+//     axios
+//       .get(`${API_URL}/api/all-events`)
+//       .then((response) => {
+//         console.log("Fetched events:", response.data);
+//         setEvents(response.data);
+//         setFilteredEvents(response.data);
+//       })
+//       .catch((error) => {
+//         console.error("Error fetching events:", error);
+//       });
+//   }, []);
+
+//   useEffect(() => {
+//     setFilteredEvents(
+//       events.filter((event) =>
+//         event.title
+//           ? event.title.toLowerCase().includes(search.toLowerCase())
+//           : false
+//       )
+//     );
+//   }, [search, events]);
+
+//   const handleEventPress = (event) => {
+//     navigation.navigate("EventDetailsScreen", { event });
+//   };
+
+//   return (
+//     <View style={styles.container}>
+//       <View style={styles.header}>
+//         <TouchableOpacity onPress={() => navigation.goBack()}>
+//           <MaterialCommunityIcons name="arrow-left" size={24} color="white" />
+//         </TouchableOpacity>
+//         <Text style={styles.headerTitle}>Choose an Event</Text>
+//       </View>
+//       <View style={styles.searchContainer}>
+//         <TextInput
+//           style={styles.searchInput}
+//           placeholder="Search for an event"
+//           value={search}
+//           onChangeText={setSearch}
+//         />
+//       </View>
+//       <FlatList
+//         data={filteredEvents}
+//         renderItem={({ item }) => (
+//           <TouchableOpacity
+//             style={styles.eventCard}
+//             onPress={() => handleEventPress(item)}
+//           >
+//             <Image
+//               source={{ uri: item.images || "default-image-url" }} // Handle missing images
+//               style={styles.eventImage}
+//             />
+//             <View style={styles.eventDetails}>
+//               <Text style={styles.eventName}>
+//                 {item.title || "Unknown Title"}
+//               </Text>
+//               <Text style={styles.eventDate}>
+//                 {item.date || "Unknown Date"}
+//               </Text>
+//             </View>
+//           </TouchableOpacity>
+//         )}
+//         keyExtractor={(item) => item._id.toString()} // Ensure proper key extraction
+//         numColumns={2}
+//         contentContainerStyle={styles.scrollView}
+//       />
+//     </View>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     backgroundColor: "#fff",
+//   },
+//   header: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     backgroundColor: "#BF1013",
+//     paddingTop: 60,
+//     paddingBottom: 20,
+//     paddingHorizontal: 20,
+//   },
+//   headerTitle: {
+//     fontSize: 20,
+//     fontWeight: "bold",
+//     color: "white",
+//     marginLeft: 20,
+//     paddingLeft: 60,
+//   },
+//   searchContainer: {
+//     padding: 20,
+//   },
+//   searchInput: {
+//     borderColor: "#ccc",
+//     borderWidth: 1,
+//     borderRadius: 10,
+//     padding: 10,
+//   },
+//   scrollView: {
+//     padding: 20,
+//   },
+//   eventCard: {
+//     flex: 1,
+//     margin: 10,
+//     borderRadius: 10,
+//     overflow: "hidden",
+//     alignItems: "center",
+//   },
+//   eventImage: {
+//     width: "100%",
+//     height: 150,
+//   },
+//   eventDetails: {
+//     padding: 10,
+//     alignItems: "center",
+//   },
+//   eventName: {
+//     marginTop: 10,
+//     fontSize: 16,
+//     fontWeight: "bold",
+//   },
+//   eventDate: {
+//     color: "#BF1013",
+//   },
+// });
+
+// export default ChooseLocationScreen;
+
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
   FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ActivityIndicator,
 } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { getToken } from "../backend/token"; // Function to get the token
 import axios from "axios";
 import { API_URL } from "@env";
+import { LinearGradient } from "expo-linear-gradient";
 
 const ChooseLocationScreen = ({ navigation }) => {
-  const [search, setSearch] = useState("");
   const [events, setEvents] = useState([]);
-  const [filteredEvents, setFilteredEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios
-      .get(`${API_URL}/api/all-events`)
-      .then((response) => {
-        console.log("Fetched events:", response.data);
-        setEvents(response.data);
-        setFilteredEvents(response.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching events:", error);
-      });
+    fetchUserEvents();
   }, []);
 
-  useEffect(() => {
-    setFilteredEvents(
-      events.filter((event) =>
-        event.title
-          ? event.title.toLowerCase().includes(search.toLowerCase())
-          : false
-      )
-    );
-  }, [search, events]);
+  const fetchUserEvents = async () => {
+    try {
+      const token = await getToken();
+      const response = await axios.get(`${API_URL}/api/all-events`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-  const handleEventPress = (event) => {
-    navigation.navigate("EventDetailsScreen", { event });
+      if (response.status === 200) {
+        setEvents(response.data);
+      } else {
+        console.error("Failed to fetch events:", response.status);
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <MaterialCommunityIcons name="arrow-left" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Choose an Event</Text>
-      </View>
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search for an event"
-          value={search}
-          onChangeText={setSearch}
+  const renderEventItem = ({ item }) => {
+    return (
+      <TouchableOpacity
+        style={styles.eventItem}
+        onPress={() =>
+          navigation.navigate("EventDetailsScreen", { eventId: item._id })
+        }
+      >
+        <Image
+          source={{ uri: item.images[0]?.url }}
+          style={styles.eventImage}
         />
+        <View style={styles.eventInfo}>
+          <Text style={styles.eventTitle}>{item.title}</Text>
+          <Text style={styles.eventDate}>
+            {new Date(item.date).toLocaleDateString()}
+          </Text>
+          <Text style={styles.eventLocation}>{item.location}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
       </View>
+    );
+  }
+
+  return (
+    <LinearGradient
+      colors={["#FFF72D", "#D6CAF2", "#F9D3A3"]}
+      style={styles.container}
+    >
       <FlatList
-        data={filteredEvents}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.eventCard}
-            onPress={() => handleEventPress(item)}
-          >
-            <Image
-              source={{ uri: item.images || "default-image-url" }} // Handle missing images
-              style={styles.eventImage}
-            />
-            <View style={styles.eventDetails}>
-              <Text style={styles.eventName}>
-                {item.title || "Unknown Title"}
-              </Text>
-              <Text style={styles.eventDate}>
-                {item.date || "Unknown Date"}
-              </Text>
-            </View>
-          </TouchableOpacity>
+        data={events}
+        keyExtractor={(item) => item._id}
+        renderItem={renderEventItem}
+        ListEmptyComponent={() => (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No events found</Text>
+          </View>
         )}
-        keyExtractor={(item) => item._id.toString()} // Ensure proper key extraction
-        numColumns={2}
-        contentContainerStyle={styles.scrollView}
       />
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
-  header: {
+  eventItem: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#BF1013",
-    paddingTop: 60,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "white",
-    marginLeft: 20,
-    paddingLeft: 60,
-  },
-  searchContainer: {
-    padding: 20,
-  },
-  searchInput: {
-    borderColor: "#ccc",
-    borderWidth: 1,
+    marginBottom: 16,
+    backgroundColor: "#fff",
     borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
     padding: 10,
-  },
-  scrollView: {
-    padding: 20,
-  },
-  eventCard: {
-    flex: 1,
-    margin: 10,
-    borderRadius: 10,
-    overflow: "hidden",
-    alignItems: "center",
   },
   eventImage: {
-    width: "100%",
-    height: 150,
+    width: 80,
+    height: 80,
+    borderRadius: 8,
   },
-  eventDetails: {
-    padding: 10,
-    alignItems: "center",
+  eventInfo: {
+    marginLeft: 10,
+    justifyContent: "center",
   },
-  eventName: {
-    marginTop: 10,
+  eventTitle: {
     fontSize: 16,
     fontWeight: "bold",
   },
   eventDate: {
-    color: "#BF1013",
+    fontSize: 14,
+    color: "#555",
+  },
+  eventLocation: {
+    fontSize: 14,
+    color: "#888",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 18,
+    color: "#888",
   },
 });
 

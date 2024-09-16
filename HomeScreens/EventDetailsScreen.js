@@ -1,26 +1,76 @@
-
-
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, FlatList, Dimensions } from 'react-native';
-import { MaterialCommunityIcons } from 'react-native-vector-icons'; // If you are using expo
-import { Ionicons } from '@expo/vector-icons'; // For the back arrow icon
-import MapView, { Marker } from 'react-native-maps';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  FlatList,
+  Dimensions,
+  ActivityIndicator,
+} from "react-native";
+import { MaterialCommunityIcons } from "react-native-vector-icons"; // If you are using expo
+import { Ionicons } from "@expo/vector-icons"; // For the back arrow icon
+import MapView, { Marker } from "react-native-maps";
+import axios from "axios";
+import { API_URL } from "@env";
+import { getToken } from "../backend/token";
 
 const EventDetailsScreen = ({ route, navigation }) => {
-  const { event } = route.params;
+  const { eventId } = route.params;
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
 
- const images = [
-    require('../assets/slider 1st imge.png'),  // Replace with your image paths
-     require('../assets/slider 2st imge.jpg'),
-    require('../assets/slider 3st imge.png')
-  ];
+  const images = event?.images || []; // Default to empty array if event is not yet loaded
+
+  useEffect(() => {
+    const fetchEventDetails = async () => {
+      try {
+        const token = await getToken();
+        const response = await axios.get(`${API_URL}/api/events/${eventId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.status === 200) {
+          setEvent(response.data);
+        } else {
+          console.error("Failed to fetch event details:", response.status);
+        }
+      } catch (error) {
+        console.error("Error fetching event details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEventDetails();
+  }, [eventId]);
 
   const handleScroll = (event) => {
     const slideSize = event.nativeEvent.layoutMeasurement.width;
     const index = Math.round(event.nativeEvent.contentOffset.x / slideSize);
     setCurrentIndex(index);
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  if (!event) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Event not found</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -41,7 +91,7 @@ const EventDetailsScreen = ({ route, navigation }) => {
           showsHorizontalScrollIndicator={false}
           onScroll={handleScroll}
           renderItem={({ item }) => (
-            <Image source={item} style={styles.eventImage} />
+            <Image source={{ uri: item.url }} style={styles.eventImage} />
           )}
           keyExtractor={(item, index) => index.toString()}
         />
@@ -51,7 +101,7 @@ const EventDetailsScreen = ({ route, navigation }) => {
               key={index}
               style={[
                 styles.dot,
-                { opacity: index === currentIndex ? 1 : 0.3 }
+                { opacity: index === currentIndex ? 1 : 0.3 },
               ]}
             />
           ))}
@@ -61,13 +111,28 @@ const EventDetailsScreen = ({ route, navigation }) => {
       <View style={styles.contentContainer}>
         {/* Event Title, Date, Time */}
         <View style={styles.titleDateContainer}>
-          <Text style={styles.eventTitle}>{event.name}</Text>
+          <Text style={styles.eventTitle}>{event.title}</Text>
           <View style={styles.dateTimeContainer}>
-            <MaterialCommunityIcons name="clock-outline" size={20} color="#BF1013" />
-            <Text style={styles.dateText}>09:00 PM</Text>
+            <MaterialCommunityIcons
+              name="clock-outline"
+              size={20}
+              color="#BF1013"
+            />
+            <Text style={styles.dateText}>
+              {new Date(event.date).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </Text>
             <View style={styles.dateBadge}>
-              <Text style={styles.dateBadgeText}>AUG</Text>
-              <Text style={styles.dateBadgeNumber}>05</Text>
+              <Text style={styles.dateBadgeText}>
+                {new Date(event.date)
+                  .toLocaleString("en-US", { month: "short" })
+                  .toUpperCase()}
+              </Text>
+              <Text style={styles.dateBadgeNumber}>
+                {new Date(event.date).getDate()}
+              </Text>
             </View>
           </View>
         </View>
@@ -76,12 +141,9 @@ const EventDetailsScreen = ({ route, navigation }) => {
         <View style={styles.thinLine} />
 
         {/* Organizer Section */}
-        <View>
-          
         <View style={styles.organizerContainer}>
-        <Text style={styles.organizerText}>Organized by</Text>
-          <Text>Joshua Edwards & Sorlin Dior</Text>
-        </View>
+          <Text style={styles.organizerText}>Organized by</Text>
+          <Text>{event.organizer || "Unknown"}</Text>
         </View>
 
         {/* Event Details Section */}
@@ -89,7 +151,7 @@ const EventDetailsScreen = ({ route, navigation }) => {
           <Text style={styles.sectionHeader}>Event Details</Text>
           <View style={styles.eventDetailsContainer}>
             <Text style={styles.eventDetailsText}>
-              The Monsoon music festival, popularly known as Monsoon Music festival, is an international festival of music held in Mumbai, India. It is organized by Joshua Edwards & Sorlin Dior. There are many exciting things from the artist.
+              {event.eventDetails || "No description available"}
             </Text>
           </View>
         </View>
@@ -98,46 +160,33 @@ const EventDetailsScreen = ({ route, navigation }) => {
         <View style={styles.thinLine} />
 
         {/* Artist Section */}
-        {/* <View style={styles.artistContainer}>
-          <Text style={styles.sectionHeader}>Musician</Text>
-          <Text style={styles.artistName}>Arijit Singh</Text>
+        <View style={styles.artistsContainer}>
+          {event.artists?.map((artist, index) => (
+            <View key={index} style={styles.singleArtist}>
+              {/* <Image
+                source={{ uri: artist.image }}
+                style={styles.artistImage}
+              /> */}
+              <Text style={styles.sectionHeader}>{artist.role}</Text>
+              <Text style={styles.artistName}>{artist.name}</Text>
+            </View>
+          ))}
         </View>
-
-        <View style={styles.artistContainer}>
-          <Text style={styles.sectionHeader}>Singer</Text>
-          <Text style={styles.artistName}>Shreya Ghoshal</Text>
-        </View> */}
-<View style={styles.artistsContainer}>
-  <View style={styles.artistRow}>
-    <View style={styles.singleArtist}>
-      <Image source={require('../assets/Arijit.png')} style={styles.artistImage} />
-      <Text style={styles.sectionHeader}>Musician</Text>
-      <Text style={styles.artistName}>Arijit Singh</Text>
-    </View>
-
-    <View style={styles.singleArtist}>
-      <Image source={require('../assets/Shreya.png')} style={styles.artistImage} />
-      <Text style={styles.sectionHeader}>Singer</Text>
-      <Text style={styles.artistName}>Shreya Ghoshal</Text>
-    </View>
-  </View>
-</View>
-
-
-
 
         {/* Interested Section */}
         <View style={styles.interestedContainer}>
-          <Text style={styles.interestedPrompt}>Click on interested to stay updated about this event</Text>
+          <Text style={styles.interestedPrompt}>
+            Click on interested to stay updated about this event
+          </Text>
           <TouchableOpacity style={styles.interestedButton}>
-            <Text style={styles.interestedText}>   Interested   </Text>
+            <Text style={styles.interestedText}> Interested </Text>
           </TouchableOpacity>
         </View>
 
         {/* Address Section */}
         <View style={styles.addressContainer}>
-          <Text style={styles.cityText}>Mumbai</Text>
-          <Text style={styles.addressText}>The Lalit Building, Naroda, Marol, Andheri (East) Mumbai, Maharashtra 400059, India</Text>
+          <Text style={styles.cityText}>{event.city || "City"}</Text>
+          <Text style={styles.addressText}>{event.location || "Address"}</Text>
         </View>
 
         {/* About the Venue and Map */}
@@ -151,21 +200,26 @@ const EventDetailsScreen = ({ route, navigation }) => {
           <MapView
             style={styles.map}
             initialRegion={{
-              latitude: 19.119677,
-              longitude: 72.847183,
+              latitude: event.location?.latitude || 19.119677,
+              longitude: event.location?.longitude || 72.847183,
               latitudeDelta: 0.01,
               longitudeDelta: 0.01,
             }}
           >
             <Marker
-              coordinate={{ latitude: 19.119677, longitude: 72.847183 }}
+              coordinate={{
+                latitude: event.location?.latitude || 19.119677,
+                longitude: event.location?.longitude || 72.847183,
+              }}
               title="Event Location"
             />
           </MapView>
         </View>
 
         {/* Distance from Home */}
-        <Text style={styles.distanceText}>18 km distance from your home</Text>
+        <Text style={styles.distanceText}>
+          {event.distance || "Distance"} km distance from your home
+        </Text>
 
         {/* Thin Line */}
         <View style={styles.thinLine} />
@@ -187,43 +241,43 @@ const EventDetailsScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#BF1013',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#BF1013",
     paddingTop: 70, // Adjust for status bar height
     paddingHorizontal: 20,
     paddingBottom: 15,
   },
   headerTitle: {
     fontSize: 20,
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
     paddingRight: 110,
     paddingLeft: 100,
   },
   sliderContainer: {
-    width: '100%',
+    width: "100%",
     height: 200,
     marginTop: 1, // Adjusted to accommodate the header
   },
   eventImage: {
-    width: Dimensions.get('window').width,
+    width: Dimensions.get("window").width,
     height: 200,
   },
   pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    position: 'absolute',
+    flexDirection: "row",
+    justifyContent: "center",
+    position: "absolute",
     bottom: 10,
-    width: '100%',
+    width: "100%",
   },
   dot: {
     height: 10,
     width: 10,
-    backgroundColor: '#BF1013',
+    backgroundColor: "#BF1013",
     borderRadius: 5,
     marginHorizontal: 5,
   },
@@ -231,218 +285,180 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   titleDateContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 10,
   },
   eventTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     flex: 1,
   },
   dateTimeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   dateText: {
-    fontSize: 18,
-    color: '#BF1013',
     marginLeft: 10,
+    fontSize: 16,
+    color: "#BF1013",
   },
   dateBadge: {
-    backgroundColor: '#BF1013',
-    paddingVertical: 2,
-    paddingHorizontal: 5,
-    borderRadius: 5,
-    marginLeft: 10,
-    alignItems: 'center',
+    backgroundColor: "#BF1013",
+    borderRadius: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    marginLeft: 15,
+    justifyContent: "center",
+    alignItems: "center",
   },
   dateBadgeText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
-    fontWeight: 'bold',
   },
   dateBadgeNumber: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
   },
   thinLine: {
     height: 1,
-    backgroundColor: '#D3D3D3',
+    backgroundColor: "#ccc",
     marginVertical: 10,
   },
   organizerContainer: {
-    backgroundColor: '#FFE6E6',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 20,
-    paddingTop : 10,
+    marginBottom: 10,
   },
   organizerText: {
-    fontSize: 20,
-    color: '#333',
-    fontWeight: 'bold',
-   
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
   },
   eventDetailsContainer: {
-    backgroundColor: '#BF1013',
-    padding: 15,
-    borderRadius: 5,
-    marginBottom: 20,
-  },
-  sectionHeader: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111',
     marginBottom: 10,
-    //marginTop: 10,
   },
   eventDetailsText: {
     fontSize: 16,
-    color: '#fff',
+    color: "#666",
   },
-  // artistContainer: {
-  //   marginBottom: 20,
-  // },
-  // artistName: {
-  //   fontSize: 18,
-  //   color: '#333',
-  // },
   artistsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between', 
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  artistRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  singleArtist: {
-    alignItems: 'center',
-    marginHorizontal: 40, 
-  },
-  artistImage: {
-    width: 70,  
-    height: 70,
-    borderRadius: 35,  
-    borderWidth: 2,  
-    borderColor: '#BF1013',  
-    marginRight: 10,
-    
-  },
-  sectionHeader: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111',
-    textAlign: 'left',
-  },
-  artistName: {
-    fontSize: 16,
-    color: '#333',
-    textAlign: 'center',
-  },
-  interestedContainer: {
-    marginBottom: 20,
-    padding: 15,
-    borderColor: '#BF1013',
-    borderWidth: 1,
-    borderRadius: 5,
-    backgroundColor: "#FFE6E6",
-    marginTop: 10,
-  },
-  interestedPrompt: {
-    fontSize: 14,
-    color: '#333',
     marginBottom: 10,
   },
+  singleArtist: {
+    marginBottom: 10,
+  },
+  artistImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginBottom: 5,
+  },
+  artistName: {
+    fontSize: 14,
+    color: "#333",
+  },
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 5,
+  },
+  interestedContainer: {
+    marginBottom: 10,
+  },
+  interestedPrompt: {
+    fontSize: 16,
+    color: "#333",
+    marginBottom: 5,
+  },
   interestedButton: {
-    backgroundColor: '#bf1013',
-    paddingVertical: 5,
-   // alignItems: 'center',
-    borderRadius: 10,
-    alignSelf: 'flex-end',
-    //borderBottomColor : "#BF1013",
+    backgroundColor: "#BF1013",
+    borderRadius: 5,
+    paddingVertical: 10,
+    marginTop: 5,
+
+    paddingHorizontal: 20,
   },
   interestedText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'condensed',
+    color: "#fff",
+    fontSize: 16,
+    textAlign: "center",
   },
   addressContainer: {
-    // marginBottom: 20,
-    marginBottom: 20,
-    padding: 15,
-    borderColor: '#BF1013',
-    borderWidth: 1,
-    borderRadius: 5,
-    backgroundColor : "#BF1013",
+    marginBottom: 10,
   },
   cityText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
   },
   addressText: {
     fontSize: 16,
-    color: '#fff',
-    marginTop: 5,
+    color: "#666",
   },
   venueContainer: {
-    marginBottom: 20,
+    marginBottom: 10,
   },
   venueHeaderContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
   },
   venueHeader: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111',
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
   },
   getDestinationText: {
     fontSize: 16,
-    color: '#E84A5F',
+    color: "#BF1013",
   },
   map: {
-    width: '100%',
+    width: "100%",
     height: 200,
-    borderRadius: 10,
-    marginTop: 10,
+    marginVertical: 10,
   },
   distanceText: {
     fontSize: 16,
-    color: '#333',
-    marginBottom: 20,
+    color: "#666",
+    marginBottom: 10,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   inviteButton: {
-    backgroundColor: '#BF1013',
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
+    backgroundColor: "#BF1013",
     borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    flex: 1,
     marginRight: 10,
   },
   bookButton: {
-    backgroundColor: '#BF1013',
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
+    backgroundColor: "#333",
     borderRadius: 5,
-    marginLeft: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    flex: 1,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    color: "#BF1013",
+    textAlign: "center",
   },
 });
 

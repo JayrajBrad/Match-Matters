@@ -59,17 +59,17 @@ export default function FeedScreen({ navigation, route }) {
     })();
   }, []);
 
-  useEffect(() => {
-    // fetch("http://192.168.1.43:4000/getLatestUser", {
-    fetch(`${API_URL}/user/getLatestUser`, {
-      method: "GET",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("userData from /lastestUser", data);
-        setData(data.data);
-      });
-  }, []);
+  // useEffect(() => {
+  //   // fetch("http://192.168.1.43:4000/getLatestUser", {
+  //   fetch(`${API_URL}/user/getLatestUser`, {
+  //     method: "GET",
+  //   })
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       console.log("userData from /lastestUser", data);
+  //       setData(data.data);
+  //     });
+  // }, []);
 
   useEffect(() => {
     const fetchProfileImage = async () => {
