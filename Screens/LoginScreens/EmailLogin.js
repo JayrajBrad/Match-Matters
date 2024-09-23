@@ -7,8 +7,8 @@ import {
   StyleSheet,
 } from "react-native";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "@env";
-import { saveToken } from "../../backend/token";
 
 export default function EmailLogin({ navigation }) {
   const [emailId, setEmail] = useState("");
@@ -28,13 +28,15 @@ export default function EmailLogin({ navigation }) {
       });
 
       if (response.data.success) {
-        const { token } = response.data; // Assuming the token is in response.data
-        if (token) {
-          await saveToken(token); // Save the token
-          console.log("JWT token saved successfully!");
+        const { token, user } = response.data; // Assuming the token and user are in response.data
+        if (token && user) {
+          await AsyncStorage.setItem("userData", JSON.stringify(user));
+          await AsyncStorage.setItem("userId", user._id);
+          await AsyncStorage.setItem("token", token); // Save the token
+          console.log("JWT token and user data saved successfully!");
           navigation.navigate("HomeScreen");
         } else {
-          alert("No token received from the server.");
+          alert("No token or user data received from the server.");
         }
       } else {
         alert("Login failed. Please check your email or password.");

@@ -7,291 +7,247 @@ import {
   StyleSheet,
   Alert,
   Image,
-  Platform,
+  ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as ImagePicker from "expo-image-picker";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 import { API_URL } from "@env";
+import PreferencesDropdown from "../components/PreferencesDropdown";
+import { getUserData, getUserId } from "../backend/registrationUtils"; // Adjust path as needed
+import GenderDropdown from "../components/GenderDropdown";
+
+const preferences = [
+  "Clubbing",
+  "Party",
+  "Movies",
+  "Travel",
+  "Music",
+  "Fitness",
+  "Cooking",
+  "Gaming",
+  "Art",
+  "Photography",
+];
 
 const EditProfileScreen = () => {
   const navigation = useNavigation();
-  const [profileData, setProfileData] = useState({
-    userName: "",
-    email: "",
-    mobileNumber: "",
-    dateOfBirth: "",
-    gender: "",
-    instagram: "",
-    facebook: "",
-  });
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [gender, setGender] = useState("");
   const [profileImage, setProfileImage] = useState(null);
+  const [userId, setUserId] = useState("");
+  const [selectedPreferences, setSelectedPreferences] = useState([]);
 
   useEffect(() => {
-    const fetchProfileData = async () => {
+    const fetchUserData = async () => {
       try {
-        const response = await fetch(
-          // "http://192.168.1.43:4000/getUserProfile",
-          `${API_URL}/user/getUserProfile`,
+        const storedUserId = await getUserId(); // Assuming getUserId retrieves the user ID from AsyncStorage
+        setUserId(storedUserId);
 
-          { method: "GET" }
-        );
-        const result = await response.json();
-        setProfileData(result.data);
-      } catch (error) {
-        console.error("Error fetching profile data:", error);
-      }
-    };
+        const response = await axios.get(`${API_URL}/user/${storedUserId}`);
 
-    const fetchProfileImage = async () => {
-      try {
-        const profileImageUri = await AsyncStorage.getItem("profile_image");
-        if (profileImageUri) {
-          setProfileImage(profileImageUri);
+        if (response.status === 200) {
+          const userData = response.data; // Adjust according to your API response structure
+          setFirstName(userData.firstName || "");
+          setLastName(userData.lastName || "");
+          setPhoneNumber(
+            userData.phoneNumber ? String(userData.phoneNumber) : ""
+          );
+          setGender(userData.gender || "");
+          setProfileImage(userData.profileImage || null);
+          setSelectedPreferences(userData.selectedPreferences || []);
         } else {
-          setProfileImage(
-            "file:///data/user/0/host.exp.exponent/cache/ExperienceData/%2540anonymous%252Fmatch-matters-725daa8f-db2f-4314-ab61-477c5f51181d/ImagePicker/4463d451-9312-44b7-b408-3de49a387dac.jpeg"
+          Alert.alert(
+            "Error",
+            "Failed to load profile data. Please try again later."
           );
         }
       } catch (error) {
-        console.error("Error fetching profile image:", error);
+        console.error("Error fetching user data", error);
+        Alert.alert(
+          "Error",
+          "Failed to load profile data. Please try again later."
+        );
       }
     };
 
-    fetchProfileData();
-    fetchProfileImage();
+    fetchUserData();
   }, []);
 
-  const handleSave = async () => {
+  const handleUpdateProfile = async () => {
     try {
-      const response = await fetch(
-        // "http://192.168.1.43:4000/updateUserProfile",
-        `${API_URL}/user/updateUserProfile`,
+      const response = await axios.put(`${API_URL}/user/updateUserProfile`, {
+        userId,
+        firstName,
+        lastName,
+        phoneNumber,
+        gender,
+        selectedPreferences,
+      });
 
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(profileData),
-        }
-      );
+      if (response.status === 200) {
+        await AsyncStorage.setItem("firstName", firstName);
+        await AsyncStorage.setItem("lastName", lastName);
+        await AsyncStorage.setItem("phoneNumber", phoneNumber);
+        await AsyncStorage.setItem("gender", gender);
+        await AsyncStorage.setItem(
+          "selectedPreferences",
+          JSON.stringify(selectedPreferences)
+        );
 
-      if (response.ok) {
-        Alert.alert("Success", "Profile updated successfully");
+        Alert.alert("Success", "Profile updated successfully!");
         navigation.goBack();
       } else {
-        Alert.alert("Error", "Failed to update profile");
+        Alert.alert("Error", "Failed to update profile. Please try again.");
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
-      Alert.alert("Error", "Failed to update profile");
-    }
-  };
-
-  const pickImage = async () => {
-    if (Platform.OS !== "web") {
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        alert("Sorry, we need camera roll permissions to make this work!");
-        return;
-      }
-    }
-
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.cancelled) {
-      setProfileImage(result.uri);
-      await AsyncStorage.setItem("profile_image", result.uri);
+      console.error("Error updating profile", error);
+      Alert.alert("Error", "Failed to update profile. Please try again.");
     }
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.backButton}
-      >
-        <Text style={styles.backButtonText}>Back</Text>
-      </TouchableOpacity>
+    <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>Edit Profile</Text>
-      </View>
-      <View style={styles.profileImageContainer}>
-        {profileImage ? (
-          <TouchableOpacity onPress={pickImage}>
-            <Image source={{ uri: profileImage }} style={styles.profileImage} />
-          </TouchableOpacity>
-        ) : (
-          <Icon name="person" size={80} color="#ddd" />
-        )}
-        <TouchableOpacity style={styles.editIcon} onPress={pickImage}>
-          <Text style={styles.editIconText}>✏️</Text>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Icon name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Edit Profile</Text>
       </View>
-      <View style={styles.formContainer}>
-        <Text style={styles.label}>User Name</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter user name"
-          value={profileData.userName}
-          onChangeText={(text) =>
-            setProfileData({ ...profileData, userName: text })
-          }
-        />
-        <Text style={styles.label}>Email Id</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter email"
-          value={profileData.email}
-          onChangeText={(text) =>
-            setProfileData({ ...profileData, email: text })
-          }
-        />
-        <Text style={styles.label}>Mobile Number</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your 10 digit mobile number"
-          value={profileData.mobileNumber}
-          onChangeText={(text) =>
-            setProfileData({ ...profileData, mobileNumber: text })
-          }
-        />
-        <Text style={styles.label}>Date of Birth</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="DD / MM / YYYY"
-          value={profileData.dateOfBirth}
-          onChangeText={(text) =>
-            setProfileData({ ...profileData, dateOfBirth: text })
-          }
-        />
-        <Text style={styles.label}>Gender</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Select"
-          value={profileData.gender}
-          onChangeText={(text) =>
-            setProfileData({ ...profileData, gender: text })
-          }
-        />
-        <View style={styles.linkedAccountsSection}>
-          <Text style={styles.linkedAccountsHeader}>Linked Accounts</Text>
-          <TouchableOpacity style={styles.linkedAccount}>
-            <Text style={styles.linkedAccountText}>Instagram</Text>
-            <Text style={styles.addText}>Add</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.linkedAccount}>
-            <Text style={styles.linkedAccountText}>Facebook</Text>
-            <Text style={styles.addText}>Add</Text>
-          </TouchableOpacity>
+
+      <View style={styles.profileSection}>
+        {profileImage ? (
+          <Image source={{ uri: profileImage }} style={styles.profileImage} />
+        ) : (
+          <Image
+            source={require("../assets/updated-logo.png")}
+            style={styles.profileImage}
+          />
+        )}
+        <View style={styles.profileInfo}>
+          {/* Label for First Name */}
+          <Text style={styles.label}>First Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="First Name"
+            value={firstName}
+            onChangeText={setFirstName}
+          />
+
+          {/* Label for Last Name */}
+          <Text style={styles.label}>Last Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Last Name"
+            value={lastName}
+            onChangeText={setLastName}
+          />
+
+          {/* Label for Phone Number */}
+          <Text style={styles.label}>Phone Number</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Phone Number"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            keyboardType="numeric"
+          />
+
+          {/* Label for Gender */}
+          <Text style={styles.label}>Gender</Text>
+          <GenderDropdown gender={gender} onSelectGender={setGender} />
+
+          {/* Label for Preferences */}
+          <Text style={styles.label}>Preferences</Text>
+          <PreferencesDropdown
+            preferences={preferences}
+            selectedPreferences={selectedPreferences}
+            onSelect={setSelectedPreferences}
+          />
         </View>
       </View>
-      <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
-        <Text style={styles.saveButtonText}>Save</Text>
+
+      <TouchableOpacity
+        onPress={handleUpdateProfile}
+        style={styles.updateButton}
+      >
+        <Text style={styles.updateButtonText}>Save Changes</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
     padding: 16,
-  },
-  backButton: {
-    marginBottom: 16,
-  },
-  backButtonText: {
-    color: "#BF1013",
-    fontSize: 16,
+    backgroundColor: "#f9f9f9",
   },
   header: {
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  headerText: {
-    fontSize: 24,
+  backButton: {
+    padding: 10,
+  },
+  headerTitle: {
+    fontSize: 20,
     fontWeight: "bold",
+    flex: 1,
+    textAlign: "center",
   },
-  profileImageContainer: {
+  profileSection: {
     alignItems: "center",
-    marginBottom: 16,
-    position: "relative",
+    marginBottom: 20,
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
   },
   profileImage: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    marginBottom: 8,
+    marginBottom: 20,
   },
-  editIcon: {
-    position: "absolute",
-    right: 10,
-    bottom: 10,
-    backgroundColor: "#FFF",
-    borderRadius: 20,
-    padding: 4,
-  },
-  editIconText: {
-    fontSize: 16,
-    color: "#BF1013",
-  },
-  formContainer: {
-    marginBottom: 16,
+  profileInfo: {
+    width: "100%",
   },
   label: {
-    fontSize: 16,
-    color: "#111",
-    marginBottom: 8,
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 6,
+    marginLeft: 2,
+    fontWeight: "bold",
   },
   input: {
-    borderWidth: 1,
+    height: 40,
     borderColor: "#ddd",
-    borderRadius: 28,
-    padding: 12,
-    backgroundColor: "#FEF1F1",
-    marginBottom: 12,
-    fontSize: 16,
-    padding: 10,
-  },
-  linkedAccountsSection: {
-    marginTop: 16,
-  },
-  linkedAccountsHeader: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  linkedAccount: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-  },
-  linkedAccountText: {
-    fontSize: 16,
-    color: "#111",
-  },
-  addText: {
-    fontSize: 16,
-    color: "#BF1013",
-  },
-  saveButton: {
-    backgroundColor: "#BF1013",
-    padding: 16,
+    borderWidth: 1,
     borderRadius: 8,
-    alignItems: "center",
+    marginBottom: 16,
+    paddingHorizontal: 10,
+    backgroundColor: "#fff",
   },
-  saveButtonText: {
+  updateButton: {
+    backgroundColor: "#BF1013",
+    paddingVertical: 15,
+    borderRadius: 20,
+    alignItems: "center",
+    marginHorizontal: 16,
+  },
+  updateButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",

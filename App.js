@@ -39,6 +39,7 @@ import CreateEventScreen from "./HomeScreens/CreateEventScreen";
 import CityEventsScreen from "./HomeScreens/CityEventsScreen";
 import EventDetailsScreen from "./HomeScreens/EventDetailsScreen";
 import SignPassword from "./Screens/SignPassword";
+import ChatRoomScreen from "./HomeScreens/ChatRoomScreen";
 
 // Import custom icons
 import Connection from "./assets/Connection.png";
@@ -185,6 +186,11 @@ const App = () => {
           component={EmailLogin}
           options={{ headerShown: false }}
         />
+        <Stack.Screen
+          name="ChatRoomScreen"
+          component={ChatRoomScreen}
+          options={{ headerShown: false }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -194,80 +200,54 @@ const TabNavigator = () => {
   return (
     <Tab.Navigator
       initialRouteName="FeedScreen"
-      screenOptions={{
+      screenOptions={({ route }) => ({
         tabBarShowLabel: true,
         headerShown: false,
         tabBarStyle: {
           position: "absolute",
-          height: 80,
-          paddingTop: 20,
-          // bottom: 10,
-          // left: 10,
-          // right: 10,
+          bottom: 0,
+          right: 0,
+          left: 0,
           elevation: 0,
-          // backgroundColor: "rgba(255, 255, 255, 0.2)", // Transparent background
-          // borderRadius: 20,
-          // borderTopWidth: 0,
+          height: 100,
+          // backgroundColor: route.name === "Home" ? "transparent" : "#fff",
+          borderTopWidth: 0,
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          paddingTop: 10,
-
-          // marginBottom: 5,
-          fontWeight: "bold",
+          marginBottom: 10,
+          color: "#000",
         },
         tabBarIconStyle: {
-          marginBottom: 5,
+          marginTop: 10,
         },
-      }}
+      })}
     >
       <Tab.Screen
         name="FeedScreen"
         component={FeedScreen}
         options={{
-          title: "People",
-          tabBarIcon: ({ focused }) => (
-            <Image
-              source={Prefrances}
-              style={{
-                width: 40,
-                height: 30,
-                tintColor: focused ? "#FF5A5F" : "#BF1013",
-              }}
+          title: "Home",
+          tabBarIcon: ({ focused, color }) => (
+            <MaterialCommunityIcons
+              name="home"
+              size={30}
+              color={focused ? "#BF1013" : "#FF5A5F"}
             />
           ),
         }}
       />
-      <Tab.Screen
-        name="Profile"
-        component={Profile}
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ focused }) => (
-            <Image
-              source={schedule}
-              style={{
-                width: 40,
-                height: 30,
-                tintColor: focused ? "#FF5A5F" : "#BF1013",
-              }}
-            />
-          ),
-        }}
-      />
+
       <Tab.Screen
         name="Liked"
         component={LikedYou}
         options={{
           title: "Liked",
-          tabBarIcon: ({ focused }) => (
-            <Image
-              source={homeicon}
-              style={{
-                width: 30,
-                height: 30,
-                tintColor: focused ? "#FF5A5F" : "#BF1013",
-              }}
+          tabBarIcon: ({ focused, color }) => (
+            <MaterialCommunityIcons
+              name="heart"
+              size={30}
+              color={focused ? "#BF1013" : "#FF5A5F"}
             />
           ),
         }}
@@ -277,14 +257,11 @@ const TabNavigator = () => {
         component={Chat}
         options={{
           title: "Chat",
-          tabBarIcon: ({ focused }) => (
-            <Image
-              source={Connections}
-              style={{
-                width: 40,
-                height: 30,
-                tintColor: focused ? "#FF5A5F" : "#BF1013",
-              }}
+          tabBarIcon: ({ focused, color }) => (
+            <MaterialCommunityIcons
+              name="chat"
+              size={30}
+              color={focused ? "#BF1013" : "#FF5A5F"}
             />
           ),
         }}
@@ -294,14 +271,25 @@ const TabNavigator = () => {
         component={ForYou}
         options={{
           title: "For You",
-          tabBarIcon: ({ focused }) => (
-            <Image
-              source={ProfileImage}
-              style={{
-                width: 40,
-                height: 30,
-                tintColor: focused ? "#FF5A5F" : "#BF1013",
-              }}
+          tabBarIcon: ({ focused, color }) => (
+            <MaterialCommunityIcons
+              name="star"
+              size={30}
+              color={focused ? "#BF1013" : "#FF5A5F"}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={Profile}
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ focused, color }) => (
+            <MaterialCommunityIcons
+              name="account"
+              size={30}
+              color={focused ? "#BF1013" : "#FF5A5F"}
             />
           ),
         }}

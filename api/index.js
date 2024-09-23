@@ -4,18 +4,27 @@ const express = require("express");
 
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const http = require("http");
+const { Server } = require("socket.io");
+
 const cors = require("cors");
 const userRoutes = require("./routes/userRoutes");
 const eventRoutes = require("./routes/eventRoutes");
 const mediaRoutes = require("./routes/media");
-const signUploadRoutes = require("./routes/sign-upload");
+const chatRoutes = require("./routes/chatRoutes");
 const authenticateToken = require("./middlewares/authenticateToken");
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
 const port = 4000;
 
-const http = require("http").createServer(app);
-const io = require("socket.io")(http);
+// const http = require("http").createServer(app);
+// const io = require("socket.io")(http);
 
 app.use(cors());
 
@@ -37,7 +46,30 @@ mongoose
 app.use("/user", userRoutes);
 app.use("/api", eventRoutes);
 app.use("/api", mediaRoutes);
-app.use("/api", signUploadRoutes);
+app.use("/chat", chatRoutes);
+
+// Socket.io setup and handlers (as you've already implemented)
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
+
+  // Join a chat room
+  socket.on("joinRoom", ({ chatId }) => {
+    socket.join(chatId);
+    console.log(`User joined room: ${chatId}`);
+  });
+
+  // Handle sending a message
+  socket.on("sendMessage", ({ chatId, senderId, text }) => {
+    const message = new Message({ chatId, senderId, text });
+    message.save().then((savedMessage) => {
+      io.to(chatId).emit("receiveMessage", savedMessage);
+    });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("A user disconnected:", socket.id);
+  });
+});
 
 // app.use(authenticateToken);
 

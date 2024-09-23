@@ -50,6 +50,12 @@ const eventSchema = new mongoose.Schema(
       type: Number, // in the local currency
       required: true,
     },
+    participants: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     timestamps: true,

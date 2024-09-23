@@ -8,10 +8,10 @@ import {
   Alert,
   ScrollView,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native"; // Import useFocusEffect
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { getUserData, getUserId } from "../backend/registrationUtils"; // Adjust the path to your authUtils
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_URL } from "@env";
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
@@ -19,45 +19,53 @@ const ProfileScreen = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [activeTab, setActiveTab] = useState("Plans");
 
-  useEffect(() => {
-    // fetch("http://192.168.1.43:4000/getLatestUser", {
-    fetch(`${API_URL}/user/getLatestUser`, {
-      method: "GET",
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status}`);
+  // Function to fetch user data
+  const fetchUserData = async () => {
+    try {
+      const userId = await getUserId();
+      console.log("Fetched user ID:", userId); // Debug log
+      if (userId) {
+        const userData = await getUserData(userId);
+        if (userData) {
+          console.log("User data from API", userData);
+          setData(userData);
+        } else {
+          Alert.alert(
+            "Error",
+            "Failed to load profile data. Please try again later."
+          );
         }
-        return res.json();
-      })
-      .then((data) => {
-        console.log("userData from /getUserProfile", data);
-        setData(data.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching user profile", error);
-        Alert.alert(
-          "Error",
-          "Failed to load profile data. Please try again later."
-        );
-      });
-  }, []);
-
-  useEffect(() => {
-    const fetchProfileImage = async () => {
-      try {
-        const profileImageUri = await AsyncStorage.getItem("profile_image");
-        console.log("Fetched profile image URI:", profileImageUri); // Debug logging
-        if (profileImageUri) {
-          setProfileImage(profileImageUri);
-        }
-      } catch (error) {
-        console.log("Error fetching profile image:", error);
+      } else {
+        Alert.alert("Error", "Failed to load user ID. Please try again later.");
       }
-    };
+    } catch (error) {
+      console.error("Error fetching user data", error);
+      Alert.alert(
+        "Error",
+        "Failed to load profile data. Please try again later."
+      );
+    }
+  };
 
-    fetchProfileImage();
-  }, []);
+  // Fetch profile image
+  const fetchProfileImage = async () => {
+    try {
+      const profileImageUri = await AsyncStorage.getItem("profile_image");
+      console.log("Fetched profile image URI:", profileImageUri); // Debug logging
+      if (profileImageUri) {
+        setProfileImage(profileImageUri);
+      }
+    } catch (error) {
+      console.log("Error fetching profile image:", error);
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUserData(); // Fetch user data when screen is focused
+      fetchProfileImage(); // Fetch profile image as well
+    }, [])
+  );
 
   const handleEditProfile = () => {
     navigation.navigate("EditProfileScreen");
@@ -103,14 +111,16 @@ const ProfileScreen = () => {
           <Text style={styles.profileName}>
             {data.firstName
               ? `${data.firstName} ${data.lastName}, ${data.age}`
-              : "Loading..."}
+              : "Loading...."}
           </Text>
-          <TouchableOpacity
-            onPress={handleEditProfile}
-            style={styles.editProfileButton}
-          >
-            <Text style={styles.editProfileText}>Edit your profile</Text>
-          </TouchableOpacity>
+          <View style={styles.editProfile}>
+            <TouchableOpacity
+              onPress={handleEditProfile}
+              style={styles.editProfileButton}
+            >
+              <Text style={styles.editProfileText}>Edit your profile</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
       <View style={styles.verificationBox}>
@@ -233,14 +243,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
     marginBottom: 20,
   },
   backButton: {
-    padding: 8,
+    padding: 10,
   },
   drawerButton: {
-    padding: 8,
+    padding: 10,
   },
   profileSection: {
     flexDirection: "row",
@@ -251,136 +260,120 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    marginRight: 16,
+    marginRight: 20,
   },
   profileInfo: {
     flex: 1,
   },
   profileName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 4,
   },
   editProfileButton: {
-    backgroundColor: "#FEF1F1",
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 20,
-    alignSelf: "flex-start",
+    marginTop: 10,
+    backgroundColor: "#FEF1F1", // Add background color here
+    borderRadius: 5,
+    width: 150,
+    padding: 10, // Add padding for better touch area
+    alignItems: "center", // Center text in button
   },
+
   editProfileText: {
     color: "#BF1013",
-    fontSize: 14,
   },
   verificationBox: {
-    backgroundColor: "#f9f9f9",
     padding: 16,
+    backgroundColor: "#f9f9f9",
     borderRadius: 8,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ddd",
+    marginBottom: 20,
   },
   verificationText: {
     fontSize: 16,
     textAlign: "center",
     marginBottom: 8,
-    color: "#666",
   },
   verifyButton: {
-    backgroundColor: "#FEF1F1",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  verifyButtonText: {
-    color: "#BF1013",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  sectionContainer: {
-    marginTop: 20,
-  },
-  tabs: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  tabButton: {
+    backgroundColor: "#BF1013",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
-    backgroundColor: "#BF1013",
-    marginHorizontal: 5,
+    alignItems: "center",
   },
-  activeTabButton: {
-    backgroundColor: "#BF1013",
-  },
-  tabButtonText: {
-    color: "#111",
+  verifyButtonText: {
+    color: "#fff",
     fontSize: 16,
   },
+  sectionContainer: {
+    marginBottom: 20,
+  },
+  tabs: {
+    flexDirection: "row",
+    marginBottom: 10,
+  },
+  tabButton: {
+    flex: 1,
+    padding: 10,
+    alignItems: "center",
+  },
+  activeTabButton: {
+    borderBottomWidth: 2,
+    borderBottomColor: "#BF1013",
+  },
+  tabButtonText: {
+    fontSize: 16,
+    color: "#000",
+  },
+  // editProfile: {
+  //   backgroundColor: "#FEF1F1",
+  //   borderRadius: 5,
+  // },
   activeTabButtonText: {
-    color: "#fff",
+    color: "#BF1013",
   },
   planBox: {
-    backgroundColor: "#BF1013",
+    backgroundColor: "#f9f9f9",
     padding: 16,
     borderRadius: 8,
-    alignItems: "center",
     borderWidth: 1,
     borderColor: "#ddd",
   },
   planText: {
-    fontSize: 27,
-    fontWeight: "400",
-    textAlign: "center",
+    fontSize: 16,
     marginBottom: 8,
-    color: "#fff",
   },
   planTextinside: {
-    fontSize: 15,
-    fontWeight: "400",
-    textAlign: "center",
+    fontSize: 14,
+    color: "#888",
     marginBottom: 8,
-    color: "#fff",
   },
   upgradeButton: {
-    backgroundColor: "#fff",
+    backgroundColor: "#BF1013",
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 20,
+    alignItems: "center",
   },
   upgradeButtonText: {
-    color: "#111",
+    color: "#fff",
     fontSize: 16,
-    fontWeight: "bold",
   },
   tableContainer: {
-    marginTop: 20,
-    backgroundColor: "#fff",
     borderRadius: 8,
-    padding: 16,
     borderWidth: 1,
     borderColor: "#ddd",
-    backgroundColor: "#FEF1F1",
-    paddingVertical: 10,
   },
   tableRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
   },
   tableCell: {
     flex: 1,
-    textAlign: "center",
-    fontSize: 16,
-    //marginEnd: 10,
+    padding: 10,
   },
   tableHeader: {
     fontWeight: "bold",
-    //color: "#BF1013"
+    backgroundColor: "#f1f1f1",
   },
 });
 
