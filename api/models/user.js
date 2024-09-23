@@ -46,6 +46,39 @@ const userSchema = new Schema({
       type: String,
     },
   ],
+  receivedLikes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
+  matches: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
+  eventsBooked: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Event",
+    },
+  ],
+  // chats: [
+  //   {
+  //     userId: {
+  //       type: mongoose.Schema.Types.ObjectId,
+  //       ref: "User",
+  //     },
+  //     lastMessage: {
+  //       type: String,
+  //     },
+  //     timestamp: {
+  //       type: Date,
+  //       default: Date.now,
+  //     },
+  //   },
+  // ],
   isAdmin: {
     type: Boolean,
     default: false,

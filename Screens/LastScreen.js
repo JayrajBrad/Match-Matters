@@ -7,14 +7,15 @@ import {
   ScrollView,
 } from "react-native";
 import React, { useEffect, useState } from "react";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_URL } from "@env";
 import {
   getRegistrationProgress,
   saveRegistrationProgress,
 } from "../backend/registrationUtils";
 import { saveToken, getToken, clearToken } from "../backend/token";
-import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_URL } from "@env";
+import { getUserId } from "../backend/registrationUtils";
 
 export default function PreferenceScreen({ navigation }) {
   const [userData, setUserData] = useState();
@@ -58,9 +59,7 @@ export default function PreferenceScreen({ navigation }) {
         "Password",
         "Name",
         "Age",
-
         "Photos",
-
         "Preference",
       ];
 
@@ -110,7 +109,7 @@ export default function PreferenceScreen({ navigation }) {
 
     await sendData(); // Await sendData call
     await clearAllScreenData();
-    navigation.navigate("HomeScreen", { userData });
+    navigation.navigate("HomeScreen", { userData }); // Navigate to ProfileScreen instead of HomeScreen
   };
 
   const sendData = async () => {
@@ -127,9 +126,20 @@ export default function PreferenceScreen({ navigation }) {
 
         // Check if the token is in the response
         const token = response.data.token;
-        if (token) {
-          await saveToken(token); // Save the token
+        const user = response.data.user;
+
+        if (token && user) {
+          await AsyncStorage.setItem("token", token); // Save the token
           console.log("JWT token saved successfully!");
+
+          // // Save user data in AsyncStorage
+          // await AsyncStorage.setItem("userData", JSON.stringify(userData));
+          await AsyncStorage.setItem("userData", JSON.stringify(user));
+
+          await AsyncStorage.setItem("userId", user._id);
+
+          const userId = await getUserId();
+          console.log("New User ID:", userId);
 
           await sendAuthenticatedRequest();
         } else {
@@ -145,7 +155,7 @@ export default function PreferenceScreen({ navigation }) {
 
   const sendAuthenticatedRequest = async () => {
     try {
-      const token = await getToken();
+      const token = await AsyncStorage.getItem("token");
       console.log("Token:", token);
 
       // Replace with the correct route
@@ -158,7 +168,7 @@ export default function PreferenceScreen({ navigation }) {
         },
       });
 
-      console.log("Response data:", response.data);
+      // console.log("Response data:", response.data);
     } catch (error) {
       console.error("Error in authenticated request:", error);
     }

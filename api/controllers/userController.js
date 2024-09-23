@@ -3,11 +3,9 @@ const bcrypt = require("bcrypt"); // For password hashing
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
-// Secret key for JWT (keep this secret and store it securely)
 const JWT_SECRET = process.env.JWT_SECRET;
 console.log("JWT_SECRET from usercontroller: ", JWT_SECRET);
 
-// Register User with all fields from the schema
 exports.registerUser = async (req, res) => {
   try {
     const {
@@ -24,34 +22,30 @@ exports.registerUser = async (req, res) => {
       isAdmin = false,
     } = req.body;
 
-    // Check if user with the same email already exists
     const existingUser = await User.findOne({ emailId });
     if (existingUser) {
       return res.status(400).json({ error: "User already exists" });
     }
 
-    // Hash the password before saving
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create a new user instance with the provided data and hashed password
     const newUser = new User({
       phoneNumber,
       emailId,
-      password: hashedPassword, // Store the hashed password
+      password: hashedPassword,
       firstName,
       lastName,
       age,
       birthdate,
       gender,
-      selectedPreferences, // Optional field, will default to an empty array
-      images, // Optional field, will default to an empty array
-      isAdmin, // Default to false unless specified
+      selectedPreferences,
+      images,
+      isAdmin,
     });
 
-    // Save the new user to the database
     await newUser.save();
 
-    // Generate a JWT token with the user's ID as the payload
     const token = jwt.sign(
       { userId: newUser._id, isAdmin: newUser.isAdmin },
       JWT_SECRET,
@@ -60,7 +54,6 @@ exports.registerUser = async (req, res) => {
       }
     );
 
-    // Respond with the token and a success message
     res.status(200).json({
       message: "User registered successfully!",
       token, // Send the JWT token in the response
@@ -79,25 +72,21 @@ exports.registerUser = async (req, res) => {
       },
     });
   } catch (error) {
-    // Log the error and respond with an internal server error message
     console.error("Error creating user:", error.message, error.stack);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-// Login User with Password Verification and Token Generation
 exports.loginUser = async (req, res) => {
   try {
     const { emailId, password } = req.body;
 
-    // Check if email and password are provided
     if (!emailId || !password) {
       return res
         .status(400)
         .json({ success: false, message: "Email and password are required" });
     }
 
-    // Check if the user exists
     const user = await User.findOne({ emailId });
     if (!user) {
       return res
@@ -105,7 +94,6 @@ exports.loginUser = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
-    // Compare the provided password with the hashed password stored in the database
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res
@@ -113,14 +101,13 @@ exports.loginUser = async (req, res) => {
         .json({ success: false, message: "Invalid password" });
     }
 
-    // Generate a JWT token with the user's ID and isAdmin status
     let token;
     try {
       token = jwt.sign(
         { userId: user._id, isAdmin: user.isAdmin },
         JWT_SECRET,
         {
-          expiresIn: "7d", // Token expiration time
+          expiresIn: "7d",
         }
       );
       console.log("token generated at login : ", token);
@@ -131,7 +118,6 @@ exports.loginUser = async (req, res) => {
         .json({ success: false, message: "Error generating token" });
     }
 
-    // Respond with the token and user details
     res.status(200).json({
       success: true,
       message: "Login successful",
@@ -139,7 +125,7 @@ exports.loginUser = async (req, res) => {
       user: {
         _id: user._id,
         emailId: user.emailId,
-        // Include other user details if necessary
+        phoneNumber: user.phoneNumber,
         firstName: user.firstName,
         lastName: user.lastName,
         age: user.age,
@@ -167,13 +153,49 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-// Get Latest User
-exports.getLatestUser = async (req, res) => {
+exports.updateUserProfile = async (req, res) => {
   try {
-    const latestUser = await User.findOne({}).sort({ _id: -1 }).exec();
-    res.status(200).json({ status: "ok", data: latestUser });
+    const {
+      userId,
+      firstName,
+      lastName,
+      phoneNumber,
+      gender,
+      selectedPreferences,
+    } = req.body;
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: { firstName, lastName, phoneNumber, gender, selectedPreferences },
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Profile updated successfully", user: updatedUser });
   } catch (error) {
-    console.error("Error fetching latest user:", error);
-    res.status(500).json({ status: "error", message: "Internal Server Error" });
+    console.error("Error updating profile:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.getUserData = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user); // Send the user data as response
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
