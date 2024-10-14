@@ -22,19 +22,6 @@ export const getRegistrationProgress = async (screenName) => {
   }
 };
 
-// export const getUserData = async () => {
-//   try {
-//     // Retrieve the user data from AsyncStorage
-//     const userData = await AsyncStorage.getItem("userData");
-
-//     // Parse and return the user data
-//     return userData ? JSON.parse(userData) : null;
-//   } catch (error) {
-//     console.error("Failed to retrieve user data:", error);
-//     return null;
-//   }
-// };
-
 // Fetch user data by user ID
 export const getUserData = async (userId) => {
   try {
@@ -45,15 +32,6 @@ export const getUserData = async (userId) => {
     return null;
   }
 };
-
-// export const getUserId = async () => {
-//   try {
-//     const userId = await AsyncStorage.getItem("userId");
-//     return userId;
-//   } catch (error) {
-//     console.error("Failed to get user ID:", error);
-//   }
-// };
 
 export const getUserId = async () => {
   try {

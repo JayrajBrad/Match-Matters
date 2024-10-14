@@ -27,6 +27,7 @@ const createEvent = async (req, res) => {
         time,
         organizer,
         eventDetails,
+        genre,
         artists,
         ticketPrice,
         images, // Already uploaded image URLs (optional)
@@ -80,6 +81,7 @@ const createEvent = async (req, res) => {
         time,
         organizer: organizer || req.user.userId,
         eventDetails,
+        genre,
         // artists: artists ? JSON.parse(artists) : [],
         artists: typeof artists === "string" ? JSON.parse(artists) : artists,
         location,
@@ -150,9 +152,128 @@ const getEventById = async (req, res) => {
   }
 };
 
+// Controller to handle likes
+const likeEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const userId = req.user.userId;
+
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    const alreadyLiked = event.likes.includes(userId);
+
+    if (alreadyLiked) {
+      // Unlike the event
+      event.likes = event.likes.filter((like) => like.toString() !== userId);
+    } else {
+      // Like the event
+      event.likes.push(userId);
+    }
+
+    await event.save();
+
+    res.status(200).json({
+      message: alreadyLiked ? "Unliked" : "Liked",
+      likesCount: event.likes.length,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Error liking the event", message: error.message });
+  }
+};
+
+// Controller to handle comments
+const addComment = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { text } = req.body;
+    const userId = req.user.userId;
+
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    const newComment = {
+      user: userId,
+      text,
+      createdAt: new Date(),
+    };
+
+    event.comments.push(newComment);
+
+    await event.save();
+
+    res
+      .status(201)
+      .json({ message: "Comment added", comments: event.comments });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Error adding comment", message: error.message });
+  }
+};
+
+// Controller to handle views
+const incrementViews = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    event.views += 1;
+    await event.save();
+
+    res.status(200).json({ message: "View incremented", views: event.views });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Error incrementing views", message: error.message });
+  }
+};
+
+// Controller to handle shares
+const shareEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const userId = req.user.userId;
+
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    event.shares.push(userId);
+    await event.save();
+
+    res
+      .status(200)
+      .json({ message: "Event shared", sharesCount: event.shares.length });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Error sharing the event", message: error.message });
+  }
+};
+
 module.exports = {
   createEvent,
   getUserEvents,
   getAllEvents,
-  getEventById, // Export the new function
+  getEventById,
+  likeEvent,
+  addComment,
+  incrementViews,
+  shareEvent,
 };

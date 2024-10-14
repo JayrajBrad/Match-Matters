@@ -4,7 +4,10 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
+
 console.log("JWT_SECRET from usercontroller: ", JWT_SECRET);
+console.log("REFRESH_TOKEN_SECRET from usercontroller: ", REFRESH_TOKEN_SECRET);
 
 exports.registerUser = async (req, res) => {
   try {
@@ -77,6 +80,72 @@ exports.registerUser = async (req, res) => {
   }
 };
 
+// exports.loginUser = async (req, res) => {
+//   try {
+//     const { emailId, password } = req.body;
+
+//     if (!emailId || !password) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Email and password are required" });
+//     }
+
+//     const user = await User.findOne({ emailId });
+//     if (!user) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "User not found" });
+//     }
+
+//     const isPasswordValid = await bcrypt.compare(password, user.password);
+//     if (!isPasswordValid) {
+//       return res
+//         .status(401)
+//         .json({ success: false, message: "Invalid password" });
+//     }
+
+//     let token;
+//     try {
+//       token = jwt.sign(
+//         { userId: user._id, isAdmin: user.isAdmin },
+//         JWT_SECRET,
+//         {
+//           expiresIn: "7d",
+//         }
+//       );
+//       console.log("token generated at login : ", token);
+//     } catch (error) {
+//       console.error("Error generating token:", error.message);
+//       return res
+//         .status(500)
+//         .json({ success: false, message: "Error generating token" });
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Login successful",
+//       token,
+//       refreshToken,
+//       user: {
+//         _id: user._id,
+//         emailId: user.emailId,
+//         phoneNumber: user.phoneNumber,
+//         firstName: user.firstName,
+//         lastName: user.lastName,
+//         age: user.age,
+//         birthdate: user.birthdate,
+//         gender: user.gender,
+//         selectedPreferences: user.selectedPreferences,
+//         images: user.images,
+//         isAdmin: user.isAdmin,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error logging in user:", error.message, error.stack);
+//     res.status(500).json({ success: false, message: "Internal Server Error" });
+//   }
+// };
+
 exports.loginUser = async (req, res) => {
   try {
     const { emailId, password } = req.body;
@@ -101,27 +170,38 @@ exports.loginUser = async (req, res) => {
         .json({ success: false, message: "Invalid password" });
     }
 
-    let token;
+    let token, refreshToken;
     try {
       token = jwt.sign(
         { userId: user._id, isAdmin: user.isAdmin },
         JWT_SECRET,
         {
-          expiresIn: "7d",
+          expiresIn: "7d", // Shorter expiration for access token
         }
       );
-      console.log("token generated at login : ", token);
+
+      refreshToken = jwt.sign(
+        { userId: user._id, isAdmin: user.isAdmin },
+        REFRESH_TOKEN_SECRET,
+        {
+          expiresIn: "30d", // Longer expiration for refresh token
+        }
+      );
+
+      console.log("Access token generated:", token);
+      console.log("Refresh token generated:", refreshToken);
     } catch (error) {
-      console.error("Error generating token:", error.message);
+      console.error("Error generating tokens:", error.message);
       return res
         .status(500)
-        .json({ success: false, message: "Error generating token" });
+        .json({ success: false, message: "Error generating tokens" });
     }
 
     res.status(200).json({
       success: true,
       message: "Login successful",
-      token,
+      token, // Access token
+      refreshToken, // Refresh token
       user: {
         _id: user._id,
         emailId: user.emailId,
@@ -139,6 +219,32 @@ exports.loginUser = async (req, res) => {
   } catch (error) {
     console.error("Error logging in user:", error.message, error.stack);
     res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+exports.refreshToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+    console.log("refreshToken controller :", token);
+
+    if (!token) {
+      return res.status(400).json({ message: "Token is required" });
+    }
+
+    jwt.verify(token, REFRESH_TOKEN_SECRET, (err, user) => {
+      // Use a separate secret for refresh tokens
+      if (err)
+        return res.status(403).json({ message: "Invalid  refresh token" });
+      const newAccessToken = jwt.sign(
+        { userId: user.userId, isAdmin: user.isAdmin },
+        JWT_SECRET,
+        { expiresIn: "7d" }
+      );
+
+      res.status(200).json({ token: newAccessToken });
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 

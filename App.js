@@ -139,7 +139,27 @@ const App = () => {
         <Stack.Screen
           name="MostHappening"
           component={MostHappening}
-          options={{ headerShown: false }}
+          options={{
+            title: "MostHappening",
+            headerShown: true,
+            headerTitleAlign: "center", // Align title to center
+            // tabBarIcon: ({ focused }) => (
+            //   <MaterialCommunityIcons
+            //     name="home"
+            //     size={30}
+            //     color={focused ? "#BF1013" : "#FF5A5F"}
+            //   />
+            // ),
+          }}
+        />
+        <Stack.Screen
+          name="ForYou"
+          component={ForYou}
+          options={{
+            title: "For You",
+            headerShown: true,
+            headerTitleAlign: "center", // Align title to center
+          }}
         />
         <Stack.Screen
           name="TicketSales"
@@ -162,24 +182,40 @@ const App = () => {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="MyEventsScreen"
+          name="MyEvents"
           component={MyEventsScreen}
-          options={{ headerShown: false }}
+          options={{
+            title: "Create Event",
+            headerShown: true,
+            headerTitleAlign: "center", // Align title to center
+          }}
         />
         <Stack.Screen
           name="CreateEventScreen"
           component={CreateEventScreen}
-          options={{ headerShown: false }}
+          options={{
+            title: "Create Event",
+            headerShown: true,
+            headerTitleAlign: "center", // Align title to center
+          }}
         />
         <Stack.Screen
           name="CityEventsScreen"
           component={CityEventsScreen}
-          options={{ headerShown: false }}
+          options={{
+            title: "Create Event",
+            headerShown: true,
+            headerTitleAlign: "center", // Align title to center
+          }}
         />
         <Stack.Screen
           name="EventDetailsScreen"
           component={EventDetailsScreen}
-          options={{ headerShown: false }}
+          options={{
+            title: "Event Details",
+            headerShown: true,
+            headerTitleAlign: "center", // Align title to center
+          }}
         />
         <Stack.Screen
           name="EmailLogin"
@@ -198,11 +234,108 @@ const App = () => {
 
 const TabNavigator = () => {
   return (
+    // <Tab.Navigator
+    //   initialRouteName="FeedScreen"
+    //   screenOptions={({ route }) => ({
+    //     tabBarShowLabel: true,
+    //     headerShown: false,
+    //     tabBarStyle: {
+    //       position: "absolute",
+    //       bottom: 0,
+    //       right: 0,
+    //       left: 0,
+    //       elevation: 0,
+    //       height: 100,
+    //       // backgroundColor: route.name === "Home" ? "transparent" : "#fff",
+    //       borderTopWidth: 0,
+    //     },
+    //     tabBarLabelStyle: {
+    //       fontSize: 12,
+    //       marginBottom: 10,
+    //       color: "#000",
+    //     },
+    //     tabBarIconStyle: {
+    //       marginTop: 10,
+    //     },
+    //   })}
+    // >
+    //   <Tab.Screen
+    //     name="FeedScreen"
+    //     component={FeedScreen}
+    //     options={{
+    //       title: "Home",
+    //       tabBarIcon: ({ focused, color }) => (
+    //         <MaterialCommunityIcons
+    //           name="home"
+    //           size={30}
+    //           color={focused ? "#BF1013" : "#FF5A5F"}
+    //         />
+    //       ),
+    //     }}
+    //   />
+
+    //   <Tab.Screen
+    //     name="Liked"
+    //     component={LikedYou}
+    //     options={{
+    //       title: "Liked",
+    //       tabBarIcon: ({ focused, color }) => (
+    //         <MaterialCommunityIcons
+    //           name="heart"
+    //           size={30}
+    //           color={focused ? "#BF1013" : "#FF5A5F"}
+    //         />
+    //       ),
+    //     }}
+    //   />
+    //   <Tab.Screen
+    //     name="Chat"
+    //     component={Chat}
+    //     options={{
+    //       title: "Chat",
+    //       tabBarIcon: ({ focused, color }) => (
+    //         <MaterialCommunityIcons
+    //           name="chat"
+    //           size={30}
+    //           color={focused ? "#BF1013" : "#FF5A5F"}
+    //         />
+    //       ),
+    //     }}
+    //   />
+    //   <Tab.Screen
+    //     name="ForYou"
+    //     component={ForYou}
+    //     options={{
+    //       title: "For You",
+    //       tabBarIcon: ({ focused, color }) => (
+    //         <MaterialCommunityIcons
+    //           name="star"
+    //           size={30}
+    //           color={focused ? "#BF1013" : "#FF5A5F"}
+    //         />
+    //       ),
+    //     }}
+    //   />
+    //   <Tab.Screen
+    //     name="Profile"
+    //     component={Profile}
+    //     options={{
+    //       title: "Profile",
+    //       tabBarIcon: ({ focused, color }) => (
+    //         <MaterialCommunityIcons
+    //           name="account"
+    //           size={30}
+    //           color={focused ? "#BF1013" : "#FF5A5F"}
+    //         />
+    //       ),
+    //     }}
+    //   />
+    // </Tab.Navigator>
+
     <Tab.Navigator
       initialRouteName="FeedScreen"
       screenOptions={({ route }) => ({
         tabBarShowLabel: true,
-        headerShown: false,
         tabBarStyle: {
           position: "absolute",
           bottom: 0,
@@ -210,7 +343,6 @@ const TabNavigator = () => {
           left: 0,
           elevation: 0,
           height: 100,
-          // backgroundColor: route.name === "Home" ? "transparent" : "#fff",
           borderTopWidth: 0,
         },
         tabBarLabelStyle: {
@@ -228,7 +360,9 @@ const TabNavigator = () => {
         component={FeedScreen}
         options={{
           title: "Home",
-          tabBarIcon: ({ focused, color }) => (
+          headerShown: true,
+          headerTitleAlign: "center", // Align title to center
+          tabBarIcon: ({ focused }) => (
             <MaterialCommunityIcons
               name="home"
               size={30}
@@ -243,7 +377,9 @@ const TabNavigator = () => {
         component={LikedYou}
         options={{
           title: "Liked",
-          tabBarIcon: ({ focused, color }) => (
+          headerShown: true,
+          headerTitleAlign: "center", // Align title to center
+          tabBarIcon: ({ focused }) => (
             <MaterialCommunityIcons
               name="heart"
               size={30}
@@ -252,12 +388,15 @@ const TabNavigator = () => {
           ),
         }}
       />
+
       <Tab.Screen
         name="Chat"
         component={Chat}
         options={{
           title: "Chat",
-          tabBarIcon: ({ focused, color }) => (
+          headerShown: true,
+          headerTitleAlign: "center", // Align title to center
+          tabBarIcon: ({ focused }) => (
             <MaterialCommunityIcons
               name="chat"
               size={30}
@@ -266,12 +405,15 @@ const TabNavigator = () => {
           ),
         }}
       />
-      <Tab.Screen
+
+      {/* <Tab.Screen
         name="ForYou"
         component={ForYou}
         options={{
           title: "For You",
-          tabBarIcon: ({ focused, color }) => (
+          headerShown: true,
+          headerTitleAlign: "center", // Align title to center
+          tabBarIcon: ({ focused }) => (
             <MaterialCommunityIcons
               name="star"
               size={30}
@@ -279,13 +421,16 @@ const TabNavigator = () => {
             />
           ),
         }}
-      />
+      /> */}
+
       <Tab.Screen
         name="Profile"
         component={Profile}
         options={{
           title: "Profile",
-          tabBarIcon: ({ focused, color }) => (
+          headerShown: true,
+          headerTitleAlign: "center", // Align title to center
+          tabBarIcon: ({ focused }) => (
             <MaterialCommunityIcons
               name="account"
               size={30}
@@ -302,7 +447,7 @@ const DrawerNavigator = () => {
   return (
     <Drawer.Navigator
       initialRouteName="Home"
-      drawerPosition="right"
+      drawerPosition="left"
       screenOptions={{ headerShown: false }}
       drawerContent={(props) => <DrawerContent {...props} />}
     >
@@ -310,15 +455,39 @@ const DrawerNavigator = () => {
       <Drawer.Screen name="Profile" component={Profile} />
       <Drawer.Screen name="LikedYou" component={LikedYou} />
       <Drawer.Screen name="Chat" component={Chat} />
-      <Drawer.Screen name="ForYou" component={ForYou} />
-      <Drawer.Screen name="MyEvents" component={MyEventsScreen} />
+      {/* <Drawer.Screen name="ForYou" component={ForYou} /> */}
+      {/* <Drawer.Screen name="MyEvents" component={MyEventsScreen} /> */}
       <Drawer.Screen name="Notifications" component={NotificationsScreen} />
-      <Drawer.Screen name="Membership" component={MembershipScreen} />
-      <Drawer.Screen name="MyBookings" component={MyBookingsScreen} />
+      <Drawer.Screen
+        name="Membership"
+        component={MembershipScreen}
+        options={{
+          title: "Membership",
+          headerShown: true,
+          headerTitleAlign: "center", // Align title to center
+        }}
+      />
+      <Drawer.Screen
+        name="MyBookings"
+        component={MyBookingsScreen}
+        options={{
+          title: "My Bookings",
+          headerShown: true,
+          headerTitleAlign: "center", // Align title to center
+        }}
+      />
       <Drawer.Screen name="Help" component={HelpScreen} />
       <Drawer.Screen name="PrivacyCenter" component={PrivacyCenterScreen} />
       <Drawer.Screen name="ContactUs" component={ContactUsScreen} />
-      <Drawer.Screen name="FAQs" component={FAQScreen} />
+      <Drawer.Screen
+        name="FAQs"
+        component={FAQScreen}
+        options={{
+          title: "FAQ",
+          headerShown: true,
+          headerTitleAlign: "center",
+        }}
+      />
     </Drawer.Navigator>
   );
 };
