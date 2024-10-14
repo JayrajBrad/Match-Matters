@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   ScrollView,
   Image,
+  Keyboard,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -15,9 +17,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import axios from "axios";
 import { API_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
-import { getToken } from "../backend/token";
+import { getToken, getRefreshToken, saveToken } from "../backend/token";
 import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY } from "@env";
 import FormData from "form-data";
+import { Picker } from "@react-native-picker/picker";
 
 const CreateEventScreen = ({ navigation }) => {
   const [images, setImages] = useState([null, null, null]);
@@ -30,11 +33,52 @@ const CreateEventScreen = ({ navigation }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [isDatePicker, setIsDatePicker] = useState(true);
+  const [eventGenre, setEventGenre] = useState("");
+  const [showGenreDropdown, setShowGenreDropdown] = useState(false);
 
   // New state variables for the additional fields
   const [artistName, setArtistName] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [ticketPrice, setTicketPrice] = useState("");
+
+  const eventGenres = [
+    "Business Event",
+    "House Party",
+    "Networking Event",
+    "Workshop",
+    "Cultural Event",
+    "Food Festival",
+    "Music Concert",
+    "Game Night",
+    "Outdoor Activity",
+    "Travel Meetup",
+  ];
+
+  const genreRef = useRef();
+
+  const handleGenreSelect = (genre) => {
+    setEventGenre(genre);
+    setShowGenreDropdown(false); // Close the dropdown after selection
+  };
+
+  const toggleGenreDropdown = () => {
+    setShowGenreDropdown((prev) => !prev);
+  };
+
+  // const handleOutsideClick = (event) => {
+  //   // Check if the clicked target is outside the genre dropdown
+  //   if (genreRef.current && !genreRef.current.contains(event.target)) {
+  //     setShowGenreDropdown(false);
+  //   }
+  // };
+
+  // // Attach event listener to close dropdown when clicking outside
+  // React.useEffect(() => {
+  //   document.addEventListener("mousedown", handleOutsideClick);
+  //   return () => {
+  //     document.removeEventListener("mousedown", handleOutsideClick);
+  //   };
+  // }, []);
 
   const pickMedia = async (index, setImageArray, imageArray, type) => {
     let options = {
@@ -135,23 +179,32 @@ const CreateEventScreen = ({ navigation }) => {
     }
   };
 
+  const refreshAuthToken = async (refreshToken) => {
+    console.log("Attempting to refresh with token:", refreshToken);
+    try {
+      const response = await axios.post(`${API_URL}/user/refresh-token`, {
+        token: refreshToken,
+      });
+      return response.data.token; // Return the new token
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      throw error; // Rethrow error to handle it in the calling function
+    }
+  };
+
   const handlePublish = async () => {
     try {
-      const token = await getToken();
+      let token = await getToken(); // Get the token initially
       console.log("token from createevent :", token);
 
+      if (!token) {
+        console.log("No access token found. Cannot proceed with publish.");
+        return; // Prevent proceeding without a valid token
+      }
       const formattedDate = startDate ? new Date(startDate).toISOString() : "";
       const formattedTime = startTime
         ? startTime.toTimeString().split(" ")[0]
         : "";
-
-      // Get signature for image upload
-      const { timestamp: imgTimestamp, signature: imgSignature } =
-        await getSignatureForUpload("images");
-
-      // Get signature for video upload
-      const { timestamp: videoTimestamp, signature: videoSignature } =
-        await getSignatureForUpload("videos");
 
       const uploadedImages = await Promise.all(
         images.map(async (image) => {
@@ -183,6 +236,7 @@ const CreateEventScreen = ({ navigation }) => {
           },
         ],
         location,
+        genre: eventGenre,
         images: validImages.map((url) => ({ url })),
         videoUrl: uploadedVideo,
         ticketPrice: parseFloat(ticketPrice),
@@ -190,25 +244,72 @@ const CreateEventScreen = ({ navigation }) => {
 
       console.log("event data :", eventData);
 
-      // Send the data to the backend
-      const response = await axios.post(
-        `${API_URL}/api/events`, // Adjust the URL as needed
-        eventData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-          // body: data,
-          timeout: 10000,
-        }
-      );
+      // Function to send the publish request
+      const publishEvent = async (token) => {
+        return await axios.post(
+          `${API_URL}/api/events`, // Adjust the URL as needed
+          eventData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+            timeout: 10000,
+          }
+        );
+      };
 
-      if (response.status === 201) {
-        alert("Event successfully published!");
-        navigation.goBack();
-      } else {
-        alert(`Failed to publish event. Status: ${response.status}`);
+      // Attempt to publish the event
+      try {
+        const response = await publishEvent(token);
+        if (response.status === 201) {
+          alert("Event successfully published!");
+          navigation.goBack();
+        } else {
+          alert(`Failed to publish event. Status: ${response.status}`);
+        }
+      } catch (error) {
+        // Handle token expiration
+        if (error.response && error.response.status === 403) {
+          console.log("Token expired, attempting to refresh...");
+          // Refresh the token
+          try {
+            // Use a different way to get refreshToken, if it’s stored in localStorage in your app
+            const refreshToken = await getRefreshToken(); // Implement this method based on your storage strategy
+            console.log("Using refresh token for request:", refreshToken);
+            // Refresh the token
+
+            if (!refreshToken) {
+              console.log(
+                "No refresh token found. User may need to log in again."
+              );
+              return; // Prevent proceeding if no refresh token is available
+            }
+
+            token = await refreshAuthToken(refreshToken); // Call the function with the correct token
+
+            // Store the new token if necessary
+            await saveToken(token); // Optional: save new token to localStorage
+
+            // Retry the publish request with the new token
+            const retryResponse = await publishEvent(token);
+            if (retryResponse.status === 201) {
+              alert("Event successfully published!");
+              navigation.goBack();
+            } else {
+              alert(
+                `Failed to publish event on retry. Status: ${retryResponse.status}`
+              );
+            }
+          } catch (refreshError) {
+            console.error("Error refreshing token:", refreshError);
+            alert("Session expired. Please log in again.");
+            // Optionally, redirect the user to the login page
+            // navigation.navigate("Login"); // Adjust according to your navigation setup
+          }
+        } else {
+          throw error; // Handle other errors
+        }
       }
     } catch (error) {
       console.error("Error publishing event:", error);
@@ -231,165 +332,286 @@ const CreateEventScreen = ({ navigation }) => {
     }
   };
 
-  return (
-    <LinearGradient
-      colors={["#FFF72D", "#D6CAF2", "#F9D3A3"]}
-      style={styles.container}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.header}>Create Events</Text>
+  // const handlePublish = async () => {
+  //   try {
+  //     const token = await getToken();
+  //     console.log("token from createevent :", token);
 
-        <Text style={styles.subHeader}>Add Photos</Text>
-        <View style={styles.photosContainer}>
-          <TouchableOpacity
-            style={styles.largeImageUpload}
-            onPress={() => pickImage(0)}
+  //     const formattedDate = startDate ? new Date(startDate).toISOString() : "";
+  //     const formattedTime = startTime
+  //       ? startTime.toTimeString().split(" ")[0]
+  //       : "";
+
+  //     // // Get signature for image upload
+  //     // const { timestamp: imgTimestamp, signature: imgSignature } =
+  //     //   await getSignatureForUpload("images");
+
+  //     // // Get signature for video upload
+  //     // const { timestamp: videoTimestamp, signature: videoSignature } =
+  //     //   await getSignatureForUpload("videos");
+
+  //     const uploadedImages = await Promise.all(
+  //       images.map(async (image) => {
+  //         if (image) {
+  //           return await uploadFile(image, "image");
+  //         }
+  //         return null;
+  //       })
+  //     );
+
+  //     // Filter out null values
+  //     const validImages = uploadedImages.filter(Boolean);
+
+  //     const uploadedVideo = videoUrl
+  //       ? await uploadFile(videoUrl, "video")
+  //       : null;
+
+  //     // Prepare the event data
+  //     const eventData = {
+  //       title,
+  //       date: formattedDate,
+  //       time: formattedTime,
+  //       organizer: organizerName,
+  //       eventDetails: description,
+  //       artists: [
+  //         {
+  //           name: artistName,
+  //           role: "Artist",
+  //         },
+  //       ],
+  //       location,
+  //       genre: eventGenre,
+  //       images: validImages.map((url) => ({ url })),
+  //       videoUrl: uploadedVideo,
+  //       ticketPrice: parseFloat(ticketPrice),
+  //     };
+
+  //     console.log("event data :", eventData);
+
+  //     // Send the data to the backend
+  //     const response = await axios.post(
+  //       `${API_URL}/api/events`, // Adjust the URL as needed
+  //       eventData,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "Content-Type": "multipart/form-data",
+  //         },
+  //         // body: data,
+  //         timeout: 10000,
+  //       }
+  //     );
+
+  //     if (response.status === 201) {
+  //       alert("Event successfully published!");
+  //       navigation.goBack();
+  //     } else {
+  //       alert(`Failed to publish event. Status: ${response.status}`);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error publishing event:", error);
+  //     if (error.response) {
+  //       console.error("Response data:", error.response.data);
+  //       console.error("Response status:", error.response.status);
+  //       console.error("Response headers:", error.response.headers);
+  //       alert(
+  //         `Error: ${
+  //           error.response.data.message || "Something went wrong"
+  //         } (Status: ${error.response.status})`
+  //       );
+  //     } else if (error.request) {
+  //       console.error("Request:", error.request);
+  //       alert("No response received from the server.");
+  //     } else {
+  //       console.error("Error message:", error.message);
+  //       alert(`Error: ${error.message}`);
+  //     }
+  //   }
+  // };
+
+  return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <LinearGradient
+        colors={["#FFF72D", "#D6CAF2", "#F9D3A3"]}
+        style={styles.container}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {/* <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
           >
-            {images[0] ? (
-              <Image source={{ uri: images[0] }} style={styles.image} />
+            <Ionicons name="arrow-back" size={24} color="black" />
+          </TouchableOpacity>
+          <Text style={styles.header}>Create Events</Text> */}
+
+          <Text style={styles.subHeader}>Add Photos</Text>
+          <View style={styles.photosContainer}>
+            <TouchableOpacity
+              style={styles.largeImageUpload}
+              onPress={() => pickImage(0)}
+            >
+              {images[0] ? (
+                <Image source={{ uri: images[0] }} style={styles.image} />
+              ) : (
+                <Ionicons name="camera-outline" size={36} color="black" />
+              )}
+            </TouchableOpacity>
+            <View style={styles.smallImagesContainer}>
+              <TouchableOpacity
+                style={styles.smallImageUpload}
+                onPress={() => pickImage(1)}
+              >
+                {images[1] ? (
+                  <Image source={{ uri: images[1] }} style={styles.image} />
+                ) : (
+                  <Ionicons name="camera-outline" size={24} color="black" />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.smallImageUpload}
+                onPress={() => pickImage(2)}
+              >
+                {images[2] ? (
+                  <Image source={{ uri: images[2] }} style={styles.image} />
+                ) : (
+                  <Ionicons name="camera-outline" size={24} color="black" />
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <Text style={styles.label}>Title</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Event title"
+            value={title}
+            onChangeText={setTitle}
+          />
+
+          <Text style={styles.label}>Location</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Location"
+            value={location}
+            onChangeText={setLocation}
+          />
+
+          <View style={styles.dateTimeContainer}>
+            <View style={styles.dateTimeSection}>
+              <Text style={styles.label}>Start Date</Text>
+              <TouchableOpacity
+                onPress={showDatePickerModal}
+                style={styles.dateTimeButton}
+              >
+                <Text style={styles.dateTimeButtonText}>
+                  {startDate ? startDate.toDateString() : "Select Start Date"}
+                </Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={startDate || new Date()}
+                  mode="date"
+                  display="default"
+                  onChange={onDateTimeChange}
+                />
+              )}
+            </View>
+
+            <View style={styles.dateTimeSection}>
+              <Text style={styles.label}>Start Time</Text>
+              <TouchableOpacity
+                onPress={showTimePickerModal}
+                style={styles.dateTimeButton}
+              >
+                <Text style={styles.dateTimeButtonText}>
+                  {startTime
+                    ? startTime.toTimeString().split(" ")[0]
+                    : "Select Start Time"}
+                </Text>
+              </TouchableOpacity>
+              {showTimePicker && (
+                <DateTimePicker
+                  value={startTime || new Date()}
+                  mode="time"
+                  display="default"
+                  onChange={onDateTimeChange}
+                />
+              )}
+            </View>
+          </View>
+
+          <Text style={styles.label}>Organizer Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Organizer name"
+            value={organizerName}
+            onChangeText={setOrganizerName}
+          />
+
+          <Text style={styles.label}>Event Description</Text>
+          <TextInput
+            style={styles.textArea}
+            placeholder="Enter event details"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+          />
+
+          <Text style={styles.label}>Select Event Genre</Text>
+          <TouchableOpacity style={styles.input} onPress={toggleGenreDropdown}>
+            <Text>{eventGenre || "Select Genre"}</Text>
+          </TouchableOpacity>
+
+          {showGenreDropdown && (
+            <View style={styles.dropdown}>
+              {eventGenres.map((genre) => (
+                <TouchableOpacity
+                  key={genre}
+                  style={styles.dropdownItem}
+                  onPress={() => handleGenreSelect(genre)}
+                >
+                  <Text>{genre}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          <Text style={styles.label}>Artist Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Artist name"
+            value={artistName}
+            onChangeText={setArtistName}
+          />
+
+          <Text style={styles.label}>Video URL</Text>
+
+          <TouchableOpacity onPress={pickVideo} style={styles.videoUpload}>
+            {videoUrl ? (
+              <Text style={styles.videoText}>Video Selected</Text>
             ) : (
-              <Ionicons name="camera-outline" size={36} color="black" />
+              <Ionicons name="videocam-outline" size={36} color="black" />
             )}
           </TouchableOpacity>
-          <View style={styles.smallImagesContainer}>
-            <TouchableOpacity
-              style={styles.smallImageUpload}
-              onPress={() => pickImage(1)}
-            >
-              {images[1] ? (
-                <Image source={{ uri: images[1] }} style={styles.image} />
-              ) : (
-                <Ionicons name="camera-outline" size={24} color="black" />
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.smallImageUpload}
-              onPress={() => pickImage(2)}
-            >
-              {images[2] ? (
-                <Image source={{ uri: images[2] }} style={styles.image} />
-              ) : (
-                <Ionicons name="camera-outline" size={24} color="black" />
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
 
-        <Text style={styles.label}>Title</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Event title"
-          value={title}
-          onChangeText={setTitle}
-        />
+          <Text style={styles.label}>Ticket Price</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ticket Price"
+            keyboardType="numeric"
+            value={ticketPrice}
+            onChangeText={setTicketPrice}
+          />
 
-        <Text style={styles.label}>Location</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Location"
-          value={location}
-          onChangeText={setLocation}
-        />
-
-        <View style={styles.dateTimeContainer}>
-          <View style={styles.dateTimeSection}>
-            <Text style={styles.label}>Start Date</Text>
-            <TouchableOpacity
-              onPress={showDatePickerModal}
-              style={styles.dateTimeButton}
-            >
-              <Text style={styles.dateTimeButtonText}>
-                {startDate ? startDate.toDateString() : "Select Start Date"}
-              </Text>
-            </TouchableOpacity>
-            {showDatePicker && (
-              <DateTimePicker
-                value={startDate || new Date()}
-                mode="date"
-                display="default"
-                onChange={onDateTimeChange}
-              />
-            )}
-          </View>
-
-          <View style={styles.dateTimeSection}>
-            <Text style={styles.label}>Start Time</Text>
-            <TouchableOpacity
-              onPress={showTimePickerModal}
-              style={styles.dateTimeButton}
-            >
-              <Text style={styles.dateTimeButtonText}>
-                {startTime
-                  ? startTime.toTimeString().split(" ")[0]
-                  : "Select Start Time"}
-              </Text>
-            </TouchableOpacity>
-            {showTimePicker && (
-              <DateTimePicker
-                value={startTime || new Date()}
-                mode="time"
-                display="default"
-                onChange={onDateTimeChange}
-              />
-            )}
-          </View>
-        </View>
-
-        <Text style={styles.label}>Organizer Name</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Organizer name"
-          value={organizerName}
-          onChangeText={setOrganizerName}
-        />
-
-        <Text style={styles.label}>Event Description</Text>
-        <TextInput
-          style={styles.textArea}
-          placeholder="Enter event details"
-          value={description}
-          onChangeText={setDescription}
-          multiline
-        />
-
-        <Text style={styles.label}>Artist Name</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Artist name"
-          value={artistName}
-          onChangeText={setArtistName}
-        />
-
-        <Text style={styles.label}>Video URL</Text>
-
-        <TouchableOpacity onPress={pickVideo} style={styles.videoUpload}>
-          {videoUrl ? (
-            <Text style={styles.videoText}>Video Selected</Text>
-          ) : (
-            <Ionicons name="videocam-outline" size={36} color="black" />
-          )}
-        </TouchableOpacity>
-
-        <Text style={styles.label}>Ticket Price</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ticket Price"
-          keyboardType="numeric"
-          value={ticketPrice}
-          onChangeText={setTicketPrice}
-        />
-
-        <TouchableOpacity style={styles.publishButton} onPress={handlePublish}>
-          <Text style={styles.publishButtonText}>Publish Event</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </LinearGradient>
+          <TouchableOpacity
+            style={styles.publishButton}
+            onPress={handlePublish}
+          >
+            <Text style={styles.publishButtonText}>Publish Event</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </LinearGradient>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -417,6 +639,13 @@ const styles = StyleSheet.create({
   },
   photosContainer: {
     flexDirection: "row",
+    marginBottom: 16,
+  },
+  picker: {
+    height: 50,
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 5,
     marginBottom: 16,
   },
   largeImageUpload: {
@@ -459,6 +688,20 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 8,
     marginBottom: 16,
+    justifyContent: "center",
+  },
+  dropdown: {
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 16,
+    position: "absolute",
+    backgroundColor: "#fff",
+    zIndex: 1,
+    width: "100%",
+  },
+  dropdownItem: {
+    padding: 10,
   },
   textArea: {
     height: 100,

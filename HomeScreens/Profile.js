@@ -85,7 +85,7 @@ const ProfileScreen = () => {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -95,7 +95,7 @@ const ProfileScreen = () => {
         <TouchableOpacity onPress={openDrawer} style={styles.drawerButton}>
           <Icon name="menu" size={24} color="#000" />
         </TouchableOpacity>
-      </View>
+      </View> */}
       <View style={styles.profileSection}>
         {profileImage ? (
           <Image source={{ uri: profileImage }} style={styles.profileImage} />

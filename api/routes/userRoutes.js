@@ -7,6 +7,7 @@ const authenticateToken = require("../middlewares/authenticateToken"); // Import
 // User Routes
 router.post("/register", userController.registerUser);
 router.post("/login", userController.loginUser);
+router.post("/refresh-token", userController.refreshToken);
 router.get("/getAllUsers", authenticateToken, userController.getAllUsers); // Protect this route
 router.get("/:userId", userController.getUserData);
 router.put("/updateUserProfile", userController.updateUserProfile);

@@ -14,36 +14,64 @@ import { MaterialCommunityIcons } from "react-native-vector-icons"; // If you ar
 import { Ionicons } from "@expo/vector-icons"; // For the back arrow icon
 import MapView, { Marker } from "react-native-maps";
 import axios from "axios";
-import { API_URL } from "@env";
+import { API_URL, OLA_MAPS_API_KEY } from "@env";
 import { getToken } from "../backend/token";
+import { v4 as uuidv4 } from "uuid";
 
 const EventDetailsScreen = ({ route, navigation }) => {
   const { eventId } = route.params;
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [locationCoords, setLocationCoords] = useState(null);
 
-  const images = event?.images || []; // Default to empty array if event is not yet loaded
+  const images = event?.images || [];
 
   useEffect(() => {
     const fetchEventDetails = async () => {
       try {
         const token = await getToken();
         const response = await axios.get(`${API_URL}/api/events/${eventId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-
-        if (response.status === 200) {
-          setEvent(response.data);
-        } else {
-          console.error("Failed to fetch event details:", response.status);
-        }
+        setEvent(response.data);
+        await fetchLocationCoordinates(response.data.location);
       } catch (error) {
         console.error("Error fetching event details:", error);
       } finally {
         setLoading(false);
+      }
+    };
+
+    const fetchLocationCoordinates = async (location) => {
+      try {
+        console.log("ola api : ", OLA_MAPS_API_KEY);
+        console.log("location :", location);
+
+        const requestId = uuidv4();
+        console.log("requestId", requestId);
+
+        const geocodeUrl = `https://api.olamaps.io/places/v1/geocode?address=${location}&api_key=${OLA_MAPS_API_KEY}`;
+        const response = await axios.get(geocodeUrl, {
+          headers: { "X-Request-Id": requestId },
+        });
+
+        if (
+          response.data.geocodingResults &&
+          response.data.geocodingResults.length > 0
+        ) {
+          const { lat, lng } =
+            response.data.geocodingResults[0].geometry.location;
+          console.log("Coordinates:", { latitude: lat, longitude: lng });
+          setLocationCoords({ latitude: lat, longitude: lng });
+        } else {
+          console.error("No results found for the provided location.");
+        }
+      } catch (error) {
+        console.error(
+          "Error fetching coordinates:",
+          error.response || error.message
+        );
       }
     };
 
@@ -75,12 +103,12 @@ const EventDetailsScreen = ({ route, navigation }) => {
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Event Details</Text>
-      </View>
+      </View> */}
 
       {/* Image Slider */}
       <View style={styles.sliderContainer}>
@@ -197,23 +225,20 @@ const EventDetailsScreen = ({ route, navigation }) => {
               <Text style={styles.getDestinationText}>Get Destination</Text>
             </TouchableOpacity>
           </View>
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude: event.location?.latitude || 19.119677,
-              longitude: event.location?.longitude || 72.847183,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            }}
-          >
-            <Marker
-              coordinate={{
-                latitude: event.location?.latitude || 19.119677,
-                longitude: event.location?.longitude || 72.847183,
+          {/* Map Section */}
+          {locationCoords && (
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: locationCoords.latitude,
+                longitude: locationCoords.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
               }}
-              title="Event Location"
-            />
-          </MapView>
+            >
+              <Marker coordinate={locationCoords} title="Event Location" />
+            </MapView>
+          )}
         </View>
 
         {/* Distance from Home */}
@@ -243,20 +268,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
+  map: { height: 200, marginVertical: 20 },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#BF1013",
-    paddingTop: 70, // Adjust for status bar height
-    paddingHorizontal: 20,
-    paddingBottom: 15,
+    paddingTop: 50, // Adjust for status bar height
+    padding: 20,
+    // paddingHorizontal: 20,
+    // paddingBottom: 15,
   },
   headerTitle: {
     fontSize: 20,
     color: "#fff",
     fontWeight: "bold",
-    paddingRight: 110,
-    paddingLeft: 100,
+    textAlign: "center",
+    flex: 1,
   },
   sliderContainer: {
     width: "100%",
