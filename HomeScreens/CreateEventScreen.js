@@ -65,21 +65,6 @@ const CreateEventScreen = ({ navigation }) => {
     setShowGenreDropdown((prev) => !prev);
   };
 
-  // const handleOutsideClick = (event) => {
-  //   // Check if the clicked target is outside the genre dropdown
-  //   if (genreRef.current && !genreRef.current.contains(event.target)) {
-  //     setShowGenreDropdown(false);
-  //   }
-  // };
-
-  // // Attach event listener to close dropdown when clicking outside
-  // React.useEffect(() => {
-  //   document.addEventListener("mousedown", handleOutsideClick);
-  //   return () => {
-  //     document.removeEventListener("mousedown", handleOutsideClick);
-  //   };
-  // }, []);
-
   const pickMedia = async (index, setImageArray, imageArray, type) => {
     let options = {
       mediaTypes: type,
@@ -332,103 +317,6 @@ const CreateEventScreen = ({ navigation }) => {
     }
   };
 
-  // const handlePublish = async () => {
-  //   try {
-  //     const token = await getToken();
-  //     console.log("token from createevent :", token);
-
-  //     const formattedDate = startDate ? new Date(startDate).toISOString() : "";
-  //     const formattedTime = startTime
-  //       ? startTime.toTimeString().split(" ")[0]
-  //       : "";
-
-  //     // // Get signature for image upload
-  //     // const { timestamp: imgTimestamp, signature: imgSignature } =
-  //     //   await getSignatureForUpload("images");
-
-  //     // // Get signature for video upload
-  //     // const { timestamp: videoTimestamp, signature: videoSignature } =
-  //     //   await getSignatureForUpload("videos");
-
-  //     const uploadedImages = await Promise.all(
-  //       images.map(async (image) => {
-  //         if (image) {
-  //           return await uploadFile(image, "image");
-  //         }
-  //         return null;
-  //       })
-  //     );
-
-  //     // Filter out null values
-  //     const validImages = uploadedImages.filter(Boolean);
-
-  //     const uploadedVideo = videoUrl
-  //       ? await uploadFile(videoUrl, "video")
-  //       : null;
-
-  //     // Prepare the event data
-  //     const eventData = {
-  //       title,
-  //       date: formattedDate,
-  //       time: formattedTime,
-  //       organizer: organizerName,
-  //       eventDetails: description,
-  //       artists: [
-  //         {
-  //           name: artistName,
-  //           role: "Artist",
-  //         },
-  //       ],
-  //       location,
-  //       genre: eventGenre,
-  //       images: validImages.map((url) => ({ url })),
-  //       videoUrl: uploadedVideo,
-  //       ticketPrice: parseFloat(ticketPrice),
-  //     };
-
-  //     console.log("event data :", eventData);
-
-  //     // Send the data to the backend
-  //     const response = await axios.post(
-  //       `${API_URL}/api/events`, // Adjust the URL as needed
-  //       eventData,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //           "Content-Type": "multipart/form-data",
-  //         },
-  //         // body: data,
-  //         timeout: 10000,
-  //       }
-  //     );
-
-  //     if (response.status === 201) {
-  //       alert("Event successfully published!");
-  //       navigation.goBack();
-  //     } else {
-  //       alert(`Failed to publish event. Status: ${response.status}`);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error publishing event:", error);
-  //     if (error.response) {
-  //       console.error("Response data:", error.response.data);
-  //       console.error("Response status:", error.response.status);
-  //       console.error("Response headers:", error.response.headers);
-  //       alert(
-  //         `Error: ${
-  //           error.response.data.message || "Something went wrong"
-  //         } (Status: ${error.response.status})`
-  //       );
-  //     } else if (error.request) {
-  //       console.error("Request:", error.request);
-  //       alert("No response received from the server.");
-  //     } else {
-  //       console.error("Error message:", error.message);
-  //       alert(`Error: ${error.message}`);
-  //     }
-  //   }
-  // };
-
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <LinearGradient
@@ -557,7 +445,7 @@ const CreateEventScreen = ({ navigation }) => {
             multiline
           />
 
-          <Text style={styles.label}>Select Event Genre</Text>
+          {/* <Text style={styles.label}>Select Event Genre</Text>
           <TouchableOpacity style={styles.input} onPress={toggleGenreDropdown}>
             <Text>{eventGenre || "Select Genre"}</Text>
           </TouchableOpacity>
@@ -574,12 +462,34 @@ const CreateEventScreen = ({ navigation }) => {
                 </TouchableOpacity>
               ))}
             </View>
-          )}
+          )} */}
+
+          <View>
+            <Text style={styles.label}>Event Genre</Text>
+            <TouchableOpacity
+              onPress={toggleGenreDropdown}
+              style={styles.input}
+            >
+              <Text>{eventGenre || "Select Genre"}</Text>
+            </TouchableOpacity>
+            {showGenreDropdown && (
+              <View style={styles.dropdown}>
+                {eventGenres.map((genre, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => handleGenreSelect(genre)}
+                  >
+                    <Text style={styles.dropdownText}>{genre}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
 
           <Text style={styles.label}>Artist Name</Text>
           <TextInput
             style={styles.input}
-            placeholder="Artist name"
+            placeholder="Enter artist name"
             value={artistName}
             onChangeText={setArtistName}
           />
@@ -597,7 +507,7 @@ const CreateEventScreen = ({ navigation }) => {
           <Text style={styles.label}>Ticket Price</Text>
           <TextInput
             style={styles.input}
-            placeholder="Ticket Price"
+            placeholder="Enter ticket price"
             keyboardType="numeric"
             value={ticketPrice}
             onChangeText={setTicketPrice}

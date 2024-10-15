@@ -29,12 +29,26 @@ const userSchema = new Schema({
     required: true,
   },
   birthdate: {
-    type: Date, // Use Date type for storing ISO date strings
+    type: Date,
     required: true,
   },
   gender: {
     type: String,
     required: true,
+  },
+  location: {
+    country: {
+      type: String,
+      required: true,
+    },
+    state: {
+      type: String,
+      required: true,
+    },
+    city: {
+      type: String,
+      required: true,
+    },
   },
   selectedPreferences: [
     {

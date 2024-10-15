@@ -174,7 +174,11 @@ const App = () => {
         <Stack.Screen
           name="EditProfileScreen"
           component={EditProfileScreen}
-          options={{ headerShown: false }}
+          options={{
+            title: "Edit Profile",
+            headerShown: true,
+            headerTitleAlign: "center",
+          }}
         />
         <Stack.Screen
           name="VerifyAccountScreen"
