@@ -14,8 +14,10 @@ import {
   getRegistrationProgress,
   saveRegistrationProgress,
 } from "../backend/registrationUtils";
+import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY } from "@env";
 import { saveToken, getToken, clearToken } from "../backend/token";
 import { getUserId } from "../backend/registrationUtils";
+import FormData from "form-data";
 
 export default function PreferenceScreen({ navigation }) {
   const [userData, setUserData] = useState();
@@ -107,17 +109,82 @@ export default function PreferenceScreen({ navigation }) {
       return; // Prevent sending incomplete data
     }
 
-    await sendData(); // Await sendData call
+    // Upload images to Cloudinary and get their URLs
+    if (userData.images && Array.isArray(userData.images)) {
+      const uploadPromises = userData.images
+        .filter((imageUri) => imageUri) // Filter out null or undefined URIs
+        .map((imageUri) => uploadImageToCloudinary(imageUri)); // Assume this function returns a Promise
+
+      try {
+        const uploadedImageUrls = await Promise.all(uploadPromises);
+        userData.images = uploadedImageUrls; // Replace the local image URIs with Cloudinary URLs
+      } catch (uploadError) {
+        console.error("Error uploading images to Cloudinary:", uploadError);
+        return; // Handle upload error (optional: show a message to the user)
+      }
+    }
+
+    await sendData(userData); // Await sendData call
     await clearAllScreenData();
     navigation.navigate("HomeScreen", { userData }); // Navigate to ProfileScreen instead of HomeScreen
   };
 
+  const uploadImageToCloudinary = async (imageUri) => {
+    const formData = new FormData();
+    console.log("Image URI to upload:", imageUri);
+
+    formData.append("file", {
+      uri: imageUri,
+      type: "image/jpeg",
+      name: "photo.jpg",
+    });
+    formData.append("upload_preset", "profilepic_preset"); // Make sure the name matches exactly
+    formData.append("folder", "profile_pictures"); // Optional: specify the folder if needed
+
+    try {
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Image uploaded successfully:", response.data.secure_url);
+      return response.data.secure_url; // Return the URL of the uploaded image
+    } catch (error) {
+      console.error(
+        "Error uploading to Cloudinary:",
+        error.response?.data || error.message
+      );
+      throw error; // Propagate the error to be handled in registerUser
+    }
+  };
+
   const sendData = async () => {
     try {
+      // Upload images to Cloudinary and get URLs
+      // const uploadedImages = await Promise.all(
+      //   userData.images.map((image) => uploadImageToCloudinary(image))
+      // );
+
+      // // Update userData with the uploaded image URLs
+      // const updatedUserData = {
+      //   ...userData,
+      //   images: uploadedImages, // Replace local image paths with Cloudinary URLs
+      // };
+
       const response = await axios.post(`${API_URL}/user/register`, userData, {
         headers: { "Content-Type": "application/json" },
         timeout: 20000,
       });
+
+      // const response = await axios.post(`${API_URL}/user/register`, userData, {
+      //   headers: { "Content-Type": "application/json" },
+      //   timeout: 20000,
+      // });
 
       console.log("Response from server:", response.data);
 

@@ -104,7 +104,122 @@ const createEvent = async (req, res) => {
   });
 };
 
+// const createEvent = async (req, res) => {
+//   console.log("Received a request to create an event");
+
+//   parser.fields([
+//     { name: "images", maxCount: 10 },
+//     { name: "video", maxCount: 1 },
+//   ])(req, res, async (err) => {
+//     if (err) {
+//       console.error("File upload error:", err.message);
+//       return res
+//         .status(400)
+//         .json({ error: "File upload error", message: err.message });
+//     }
+
+//     try {
+//       console.log("Request body:", req.body);
+//       console.log("Files received:", req.files);
+
+//       const {
+//         title,
+//         locationAddress, // Address as string
+//         longitude, // Longitude of the event location
+//         latitude, // Latitude of the event location
+//         date,
+//         time,
+//         organizer,
+//         eventDetails,
+//         genre,
+//         artists,
+//         ticketPrice,
+//         images, // Already uploaded image URLs (optional)
+//         videoUrl,
+//       } = req.body;
+
+//       // Parse the event date
+//       const eventDate = new Date(date);
+//       if (isNaN(eventDate.getTime())) {
+//         console.error("Invalid date format");
+//         return res.status(400).json({ error: "Invalid date format" });
+//       }
+
+//       // Ensure both latitude and longitude are provided
+//       if (!longitude || !latitude) {
+//         return res
+//           .status(400)
+//           .json({ error: "Longitude and latitude are required for location" });
+//       }
+
+//       // Upload images to Cloudinary
+//       const imageUploads = req.files.images
+//         ? Promise.all(
+//             req.files.images.map(async (file) => {
+//               console.log("Uploading image:", file.path);
+//               const result = await cloudinary.uploader.upload(file.path, {
+//                 folder: "images", // Optional folder name in Cloudinary
+//               });
+//               return { url: result.secure_url };
+//             })
+//           )
+//         : images || [];
+
+//       // Upload video to Cloudinary (if any)
+//       let videoUploadUrl = "";
+//       if (req.files.video && req.files.video[0]) {
+//         console.log("Uploading video:", req.files.video[0].path);
+//         const videoUploadResult = await cloudinary.uploader.upload(
+//           req.files.video[0].path,
+//           {
+//             resource_type: "video", // Specify video upload
+//             folder: "videos", // Optional folder name in Cloudinary
+//           }
+//         );
+//         videoUploadUrl = videoUploadResult.secure_url;
+//       } else {
+//         videoUploadUrl = videoUrl || ""; // Use the provided URL if no video is uploaded
+//       }
+
+//       console.log("Uploaded images:", imageUploads);
+//       console.log("Uploaded video URL:", videoUploadUrl);
+
+//       // Prepare the new event object
+//       const newEvent = new Event({
+//         userId: req.user.userId,
+//         title,
+//         date: eventDate,
+//         time,
+//         organizer: organizer || req.user.userId,
+//         eventDetails,
+//         genre,
+//         artists: typeof artists === "string" ? JSON.parse(artists) : artists,
+//         location: {
+//           type: "Point",
+//           coordinates: [parseFloat(longitude), parseFloat(latitude)], // Store coordinates as [longitude, latitude]
+//           address: locationAddress, // Store the location address
+//         },
+//         images: await imageUploads,
+//         videoUrl: videoUploadUrl,
+//         ticketPrice: parseFloat(ticketPrice),
+//       });
+
+//       // Save the new event
+//       await newEvent.save();
+//       console.log("Event created:", newEvent);
+
+//       res
+//         .status(201)
+//         .json({ message: "Event created successfully", event: newEvent });
+//     } catch (error) {
+//       console.error("Error creating event:", error.message, error.stack);
+//       res.status(500).json({ message: "Internal server error" });
+//     }
+//   });
+// };
+
 // Controller to get all events for a specific user
+
 const getUserEvents = async (req, res) => {
   try {
     const events = await Event.find({ userId: req.user.userId });

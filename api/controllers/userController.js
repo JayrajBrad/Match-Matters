@@ -19,6 +19,7 @@ exports.registerUser = async (req, res) => {
       lastName,
       age,
       birthdate,
+      // location: { country, state, city } ,// Extract location fields
       gender,
       selectedPreferences = [],
       images = [],
@@ -41,6 +42,7 @@ exports.registerUser = async (req, res) => {
       lastName,
       age,
       birthdate,
+      // location: { country, state, city }, // Extract location fields
       gender,
       selectedPreferences,
       images,
@@ -68,6 +70,7 @@ exports.registerUser = async (req, res) => {
         lastName: newUser.lastName,
         age: newUser.age,
         birthdate: newUser.birthdate,
+        // location: newUser.location, // Return location details in response
         gender: newUser.gender,
         selectedPreferences: newUser.selectedPreferences,
         images: newUser.images,

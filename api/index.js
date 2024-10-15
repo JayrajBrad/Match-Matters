@@ -45,8 +45,8 @@ mongoose
 
 app.use("/user", userRoutes);
 app.use("/api", eventRoutes);
-app.use("/api", mediaRoutes);
-app.use("/chat", chatRoutes);
+// app.use("/api", mediaRoutes);
+// app.use("/chat", chatRoutes);
 
 // Socket.io setup and handlers (as you've already implemented)
 io.on("connection", (socket) => {

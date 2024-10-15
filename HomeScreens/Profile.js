@@ -29,6 +29,10 @@ const ProfileScreen = () => {
         if (userData) {
           console.log("User data from API", userData);
           setData(userData);
+          // Fetch the first image from the "images" array
+          if (userData.images && userData.images.length > 0) {
+            setProfileImage(userData.images[0]); // Assuming the first image is the profile picture
+          }
         } else {
           Alert.alert(
             "Error",
@@ -45,25 +49,50 @@ const ProfileScreen = () => {
         "Failed to load profile data. Please try again later."
       );
     }
+    // const fetchUserData = async () => {
+    //   try {
+    //     const userId = await getUserId();
+    //     console.log("Fetched user ID:", userId); // Debug log
+    //     if (userId) {
+    //       const userData = await getUserData(userId);
+    //       if (userData) {
+    //         console.log("User data from API", userData);
+    //         console.log("profile pic :", userData.images);
+    //         setData(userData);
+    //       } else {
+    //         Alert.alert(
+    //           "Error",
+    //           "Failed to load profile data. Please try again later."
+    //         );
+    //       }
+    //     } else {
+    //       Alert.alert("Error", "Failed to load user ID. Please try again later.");
+    //     }
+    //   } catch (error) {
+    //     console.error("Error fetching user data", error);
+    //     Alert.alert(
+    //       "Error",
+    //       "Failed to load profile data. Please try again later."
+    //     );
+    //   }
   };
 
-  // Fetch profile image
-  const fetchProfileImage = async () => {
-    try {
-      const profileImageUri = await AsyncStorage.getItem("profile_image");
-      console.log("Fetched profile image URI:", profileImageUri); // Debug logging
-      if (profileImageUri) {
-        setProfileImage(profileImageUri);
-      }
-    } catch (error) {
-      console.log("Error fetching profile image:", error);
-    }
-  };
+  // // Fetch profile image
+  // const fetchProfileImage = async () => {
+  //   try {
+  //     const userData = await getUserData(userId); // Assuming you're fetching user data again
+  //     if (userData?.images && userData.images.length > 0) {
+  //       setProfileImage(userData.images[0]); // Use the first image in the array
+  //     }
+  //   } catch (error) {
+  //     console.log("Error fetching profile image:", error);
+  //   }
+  // };
 
   useFocusEffect(
     React.useCallback(() => {
       fetchUserData(); // Fetch user data when screen is focused
-      fetchProfileImage(); // Fetch profile image as well
+      // fetchProfileImage(); // Fetch profile image as well
     }, [])
   );
 
@@ -101,9 +130,7 @@ const ProfileScreen = () => {
           <Image source={{ uri: profileImage }} style={styles.profileImage} />
         ) : (
           <Image
-            source={{
-              uri: "file:///data/user/0/host.exp.exponent/cache/ExperienceData/%2540anonymous%252Fmatch-matters-725daa8f-db2f-4314-ab61-477c5f51181d/ImagePicker/4463d451-9312-44b7-b408-3de49a387dac.jpeg",
-            }}
+            source={{ uri: "default_fallback_image_url" }} // If no image is provided, use a fallback
             style={styles.profileImage}
           />
         )}
