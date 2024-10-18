@@ -14,32 +14,32 @@ import NamePage from "./Screens/NamePage";
 import AgeScreen from "./Screens/AgeScreen";
 import ProfilePicScreen from "./Screens/ProfilePicScreen";
 import PreferenceScreen from "./Screens/PreferenceScreen";
-import FeedScreen from "./HomeScreens/FeedScreen";
-import Profile from "./HomeScreens/Profile";
-import LikedYou from "./HomeScreens/LikedYou";
-import Chat from "./HomeScreens/Chat";
+import FeedScreen from "./TabScreens/FeedScreen";
+import Profile from "./TabScreens/Profile";
+import LikedYou from "./TabScreens/LikedYou";
+import Chat from "./TabScreens/Chat";
 import MostHappening from "./HomeScreens/MostHappening";
 import ForYou from "./HomeScreens/ForYou";
 import LastScreen from "./Screens/LastScreen";
 import StartScreen from "./Screens/StartScreen";
-import DrawerContent from "./HomeScreens/DrawerContent"; // Import the new DrawerContent file
+import DrawerContent from "./drawer/DrawerContent"; // Import the new DrawerContent file
 import TicketSales from "./HomeScreens/TicketSales";
 import Radius from "./HomeScreens/Radius";
 import EditProfileScreen from "./HomeScreens/EditProfileScreen";
 import VerifyAccountScreen from "./HomeScreens/VerifyAccountScreen";
-import MyEventsScreen from "./HomeScreens/MyEventsScreen";
+import MyEventsScreen from "./drawer/MyEventsScreen";
 import NotificationsScreen from "./HomeScreens/NotificationsScreen";
-import MembershipScreen from "./HomeScreens/MembershipScreen";
-import MyBookingsScreen from "./HomeScreens/MyBookingsScreen";
-import HelpScreen from "./HomeScreens/HelpScreen";
-import PrivacyCenterScreen from "./HomeScreens/PrivacyCenterScreen";
-import ContactUsScreen from "./HomeScreens/ContactUsScreen";
-import FAQScreen from "./HomeScreens/FAQScreen";
-import CreateEventScreen from "./HomeScreens/CreateEventScreen";
+import AllEvents from "./drawer/AllEvents";
+import MyBookingsScreen from "./drawer/MyBookingsScreen";
+import HelpScreen from "./policy/HelpScreen";
+import PrivacyCenterScreen from "./policy/PrivacyCenterScreen";
+import ContactUsScreen from "./policy/ContactUsScreen";
+import FAQScreen from "./policy/FAQScreen";
+import CreateEventScreen from "./TabScreens/CreateEventScreen";
 import CityEventsScreen from "./HomeScreens/CityEventsScreen";
 import EventDetailsScreen from "./HomeScreens/EventDetailsScreen";
 import SignPassword from "./Screens/SignPassword";
-import ChatRoomScreen from "./HomeScreens/ChatRoomScreen";
+import ChatRoomScreen from "./TabScreens/ChatRoomScreen";
 
 // Import custom icons
 import Connection from "./assets/Connection.png";
@@ -365,7 +365,22 @@ const TabNavigator = () => {
         options={{
           title: "Home",
           headerShown: true,
-          headerTitleAlign: "center", // Align title to center
+          headerTitleAlign: "center",
+          headerTitle: () => (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: "transparent",
+              }}
+            >
+              <Image
+                source={require("./assets/Match matters logo (1).png")}
+                style={{ width: 150, height: 40 }}
+                resizeMode="cover"
+              />
+            </View>
+          ),
           tabBarIcon: ({ focused }) => (
             <MaterialCommunityIcons
               name="home"
@@ -394,6 +409,23 @@ const TabNavigator = () => {
       />
 
       <Tab.Screen
+        name="CreateEventScreen"
+        component={CreateEventScreen}
+        options={{
+          title: "Events",
+          headerShown: true,
+          headerTitleAlign: "center", // Align title to center
+          tabBarIcon: ({ focused }) => (
+            <MaterialCommunityIcons
+              name="plus"
+              size={30}
+              color={focused ? "#BF1013" : "#FF5A5F"}
+            />
+          ),
+        }}
+      />
+
+      <Tab.Screen
         name="Chat"
         component={Chat}
         options={{
@@ -409,23 +441,6 @@ const TabNavigator = () => {
           ),
         }}
       />
-
-      {/* <Tab.Screen
-        name="ForYou"
-        component={ForYou}
-        options={{
-          title: "For You",
-          headerShown: true,
-          headerTitleAlign: "center", // Align title to center
-          tabBarIcon: ({ focused }) => (
-            <MaterialCommunityIcons
-              name="star"
-              size={30}
-              color={focused ? "#BF1013" : "#FF5A5F"}
-            />
-          ),
-        }}
-      /> */}
 
       <Tab.Screen
         name="Profile"
@@ -463,10 +478,10 @@ const DrawerNavigator = () => {
       {/* <Drawer.Screen name="MyEvents" component={MyEventsScreen} /> */}
       <Drawer.Screen name="Notifications" component={NotificationsScreen} />
       <Drawer.Screen
-        name="Membership"
-        component={MembershipScreen}
+        name="AllEvents"
+        component={AllEvents}
         options={{
-          title: "Membership",
+          title: "AllEvents",
           headerShown: true,
           headerTitleAlign: "center", // Align title to center
         }}

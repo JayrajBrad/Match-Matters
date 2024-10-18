@@ -26,6 +26,7 @@ export const getRegistrationProgress = async (screenName) => {
 export const getUserData = async (userId) => {
   try {
     const response = await axios.get(`${API_URL}/user/${userId}`);
+    // console.log("User data response:", response.data);
     return response.data; // Assuming the API returns user data in response.data
   } catch (error) {
     console.error("Failed to retrieve user data:", error);
@@ -36,6 +37,7 @@ export const getUserData = async (userId) => {
 export const getUserId = async () => {
   try {
     const userData = await AsyncStorage.getItem("userData");
+    // console.log(userData);
     if (userData) {
       const parsedUserData = JSON.parse(userData);
       console.log("Parsed user data:", parsedUserData);
@@ -45,19 +47,5 @@ export const getUserId = async () => {
   } catch (error) {
     console.error("Error retrieving user ID:", error);
     return null;
-  }
-};
-
-// Example function to initiate a chat
-export const initiateChat = async (userId2) => {
-  const userId1 = await getUserId();
-  try {
-    const response = await axios.post(`${API_URL}/createChat`, {
-      userId1,
-      userId2,
-    });
-    console.log("Chat initiated:", response.data);
-  } catch (error) {
-    console.error("Failed to initiate chat:", error);
   }
 };

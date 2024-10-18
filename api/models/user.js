@@ -3,8 +3,13 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
+  username: {
+    type: String,
+    required: true,
+  },
   phoneNumber: {
     type: Number,
+    // type : String,
     required: true,
   },
   emailId: {
@@ -16,14 +21,14 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
-  firstName: {
-    type: String,
-    required: true,
-  },
-  lastName: {
-    type: String,
-    required: true,
-  },
+  // firstName: {
+  //   type: String,
+  //   required: true,
+  // },
+  // lastName: {
+  //   type: String,
+  //   required: true,
+  // },
   age: {
     type: Number,
     required: true,
@@ -36,19 +41,17 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
-  location: {
-    country: {
-      type: String,
-      required: true,
-    },
-    state: {
-      type: String,
-      required: true,
-    },
-    city: {
-      type: String,
-      required: true,
-    },
+  cityName: {
+    type: String,
+    required: true,
+  },
+  stateName: {
+    type: String,
+    required: true,
+  },
+  countryName: {
+    type: String,
+    required: true,
   },
   selectedPreferences: [
     {
@@ -78,21 +81,12 @@ const userSchema = new Schema({
       ref: "Event",
     },
   ],
-  // chats: [
-  //   {
-  //     userId: {
-  //       type: mongoose.Schema.Types.ObjectId,
-  //       ref: "User",
-  //     },
-  //     lastMessage: {
-  //       type: String,
-  //     },
-  //     timestamp: {
-  //       type: Date,
-  //       default: Date.now,
-  //     },
-  //   },
-  // ],
+  createdEvents: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Event",
+    },
+  ],
   isAdmin: {
     type: Boolean,
     default: false,

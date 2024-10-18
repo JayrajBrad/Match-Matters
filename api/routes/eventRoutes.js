@@ -4,6 +4,7 @@ const {
   getUserEvents,
   getAllEvents,
   getEventById,
+  getEventsByUserId,
   likeEvent,
   addComment,
   incrementViews,
@@ -18,6 +19,7 @@ router.post("/events", authenticateToken, createEvent);
 router.get("/getEvents", getUserEvents);
 router.get("/all-events", getAllEvents);
 router.get("/events/:id", getEventById);
+router.get("/events/:userId'", getEventsByUserId);
 
 // Interaction routes
 router.post("/events/:eventId/like", authenticateToken, likeEvent); // Like/unlike event

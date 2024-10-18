@@ -12,14 +12,17 @@ console.log("REFRESH_TOKEN_SECRET from usercontroller: ", REFRESH_TOKEN_SECRET);
 exports.registerUser = async (req, res) => {
   try {
     const {
+      username,
       phoneNumber,
       emailId,
       password,
-      firstName,
-      lastName,
+      // firstName,
+      // lastName,
       age,
       birthdate,
-      // location: { country, state, city } ,// Extract location fields
+      cityName,
+      stateName,
+      countryName,
       gender,
       selectedPreferences = [],
       images = [],
@@ -31,18 +34,26 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ error: "User already exists" });
     }
 
+    // const existingUsername = await User.findOne({ username });
+    // if (existingUsername) {
+    //   return res.status(400).json({ error: "Username already taken" });
+    // }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create a new user instance with the provided data and hashed password
     const newUser = new User({
+      username,
       phoneNumber,
       emailId,
       password: hashedPassword,
-      firstName,
-      lastName,
+      // firstName,
+      // lastName,
       age,
       birthdate,
-      // location: { country, state, city }, // Extract location fields
+      cityName,
+      stateName,
+      countryName,
       gender,
       selectedPreferences,
       images,
@@ -64,13 +75,18 @@ exports.registerUser = async (req, res) => {
       token, // Send the JWT token in the response
       user: {
         _id: newUser._id,
+        username: newUser.username,
         emailId: newUser.emailId,
         phoneNumber: newUser.phoneNumber,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
+        // firstName: newUser.firstName,
+        // lastName: newUser.lastName,
         age: newUser.age,
         birthdate: newUser.birthdate,
-        // location: newUser.location, // Return location details in response
+        location: {
+          cityName: newUser.cityName,
+          stateName: newUser.stateName,
+          countryName: newUser.countryName,
+        },
         gender: newUser.gender,
         selectedPreferences: newUser.selectedPreferences,
         images: newUser.images,
@@ -207,10 +223,11 @@ exports.loginUser = async (req, res) => {
       refreshToken, // Refresh token
       user: {
         _id: user._id,
+        username: user.username,
         emailId: user.emailId,
         phoneNumber: user.phoneNumber,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        // firstName: user.firstName,
+        // lastName: user.lastName,
         age: user.age,
         birthdate: user.birthdate,
         gender: user.gender,
@@ -266,8 +283,9 @@ exports.updateUserProfile = async (req, res) => {
   try {
     const {
       userId,
-      firstName,
-      lastName,
+      // firstName,
+      // lastName,
+      username,
       phoneNumber,
       gender,
       selectedPreferences,
@@ -275,7 +293,7 @@ exports.updateUserProfile = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        $set: { firstName, lastName, phoneNumber, gender, selectedPreferences },
+        $set: { username, phoneNumber, gender, selectedPreferences },
       },
       { new: true }
     );
@@ -306,5 +324,103 @@ exports.getUserData = async (req, res) => {
   } catch (error) {
     console.error("Error fetching user data:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.updateProfileImage = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log("Request body:", req.body); // Get userId from URL params
+    const { images } = req.body; // Get imageUrl from the request body
+
+    // if (!imageUrl) {
+    //   console.error("Image URL is invalid:", imageUrl);
+    //   return res.status(400).json({ error: "Image URL is required" });
+    // }
+
+    if (!images || !Array.isArray(images) || images.length === 0) {
+      console.error("Image URL is invalid:", images);
+      return res.status(400).json({ error: "Image URL(s) is required" });
+    }
+
+    // Find the user by ID and update the profile image
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: { images } },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    console.log("UC ->", updatedUser);
+
+    res.status(200).json({
+      message: "Profile image updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating profile image:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.deleteProfileImage = async (req, res) => {
+  const { userId } = req.params;
+  const { imageUrl } = req.body; // Image URL to delete from user's profile
+
+  try {
+    // Find the user by ID
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Filter out the image to delete
+    user.images = user.images.filter((image) => image !== imageUrl);
+
+    // Save the updated user profile
+    await user.save();
+
+    res.status(200).json({ message: "Profile image deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting profile image:", error);
+    res.status(500).json({ message: "Error deleting profile image" });
+  }
+};
+
+exports.getCreatedEventsByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params; // Get user ID from request parameters
+    console.log("Request params:", req.params);
+
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    // Find the user by ID
+    const user = await User.findById(userId).populate("createdEvents"); // Populating createdEvents
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // If user is found, retrieve the events from createdEvents field
+    const createdEvents = user.createdEvents;
+
+    if (!createdEvents || createdEvents.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No events created by this user" });
+    }
+
+    res.status(200).json(createdEvents);
+  } catch (error) {
+    console.error(
+      "Error fetching created events by user ID:",
+      error.message,
+      error.stack
+    );
+    res.status(500).json({ message: "Internal server error" });
   }
 };

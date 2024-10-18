@@ -1,4 +1,5 @@
 const Event = require("../models/event");
+const User = require("../models/user");
 const cloudinary = require("../utils/cloudinary"); // Import your Cloudinary configuration
 const parser = require("../middlewares/upload");
 
@@ -84,7 +85,12 @@ const createEvent = async (req, res) => {
         genre,
         // artists: artists ? JSON.parse(artists) : [],
         artists: typeof artists === "string" ? JSON.parse(artists) : artists,
-        location,
+        location: {
+          baseAddress: location.baseAddress,
+          city: location.city,
+          state: location.state,
+          country: location.country,
+        },
         images: imageUploads,
         videoUrl: videoUploadUrl,
         ticketPrice: parseFloat(ticketPrice),
@@ -93,6 +99,12 @@ const createEvent = async (req, res) => {
       // Save the new event
       await newEvent.save();
       console.log("Event created:", newEvent);
+
+      await User.findByIdAndUpdate(
+        req.user.userId,
+        { $push: { createdEvents: newEvent._id } },
+        { new: true }
+      );
 
       res
         .status(201)
@@ -267,6 +279,34 @@ const getEventById = async (req, res) => {
   }
 };
 
+const getEventsByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log("Request params:", req.params);
+    // Get user ID from request parameters
+
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    console.log("Fetching events for user ID:", userId);
+    const events = await Event.find({ userId }); // Assuming 'userId' is the field in your Event model
+    console.log("Events fetched:", events);
+    if (events.length === 0) {
+      return res.status(404).json({ message: "No events found for this user" });
+    }
+
+    res.status(200).json(events);
+  } catch (error) {
+    console.error(
+      "Error fetching events by user ID:",
+      error.message,
+      error.stack
+    );
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // Controller to handle likes
 const likeEvent = async (req, res) => {
   try {
@@ -387,6 +427,7 @@ module.exports = {
   getUserEvents,
   getAllEvents,
   getEventById,
+  getEventsByUserId,
   likeEvent,
   addComment,
   incrementViews,

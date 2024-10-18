@@ -11,5 +11,11 @@ router.post("/refresh-token", userController.refreshToken);
 router.get("/getAllUsers", authenticateToken, userController.getAllUsers); // Protect this route
 router.get("/:userId", userController.getUserData);
 router.put("/updateUserProfile", userController.updateUserProfile);
+router.put("/:userId/update-profile-image", userController.updateProfileImage);
+router.delete(
+  "/:userId/delete-profile-image",
+  userController.deleteProfileImage
+);
+router.get("/:userId/events", userController.getCreatedEventsByUserId);
 
 module.exports = router;
