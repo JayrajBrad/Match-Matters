@@ -40,21 +40,24 @@ const eventSchema = new mongoose.Schema(
     location: {
       type: String, // Single string for location
     },
-    // location: {
-    //   type: {
-    //     type: String, // Must be 'Point'
-    //     enum: ["Point"], // 'location.type' must be 'Point'
-    //     required: true,
-    //   },
-    //   coordinates: {
-    //     type: [Number], // Array of numbers: [longitude, latitude]
-    //     required: true,
-    //   },
-    //   address: {
-    //     type: String,
-    //     required: true,
-    //   },
-    // },
+    location: {
+      baseAddress: {
+        type: String, // Street address, house/building number
+        required: true,
+      },
+      city: {
+        type: String,
+        required: true,
+      },
+      state: {
+        type: String,
+        required: true,
+      },
+      country: {
+        type: String,
+        required: true,
+      },
+    },
     images: [
       {
         url: String,

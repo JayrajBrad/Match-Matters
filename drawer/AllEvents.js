@@ -13,7 +13,7 @@ import axios from "axios";
 import { API_URL } from "@env";
 import { MaterialCommunityIcons } from "@expo/vector-icons"; // Importing icon library
 
-const ChooseLocationScreen = ({ navigation }) => {
+const AllEvents = ({ navigation }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +42,36 @@ const ChooseLocationScreen = ({ navigation }) => {
     }
   };
 
+  // const renderEventItem = ({ item }) => {
+  //   return (
+  //     <TouchableOpacity
+  //       style={styles.eventItem}
+  //       onPress={() =>
+  //         navigation.navigate("EventDetailsScreen", { eventId: item._id })
+  //       }
+  //     >
+  //       <Image
+  //         source={{ uri: item.images[0]?.url }}
+  //         style={styles.eventImage}
+  //       />
+  //       <View style={styles.eventInfo}>
+  //         <Text style={styles.eventTitle}>{item.title}</Text>
+  //         <Text style={styles.eventDate}>
+  //           {new Date(item.date).toLocaleDateString()}
+  //         </Text>
+  //         <Text style={styles.eventLocation}>{item.location}</Text>
+  //       </View>
+  //     </TouchableOpacity>
+  //   );
+  // };
+
   const renderEventItem = ({ item }) => {
+    // Format location string if it is an object
+    const location =
+      typeof item.location === "object"
+        ? `${item.location.baseAddress}, ${item.location.city}, ${item.location.state}, ${item.location.country}`
+        : item.location;
+
     return (
       <TouchableOpacity
         style={styles.eventItem}
@@ -59,7 +88,7 @@ const ChooseLocationScreen = ({ navigation }) => {
           <Text style={styles.eventDate}>
             {new Date(item.date).toLocaleDateString()}
           </Text>
-          <Text style={styles.eventLocation}>{item.location}</Text>
+          <Text style={styles.eventLocation}>{location}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -170,4 +199,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ChooseLocationScreen;
+export default AllEvents;
