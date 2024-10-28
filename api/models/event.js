@@ -38,9 +38,6 @@ const eventSchema = new mongoose.Schema(
       },
     ],
     location: {
-      type: String, // Single string for location
-    },
-    location: {
       baseAddress: {
         type: String, // Street address, house/building number
         required: true,

@@ -26,7 +26,7 @@ export const getRegistrationProgress = async (screenName) => {
 export const getUserData = async (userId) => {
   try {
     const response = await axios.get(`${API_URL}/user/${userId}`);
-    // console.log("User data response:", response.data);
+    console.log("User data response:", response.data);
     return response.data; // Assuming the API returns user data in response.data
   } catch (error) {
     console.error("Failed to retrieve user data:", error);

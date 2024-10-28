@@ -24,7 +24,7 @@ import LastScreen from "./Screens/LastScreen";
 import StartScreen from "./Screens/StartScreen";
 import DrawerContent from "./drawer/DrawerContent"; // Import the new DrawerContent file
 import TicketSales from "./HomeScreens/TicketSales";
-import Radius from "./HomeScreens/Radius";
+// import Radius from "./HomeScreens/Radius";
 import EditProfileScreen from "./HomeScreens/EditProfileScreen";
 import VerifyAccountScreen from "./HomeScreens/VerifyAccountScreen";
 import MyEventsScreen from "./drawer/MyEventsScreen";
@@ -40,6 +40,7 @@ import CityEventsScreen from "./HomeScreens/CityEventsScreen";
 import EventDetailsScreen from "./HomeScreens/EventDetailsScreen";
 import SignPassword from "./Screens/SignPassword";
 import ChatRoomScreen from "./TabScreens/ChatRoomScreen";
+import Filter from "./components/FilterComponent";
 
 // Import custom icons
 import Connection from "./assets/Connection.png";
@@ -166,11 +167,11 @@ const App = () => {
           component={TicketSales}
           options={{ headerShown: false }}
         />
-        <Stack.Screen
+        {/* <Stack.Screen
           name="Radius"
           component={Radius}
           options={{ headerShown: false }}
-        />
+        /> */}
         <Stack.Screen
           name="EditProfileScreen"
           component={EditProfileScreen}
@@ -217,6 +218,15 @@ const App = () => {
           component={EventDetailsScreen}
           options={{
             title: "Event Details",
+            headerShown: true,
+            headerTitleAlign: "center", // Align title to center
+          }}
+        />
+        <Stack.Screen
+          name="FilterComponent"
+          component={Filter}
+          options={{
+            title: "Filter",
             headerShown: true,
             headerTitleAlign: "center", // Align title to center
           }}

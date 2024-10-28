@@ -99,72 +99,6 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// exports.loginUser = async (req, res) => {
-//   try {
-//     const { emailId, password } = req.body;
-
-//     if (!emailId || !password) {
-//       return res
-//         .status(400)
-//         .json({ success: false, message: "Email and password are required" });
-//     }
-
-//     const user = await User.findOne({ emailId });
-//     if (!user) {
-//       return res
-//         .status(404)
-//         .json({ success: false, message: "User not found" });
-//     }
-
-//     const isPasswordValid = await bcrypt.compare(password, user.password);
-//     if (!isPasswordValid) {
-//       return res
-//         .status(401)
-//         .json({ success: false, message: "Invalid password" });
-//     }
-
-//     let token;
-//     try {
-//       token = jwt.sign(
-//         { userId: user._id, isAdmin: user.isAdmin },
-//         JWT_SECRET,
-//         {
-//           expiresIn: "7d",
-//         }
-//       );
-//       console.log("token generated at login : ", token);
-//     } catch (error) {
-//       console.error("Error generating token:", error.message);
-//       return res
-//         .status(500)
-//         .json({ success: false, message: "Error generating token" });
-//     }
-
-//     res.status(200).json({
-//       success: true,
-//       message: "Login successful",
-//       token,
-//       refreshToken,
-//       user: {
-//         _id: user._id,
-//         emailId: user.emailId,
-//         phoneNumber: user.phoneNumber,
-//         firstName: user.firstName,
-//         lastName: user.lastName,
-//         age: user.age,
-//         birthdate: user.birthdate,
-//         gender: user.gender,
-//         selectedPreferences: user.selectedPreferences,
-//         images: user.images,
-//         isAdmin: user.isAdmin,
-//       },
-//     });
-//   } catch (error) {
-//     console.error("Error logging in user:", error.message, error.stack);
-//     res.status(500).json({ success: false, message: "Internal Server Error" });
-//   }
-// };
-
 exports.loginUser = async (req, res) => {
   try {
     const { emailId, password } = req.body;
@@ -195,7 +129,7 @@ exports.loginUser = async (req, res) => {
         { userId: user._id, isAdmin: user.isAdmin },
         JWT_SECRET,
         {
-          expiresIn: "7d", // Shorter expiration for access token
+          expiresIn: "1h", // Shorter expiration for access token
         }
       );
 
@@ -203,7 +137,7 @@ exports.loginUser = async (req, res) => {
         { userId: user._id, isAdmin: user.isAdmin },
         REFRESH_TOKEN_SECRET,
         {
-          expiresIn: "30d", // Longer expiration for refresh token
+          expiresIn: "7d", // Longer expiration for refresh token
         }
       );
 
@@ -278,6 +212,72 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({ status: "error", message: "Internal Server Error" });
   }
 };
+
+// exports.loginUser = async (req, res) => {
+//   try {
+//     const { emailId, password } = req.body;
+
+//     if (!emailId || !password) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Email and password are required" });
+//     }
+
+//     const user = await User.findOne({ emailId });
+//     if (!user) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "User not found" });
+//     }
+
+//     const isPasswordValid = await bcrypt.compare(password, user.password);
+//     if (!isPasswordValid) {
+//       return res
+//         .status(401)
+//         .json({ success: false, message: "Invalid password" });
+//     }
+
+//     let token;
+//     try {
+//       token = jwt.sign(
+//         { userId: user._id, isAdmin: user.isAdmin },
+//         JWT_SECRET,
+//         {
+//           expiresIn: "7d",
+//         }
+//       );
+//       console.log("token generated at login : ", token);
+//     } catch (error) {
+//       console.error("Error generating token:", error.message);
+//       return res
+//         .status(500)
+//         .json({ success: false, message: "Error generating token" });
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Login successful",
+//       token,
+//       refreshToken,
+//       user: {
+//         _id: user._id,
+//         emailId: user.emailId,
+//         phoneNumber: user.phoneNumber,
+//         firstName: user.firstName,
+//         lastName: user.lastName,
+//         age: user.age,
+//         birthdate: user.birthdate,
+//         gender: user.gender,
+//         selectedPreferences: user.selectedPreferences,
+//         images: user.images,
+//         isAdmin: user.isAdmin,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error logging in user:", error.message, error.stack);
+//     res.status(500).json({ success: false, message: "Internal Server Error" });
+//   }
+// };
 
 exports.updateUserProfile = async (req, res) => {
   try {

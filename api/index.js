@@ -10,8 +10,7 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const userRoutes = require("./routes/userRoutes");
 const eventRoutes = require("./routes/eventRoutes");
-const mediaRoutes = require("./routes/media");
-const chatRoutes = require("./routes/chatRoutes");
+
 const authenticateToken = require("./middlewares/authenticateToken");
 
 const app = express();

@@ -29,29 +29,33 @@ const EventDetailsScreen = ({ route, navigation }) => {
 
   useEffect(() => {
     const fetchEventDetails = async () => {
+      console.log("Event ID:", eventId);
+
       try {
         const token = await getToken();
         const response = await axios.get(`${API_URL}/api/events/${eventId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setEvent(response.data);
-        await fetchLocationCoordinates(response.data.location);
+        // await fetchLocationCoordinates(response.data.location);
+        const locationString = `${response.data.location.baseAddress}, ${response.data.location.city}, ${response.data.location.state}, ${response.data.location.country}`;
+        await fetchLocationCoordinates(locationString);
       } catch (error) {
-        console.error("Error fetching event details:", error);
+        console.error("Error fetching event details:", error.response);
       } finally {
         setLoading(false);
       }
     };
 
-    const fetchLocationCoordinates = async (location) => {
+    const fetchLocationCoordinates = async (locationString) => {
       try {
         console.log("ola api : ", OLA_MAPS_API_KEY);
-        console.log("location :", location);
+        console.log("location :", locationString);
 
         const requestId = uuidv4();
         console.log("requestId", requestId);
 
-        const geocodeUrl = `https://api.olamaps.io/places/v1/geocode?address=${location}&api_key=${OLA_MAPS_API_KEY}`;
+        const geocodeUrl = `https://api.olamaps.io/places/v1/geocode?address=${locationString}&api_key=${OLA_MAPS_API_KEY}`;
         const response = await axios.get(geocodeUrl, {
           headers: { "X-Request-Id": requestId },
         });
@@ -212,9 +216,14 @@ const EventDetailsScreen = ({ route, navigation }) => {
         </View>
 
         {/* Address Section */}
+        {/* Address Section */}
         <View style={styles.addressContainer}>
-          <Text style={styles.cityText}>{event.city || "City"}</Text>
-          <Text style={styles.addressText}>{event.location || "Address"}</Text>
+          <Text style={styles.cityText}>{event.location?.city || "City"}</Text>
+          <Text style={styles.addressText}>
+            {`${event.location?.baseAddress || "Address"}, ${
+              event.location?.state || "State"
+            }, ${event.location?.country || "Country"}`}
+          </Text>
         </View>
 
         {/* About the Venue and Map */}

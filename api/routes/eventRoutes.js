@@ -5,10 +5,13 @@ const {
   getAllEvents,
   getEventById,
   getEventsByUserId,
+  getEventsByDateRange,
+  getEventsByGenre,
   likeEvent,
   addComment,
   incrementViews,
   shareEvent,
+  getEventsByLocation,
 } = require("../controllers/eventController"); // Adjust the path if necessary
 const authenticateToken = require("../middlewares/authenticateToken"); // Import the middleware
 
@@ -18,8 +21,14 @@ const router = express.Router();
 router.post("/events", authenticateToken, createEvent);
 router.get("/getEvents", getUserEvents);
 router.get("/all-events", getAllEvents);
-router.get("/events/:id", getEventById);
-router.get("/events/:userId'", getEventsByUserId);
+router.get("/events/:eventId", getEventById);
+router.get("/:userId/events", getEventsByUserId);
+// router.get("/events/location", getEventsByLocation);
+// router.get("/events/genre", getEventsByGenre);
+router.get("/events/location/:city/:state/:country", getEventsByLocation);
+router.get("/events/genre/:genre", getEventsByGenre);
+
+router.get("/events/filterByDate/:startDate/:endDate", getEventsByDateRange);
 
 // Interaction routes
 router.post("/events/:eventId/like", authenticateToken, likeEvent); // Like/unlike event

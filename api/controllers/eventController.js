@@ -1,4 +1,5 @@
 const Event = require("../models/event");
+const mongoose = require("mongoose");
 const User = require("../models/user");
 const cloudinary = require("../utils/cloudinary"); // Import your Cloudinary configuration
 const parser = require("../middlewares/upload");
@@ -21,6 +22,7 @@ const createEvent = async (req, res) => {
       console.log("Request body:", req.body);
       console.log("Files received:", req.files);
 
+      const { userId } = req.body;
       const {
         title,
         location,
@@ -72,15 +74,15 @@ const createEvent = async (req, res) => {
       }
 
       // const images = await imageUploads;
-      console.log("Uploaded images:", imageUploads);
-      console.log("Uploaded video URL:", videoUploadUrl);
+      // console.log("Uploaded images:", imageUploads);
+      // console.log("Uploaded video URL:", videoUploadUrl);
 
       const newEvent = new Event({
-        userId: req.user.userId,
+        userId: userId,
         title,
         date: eventDate,
         time,
-        organizer: organizer || req.user.userId,
+        organizer: organizer || userId,
         eventDetails,
         genre,
         // artists: artists ? JSON.parse(artists) : [],
@@ -100,11 +102,35 @@ const createEvent = async (req, res) => {
       await newEvent.save();
       console.log("Event created:", newEvent);
 
-      await User.findByIdAndUpdate(
-        req.user.userId,
-        { $push: { createdEvents: newEvent._id } },
-        { new: true }
-      );
+      // After the event is created
+      try {
+        // Check if the user exists
+        const user = await User.findById(userId);
+
+        if (!user) {
+          console.error("User not found with id:", userId);
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        // Update the user to push the new event ID into the `createdEvents` array
+        const updatedUser = await User.findByIdAndUpdate(
+          userId,
+          { $push: { createdEvents: newEvent._id } },
+          { new: true }
+        );
+
+        if (!updatedUser) {
+          console.error("Failed to update user with id:", userId);
+          return res
+            .status(500)
+            .json({ error: "Failed to update user with new event" });
+        }
+
+        console.log("User successfully updated with new event:", updatedUser);
+      } catch (error) {
+        console.error("Error occurred:", error.message);
+        res.status(500).json({ error: "Internal server error" });
+      }
 
       res
         .status(201)
@@ -115,122 +141,6 @@ const createEvent = async (req, res) => {
     }
   });
 };
-
-// const createEvent = async (req, res) => {
-//   console.log("Received a request to create an event");
-
-//   parser.fields([
-//     { name: "images", maxCount: 10 },
-//     { name: "video", maxCount: 1 },
-//   ])(req, res, async (err) => {
-//     if (err) {
-//       console.error("File upload error:", err.message);
-//       return res
-//         .status(400)
-//         .json({ error: "File upload error", message: err.message });
-//     }
-
-//     try {
-//       console.log("Request body:", req.body);
-//       console.log("Files received:", req.files);
-
-//       const {
-//         title,
-//         locationAddress, // Address as string
-//         longitude, // Longitude of the event location
-//         latitude, // Latitude of the event location
-//         date,
-//         time,
-//         organizer,
-//         eventDetails,
-//         genre,
-//         artists,
-//         ticketPrice,
-//         images, // Already uploaded image URLs (optional)
-//         videoUrl,
-//       } = req.body;
-
-//       // Parse the event date
-//       const eventDate = new Date(date);
-//       if (isNaN(eventDate.getTime())) {
-//         console.error("Invalid date format");
-//         return res.status(400).json({ error: "Invalid date format" });
-//       }
-
-//       // Ensure both latitude and longitude are provided
-//       if (!longitude || !latitude) {
-//         return res
-//           .status(400)
-//           .json({ error: "Longitude and latitude are required for location" });
-//       }
-
-//       // Upload images to Cloudinary
-//       const imageUploads = req.files.images
-//         ? Promise.all(
-//             req.files.images.map(async (file) => {
-//               console.log("Uploading image:", file.path);
-//               const result = await cloudinary.uploader.upload(file.path, {
-//                 folder: "images", // Optional folder name in Cloudinary
-//               });
-//               return { url: result.secure_url };
-//             })
-//           )
-//         : images || [];
-
-//       // Upload video to Cloudinary (if any)
-//       let videoUploadUrl = "";
-//       if (req.files.video && req.files.video[0]) {
-//         console.log("Uploading video:", req.files.video[0].path);
-//         const videoUploadResult = await cloudinary.uploader.upload(
-//           req.files.video[0].path,
-//           {
-//             resource_type: "video", // Specify video upload
-//             folder: "videos", // Optional folder name in Cloudinary
-//           }
-//         );
-//         videoUploadUrl = videoUploadResult.secure_url;
-//       } else {
-//         videoUploadUrl = videoUrl || ""; // Use the provided URL if no video is uploaded
-//       }
-
-//       console.log("Uploaded images:", imageUploads);
-//       console.log("Uploaded video URL:", videoUploadUrl);
-
-//       // Prepare the new event object
-//       const newEvent = new Event({
-//         userId: req.user.userId,
-//         title,
-//         date: eventDate,
-//         time,
-//         organizer: organizer || req.user.userId,
-//         eventDetails,
-//         genre,
-//         artists: typeof artists === "string" ? JSON.parse(artists) : artists,
-//         location: {
-//           type: "Point",
-//           coordinates: [parseFloat(longitude), parseFloat(latitude)], // Store coordinates as [longitude, latitude]
-//           address: locationAddress, // Store the location address
-//         },
-//         images: await imageUploads,
-//         videoUrl: videoUploadUrl,
-//         ticketPrice: parseFloat(ticketPrice),
-//       });
-
-//       // Save the new event
-//       await newEvent.save();
-//       console.log("Event created:", newEvent);
-
-//       res
-//         .status(201)
-//         .json({ message: "Event created successfully", event: newEvent });
-//     } catch (error) {
-//       console.error("Error creating event:", error.message, error.stack);
-//       res.status(500).json({ message: "Internal server error" });
-//     }
-//   });
-// };
-
-// Controller to get all events for a specific user
 
 const getUserEvents = async (req, res) => {
   try {
@@ -258,31 +168,12 @@ const getAllEvents = async (req, res) => {
   }
 };
 
-const getEventById = async (req, res) => {
-  try {
-    const { id } = req.params; // Get event ID from request parameters
-
-    if (!id) {
-      return res.status(400).json({ error: "Event ID is required" });
-    }
-
-    const event = await Event.findById(id);
-
-    if (!event) {
-      return res.status(404).json({ error: "Event not found" });
-    }
-
-    res.status(200).json(event);
-  } catch (error) {
-    console.error("Error fetching event by ID:", error.message, error.stack);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
 const getEventsByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
     console.log("Request params:", req.params);
+    // const userId = req.user.userId; // Use the logged-in user's ID
+    // console.log("Fetching events for user ID:", userId);
     // Get user ID from request parameters
 
     if (!userId) {
@@ -300,6 +191,138 @@ const getEventsByUserId = async (req, res) => {
   } catch (error) {
     console.error(
       "Error fetching events by user ID:",
+      error.message,
+      error.stack
+    );
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+/////dont delete for now/////////
+const getEventById = async (req, res) => {
+  const eventId = req.params.eventId;
+
+  // Validate the ObjectId
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    return res.status(400).json({ error: "Invalid Event ID" });
+  }
+
+  try {
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+    return res.status(200).json(event);
+  } catch (error) {
+    console.error("Error fetching event:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const getEventsByLocation = async (req, res) => {
+  const { city, state, country } = req.params; // Get parameters from URL
+
+  console.log("getEventsByLocation called with params:", req.params); // Log incoming parameters
+
+  const query = {};
+  if (city) {
+    query["location.city"] = city;
+  }
+  if (state) {
+    query["location.state"] = state;
+  }
+  if (country) {
+    query["location.country"] = country;
+  }
+
+  console.log("Constructed query:", query); // Log constructed query
+
+  try {
+    const events = await Event.find(query);
+    console.log("Fetched events:", events); // Log fetched events
+
+    if (events.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No events found for this location." });
+    }
+
+    res.json(events);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching events." });
+  }
+};
+
+const getEventsByGenre = async (req, res) => {
+  const { genre } = req.params; // Get genre from URL parameters
+
+  console.log("getEventsByGenre called with params:", req.params);
+  if (!genre) {
+    return res.status(400).json({ error: "Genre is required" });
+  }
+
+  try {
+    const events = await Event.find({ genre }); // Find events by genre
+    console.log("Fetched events by genre:", events); // Log fetched events
+
+    if (events.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No events found for this genre." });
+    }
+
+    res.json(events);
+  } catch (error) {
+    console.error("Error fetching events by genre:", error.message);
+    res.status(500).json({ message: "Error fetching events." });
+  }
+};
+
+const getEventsByDateRange = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.params; // Extract from params instead of query
+
+    // Ensure that both dates are provided
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        error: "Both startDate and endDate parameters are required",
+      });
+    }
+
+    // Parse the dates and validate them
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({
+        error:
+          "Invalid date format. Please use a valid date format (YYYY-MM-DD).",
+      });
+    }
+
+    // Adjust the end date to include the entire day
+    end.setHours(23, 59, 59, 999);
+
+    // Query events that fall within the specified date range
+    const events = await Event.find({
+      date: {
+        $gte: start, // Greater than or equal to start date
+        $lte: end, // Less than or equal to end date
+      },
+    });
+
+    // If no events found, return a 404
+    if (events.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No events found in this date range." });
+    }
+
+    res.status(200).json(events);
+  } catch (error) {
+    console.error(
+      "Error fetching events by date range:",
       error.message,
       error.stack
     );
@@ -428,8 +451,11 @@ module.exports = {
   getAllEvents,
   getEventById,
   getEventsByUserId,
+  getEventsByDateRange,
+  getEventsByGenre,
   likeEvent,
   addComment,
   incrementViews,
   shareEvent,
+  getEventsByLocation,
 };
