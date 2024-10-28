@@ -11,18 +11,16 @@ import {
   Keyboard,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-// import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
-// import { LinearGradient } from "expo-linear-gradient";
 import axios from "axios";
+import { Video } from "expo-av";
 import { Dropdown } from "react-native-element-dropdown";
 import { Country, State, City } from "country-state-city";
 import { API_URL } from "@env";
-// import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
 import { getToken, getRefreshToken, saveToken } from "../backend/token";
 import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY } from "@env";
 import FormData from "form-data";
-// import { Picker } from "@react-native-picker/picker";
+import { getUserId } from "../backend/registrationUtils";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 
 const CreateEventScreen = ({ navigation }) => {
@@ -41,13 +39,23 @@ const CreateEventScreen = ({ navigation }) => {
   const [showDeleteIcon, setShowDeleteIcon] = useState(null); // Track which image is being long-pressed
 
   const [baseAddress, setBaseAddress] = useState("");
+  // const [countryData, setCountryData] = useState([]);
+  // const [stateData, setStateData] = useState([]);
+  // const [cityData, setCityData] = useState([]);
+
+  // const [selectedCountry, setSelectedCountry] = useState(null);
+  // const [selectedState, setSelectedState] = useState(null);
+  // const [selectedCity, setSelectedCity] = useState(null);
   const [countryData, setCountryData] = useState([]);
   const [stateData, setStateData] = useState([]);
   const [cityData, setCityData] = useState([]);
-
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [selectedState, setSelectedState] = useState(null);
-  const [selectedCity, setSelectedCity] = useState(null);
+  const [country, setCountry] = useState(null);
+  const [state, setState] = useState(null);
+  const [city, setCity] = useState(null);
+  const [countryName, setCountryName] = useState(null);
+  const [stateName, setStateName] = useState(null);
+  const [cityName, setCityName] = useState(null);
+  const [isFocus, setIsFocus] = useState(false);
 
   // New state variables for the additional fields
   const [artistName, setArtistName] = useState("");
@@ -59,6 +67,8 @@ const CreateEventScreen = ({ navigation }) => {
   const [startDate, setStartDate] = useState(null);
   const [startTime, setStartTime] = useState(null);
   // Show/hide functions
+
+  const [videoThumbnailUrl, setVideoThumbnailUrl] = useState(null);
 
   const eventGenres = [
     "Business Event",
@@ -91,8 +101,8 @@ const CreateEventScreen = ({ navigation }) => {
       label: state.name,
     }));
     setStateData(states);
-    setSelectedState(null);
-    setSelectedCity(null);
+    setState(null);
+    setCity(null);
     setCityData([]);
   }, []);
 
@@ -104,7 +114,7 @@ const CreateEventScreen = ({ navigation }) => {
       })
     );
     setCityData(cities);
-    setSelectedCity(null);
+    setCity(null);
   }, []);
 
   const genreRef = useRef();
@@ -151,6 +161,10 @@ const CreateEventScreen = ({ navigation }) => {
       const uri = result.assets[0]?.uri;
       if (typeof uri === "string") {
         setVideoUrl(uri);
+        const { uri: thumbnailUri } = await Video.createThumbnailAsync(uri, {
+          time: 5000, // Time in milliseconds (e.g., 5000 for 5 seconds)
+        });
+        setVideoThumbnailUrl(thumbnailUri); // Store the thumbnail URL
       } else {
         console.error("Invalid video URL:", uri);
       }
@@ -284,13 +298,14 @@ const CreateEventScreen = ({ navigation }) => {
       // Add the location data from the form
       const locationData = {
         baseAddress,
-        country: selectedCountry,
-        state: selectedState,
-        city: selectedCity,
+        country: countryName,
+        state: stateName,
+        city: cityName,
       };
 
       // Prepare the event data
       const eventData = {
+        userId: await getUserId(),
         title,
         date: formattedDate,
         time: formattedTime,
@@ -321,7 +336,7 @@ const CreateEventScreen = ({ navigation }) => {
               Authorization: `Bearer ${token}`,
               "Content-Type": "multipart/form-data",
             },
-            timeout: 10000,
+            timeout: 20000,
           }
         );
       };
@@ -398,319 +413,6 @@ const CreateEventScreen = ({ navigation }) => {
       }
     }
   };
-
-  // return (
-  //   <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-  //     <ScrollView contentContainerStyle={styles.scrollContainer}>
-  //       <Text style={styles.subHeader}>Add Photos</Text>
-
-  //       {/* <View style={styles.photosContainer}>
-  //         <TouchableOpacity
-  //           style={styles.largeImageUpload}
-  //           onLongPress={() => setShowDeleteIcon(0)} // Show delete icon on long press
-  //           onPress={() => pickImage(0)} // Allow changing image
-  //         >
-  //           {images[0] ? (
-  //             <>
-  //               <Image source={{ uri: images[0] }} style={styles.image} />
-  //               {showDeleteIcon === 0 && (
-  //                 <TouchableOpacity
-  //                   style={styles.deleteIconWrapper}
-  //                   onPress={() => handleDeleteImage(0)} // Delete image on icon press
-  //                 >
-  //                   <Ionicons name="trash" size={24} color="red" />
-  //                 </TouchableOpacity>
-  //               )}
-  //             </>
-  //           ) : (
-  //             <Ionicons name="camera-outline" size={36} color="black" />
-  //           )}
-  //         </TouchableOpacity>
-
-  //         <View style={styles.smallImagesContainer}>
-  //           {[1, 2].map((index) => (
-  //             <TouchableOpacity
-  //               key={index}
-  //               style={styles.smallImageUpload}
-  //               onLongPress={() => setShowDeleteIcon(index)} // Show delete icon on long press
-  //               onPress={() => pickImage(index)} // Allow changing image
-  //             >
-  //               {images[index] ? (
-  //                 <>
-  //                   <Image
-  //                     source={{ uri: images[index] }}
-  //                     style={styles.image}
-  //                   />
-  //                   {showDeleteIcon === index && (
-  //                     <TouchableOpacity
-  //                       style={styles.deleteIconWrapper}
-  //                       onPress={() => handleDeleteImage(index)} // Delete image on icon press
-  //                     >
-  //                       <Ionicons name="trash" size={24} color="red" />
-  //                     </TouchableOpacity>
-  //                   )}
-  //                 </>
-  //               ) : (
-  //                 <Ionicons name="camera-outline" size={24} color="black" />
-  //               )}
-  //             </TouchableOpacity>
-  //           ))}
-  //         </View>
-  //       </View> */}
-  //       <View
-
-  //         style={styles.photosContainer}
-  //       >
-  //         <TouchableOpacity
-  //           style={styles.largeImageUpload}
-  //           onLongPress={() => setShowDeleteIcon(0)} // Show delete icon on long press
-  //           onPress={() => pickImage(0)} // Allow changing image
-  //         >
-  //           {images[0] ? (
-  //             <>
-  //               <Image source={{ uri: images[0] }} style={styles.image} />
-  //               {showDeleteIcon === 0 && (
-  //                 <TouchableOpacity
-  //                   style={styles.deleteIconWrapper}
-  //                   onPress={() => handleDeleteImage(0)} // Delete image on icon press
-  //                 >
-  //                   <Ionicons name="trash" size={24} color="red" />
-  //                 </TouchableOpacity>
-  //               )}
-  //             </>
-  //           ) : (
-  //             <Ionicons name="camera-outline" size={36} color="black" />
-  //           )}
-  //         </TouchableOpacity>
-
-  //         <View style={styles.smallImagesContainer}>
-  //           {[1, 2].map((index) => (
-  //             <TouchableOpacity
-  //               key={index}
-  //               style={styles.smallImageUpload}
-  //               onLongPress={() => setShowDeleteIcon(index)} // Show delete icon on long press
-  //               onPress={() => pickImage(index)} // Allow changing image
-  //             >
-  //               {images[index] ? (
-  //                 <>
-  //                   <Image
-  //                     source={{ uri: images[index] }}
-  //                     style={styles.image}
-  //                   />
-  //                   {showDeleteIcon === index && (
-  //                     <TouchableOpacity
-  //                       style={styles.deleteIconWrapper}
-  //                       onPress={() => handleDeleteImage(index)} // Delete image on icon press
-  //                     >
-  //                       <Ionicons name="trash" size={24} color="red" />
-  //                     </TouchableOpacity>
-  //                   )}
-  //                 </>
-  //               ) : (
-  //                 <Ionicons name="camera-outline" size={24} color="black" />
-  //               )}
-  //             </TouchableOpacity>
-  //           ))}
-  //         </View>
-  //       </View>
-
-  //       <Text style={styles.label}>Title</Text>
-  //       <TextInput
-  //         style={styles.input}
-  //         placeholder="Event title"
-  //         value={title}
-  //         onChangeText={setTitle}
-  //       />
-
-  //       <Text style={styles.label}>Base Address</Text>
-  //       <TextInput
-  //         style={styles.input}
-  //         value={baseAddress}
-  //         onChangeText={setBaseAddress}
-  //         placeholder="Enter event address"
-  //       />
-
-  //       <View style={styles.container}>
-  //         {/* Country Dropdown */}
-  //         <View style={styles.dropdownContainer}>
-  //           <Text style={styles.label}>Country</Text>
-  //           <Dropdown
-  //             style={styles.dropdown}
-  //             data={countryData}
-  //             labelField="label"
-  //             valueField="value"
-  //             placeholder="Select country"
-  //             value={selectedCountry}
-  //             onChange={(item) => {
-  //               setSelectedCountry(item.value);
-  //               handleState(item.value); // Fetch states when country is selected
-  //             }}
-  //             search // Enables search
-  //             searchPlaceholder="Search country"
-  //             containerStyle={styles.dropdownContainerStyle}
-  //             iconStyle={styles.iconStyle}
-  //             placeholderStyle={styles.placeholderStyle}
-  //             selectedTextStyle={styles.selectedTextStyle}
-  //           />
-  //         </View>
-
-  //         {/* State Dropdown */}
-  //         <View style={styles.dropdownContainer}>
-  //           <Text style={styles.label}>State</Text>
-  //           <Dropdown
-  //             style={styles.dropdown}
-  //             data={stateData}
-  //             labelField="label"
-  //             valueField="value"
-  //             placeholder="Select state"
-  //             value={selectedState}
-  //             onChange={(item) => {
-  //               setSelectedState(item.value);
-  //               handleCity(selectedCountry, item.value); // Fetch cities when state is selected
-  //             }}
-  //             search // Enables search
-  //             searchPlaceholder="Search state"
-  //             containerStyle={styles.dropdownContainerStyle}
-  //             iconStyle={styles.iconStyle}
-  //             placeholderStyle={styles.placeholderStyle}
-  //             selectedTextStyle={styles.selectedTextStyle}
-  //           />
-  //         </View>
-
-  //         {/* City Dropdown */}
-  //         <View style={styles.dropdownContainer}>
-  //           <Text style={styles.label}>City</Text>
-  //           <Dropdown
-  //             style={styles.dropdown}
-  //             data={cityData}
-  //             labelField="label"
-  //             valueField="value"
-  //             placeholder="Select city"
-  //             value={selectedCity}
-  //             onChange={(item) => setSelectedCity(item.value)}
-  //             search // Enables search
-  //             searchPlaceholder="Search city"
-  //             containerStyle={styles.dropdownContainerStyle}
-  //             iconStyle={styles.iconStyle}
-  //             placeholderStyle={styles.placeholderStyle}
-  //             selectedTextStyle={styles.selectedTextStyle}
-  //           />
-  //         </View>
-  //       </View>
-
-  //       <View style={styles.dateTimeContainer}>
-  //         <View style={styles.dateTimeSection}>
-  //           <Text style={styles.label}>Start Date</Text>
-  //           <TouchableOpacity
-  //             onPress={showDatePickerModal}
-  //             style={styles.dateTimeButton}
-  //           >
-  //             <Text style={styles.dateTimeButtonText}>
-  //               {startDate ? startDate.toDateString() : "Select Start Date"}
-  //             </Text>
-  //           </TouchableOpacity>
-  //           {showDatePicker && (
-  //             <DateTimePicker
-  //               value={startDate || new Date()}
-  //               mode="date"
-  //               display="default"
-  //               onChange={onDateTimeChange}
-  //             />
-  //           )}
-  //         </View>
-
-  //         <View style={styles.dateTimeSection}>
-  //           <Text style={styles.label}>Start Time</Text>
-  //           <TouchableOpacity
-  //             onPress={showTimePickerModal}
-  //             style={styles.dateTimeButton}
-  //           >
-  //             <Text style={styles.dateTimeButtonText}>
-  //               {startTime
-  //                 ? startTime.toTimeString().split(" ")[0]
-  //                 : "Select Start Time"}
-  //             </Text>
-  //           </TouchableOpacity>
-  //           {showTimePicker && (
-  //             <DateTimePicker
-  //               value={startTime || new Date()}
-  //               mode="time"
-  //               display="default"
-  //               onChange={onDateTimeChange}
-  //             />
-  //           )}
-  //         </View>
-  //       </View>
-
-  //       <Text style={styles.label}>Organizer Name</Text>
-  //       <TextInput
-  //         style={styles.input}
-  //         placeholder="Organizer name"
-  //         value={organizerName}
-  //         onChangeText={setOrganizerName}
-  //       />
-
-  //       <Text style={styles.label}>Event Description</Text>
-  //       <TextInput
-  //         style={styles.textArea}
-  //         placeholder="Enter event details"
-  //         value={description}
-  //         onChangeText={setDescription}
-  //         multiline
-  //       />
-
-  //       <Text style={styles.label}>Select Event Genre</Text>
-  //       <TouchableOpacity style={styles.input} onPress={toggleGenreDropdown}>
-  //         <Text>{eventGenre || "Select Genre"}</Text>
-  //       </TouchableOpacity>
-
-  //       {showGenreDropdown && (
-  //         <View style={styles.dropdown}>
-  //           {eventGenres.map((genre) => (
-  //             <TouchableOpacity
-  //               key={genre}
-  //               style={styles.dropdownItem}
-  //               onPress={() => handleGenreSelect(genre)}
-  //             >
-  //               <Text>{genre}</Text>
-  //             </TouchableOpacity>
-  //           ))}
-  //         </View>
-  //       )}
-
-  //       <Text style={styles.label}>Artist Name</Text>
-  //       <TextInput
-  //         style={styles.input}
-  //         placeholder="Enter artist name"
-  //         value={artistName}
-  //         onChangeText={setArtistName}
-  //       />
-
-  //       <Text style={styles.label}>Video URL</Text>
-
-  //       <TouchableOpacity onPress={pickVideo} style={styles.videoUpload}>
-  //         {videoUrl ? (
-  //           <Text style={styles.videoText}>Video Selected</Text>
-  //         ) : (
-  //           <Ionicons name="videocam-outline" size={36} color="black" />
-  //         )}
-  //       </TouchableOpacity>
-
-  //       <Text style={styles.label}>Ticket Price</Text>
-  //       <TextInput
-  //         style={styles.input}
-  //         placeholder="Enter ticket price"
-  //         keyboardType="numeric"
-  //         value={ticketPrice}
-  //         onChangeText={setTicketPrice}
-  //       />
-
-  //       <TouchableOpacity style={styles.publishButton} onPress={handlePublish}>
-  //         <Text style={styles.publishButtonText}>Publish Event</Text>
-  //       </TouchableOpacity>
-  //     </ScrollView>
-  //   </TouchableWithoutFeedback>
-  // );
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -799,13 +501,13 @@ const CreateEventScreen = ({ navigation }) => {
           {/* Country Dropdown */}
           <View style={styles.dropdownContainer}>
             <Text style={styles.label}>Country</Text>
-            <Dropdown
+            {/* <Dropdown
               style={styles.dropdown}
               data={countryData}
               labelField="label"
               valueField="value"
               placeholder="Select country"
-              value={selectedCountry}
+              value={country}
               onChange={(item) => {
                 setSelectedCountry(item.value);
                 handleState(item.value); // Fetch states when country is selected
@@ -816,6 +518,28 @@ const CreateEventScreen = ({ navigation }) => {
               iconStyle={styles.iconStyle}
               placeholderStyle={styles.placeholderStyle}
               selectedTextStyle={styles.selectedTextStyle}
+            /> */}
+            <Dropdown
+              style={styles.dropdown}
+              placeholderStyle={styles.placeholderStyle}
+              selectedTextStyle={styles.selectedTextStyle}
+              inputSearchStyle={styles.inputSearchStyle}
+              iconStyle={styles.iconStyle}
+              data={countryData}
+              search
+              maxHeight={300}
+              labelField="label"
+              valueField="value"
+              placeholder="Select Country"
+              searchPlaceholder="Search..."
+              value={country}
+              onFocus={() => setIsFocus(true)}
+              onBlur={() => setIsFocus(false)}
+              onChange={(item) => {
+                setCountry(item.value);
+                setCountryName(item.label);
+                handleState(item.value);
+              }}
             />
           </View>
 
@@ -824,16 +548,16 @@ const CreateEventScreen = ({ navigation }) => {
             {/* State Dropdown */}
             <View style={styles.dropdownContainer}>
               <Text style={styles.label}>State</Text>
-              <Dropdown
+              {/* <Dropdown
                 style={styles.dropdown}
                 data={stateData}
                 labelField="label"
                 valueField="value"
                 placeholder="Select state"
-                value={selectedState}
+                value={state}
                 onChange={(item) => {
                   setSelectedState(item.value);
-                  handleCity(selectedCountry, item.value); // Fetch cities when state is selected
+                  handleCity(country, item.value); // Fetch cities when state is selected
                 }}
                 search // Enables search
                 searchPlaceholder="Search state"
@@ -841,6 +565,28 @@ const CreateEventScreen = ({ navigation }) => {
                 iconStyle={styles.iconStyle}
                 placeholderStyle={styles.placeholderStyle}
                 selectedTextStyle={styles.selectedTextStyle}
+              /> */}
+              <Dropdown
+                style={styles.dropdown}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                inputSearchStyle={styles.inputSearchStyle}
+                iconStyle={styles.iconStyle}
+                data={stateData}
+                search
+                maxHeight={300}
+                labelField="label"
+                valueField="value"
+                placeholder="Select State"
+                searchPlaceholder="Search..."
+                value={state}
+                onFocus={() => setIsFocus(true)}
+                onBlur={() => setIsFocus(false)}
+                onChange={(item) => {
+                  setState(item.value);
+                  setStateName(item.label);
+                  handleCity(country, item.value);
+                }}
               />
             </View>
 
@@ -849,7 +595,7 @@ const CreateEventScreen = ({ navigation }) => {
               style={[styles.dropdownContainer, styles.dropdownContainerLast]}
             >
               <Text style={styles.label}>City</Text>
-              <Dropdown
+              {/* <Dropdown
                 style={styles.dropdown}
                 data={cityData}
                 labelField="label"
@@ -863,6 +609,27 @@ const CreateEventScreen = ({ navigation }) => {
                 iconStyle={styles.iconStyle}
                 placeholderStyle={styles.placeholderStyle}
                 selectedTextStyle={styles.selectedTextStyle}
+              /> */}
+              <Dropdown
+                style={styles.dropdown}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                inputSearchStyle={styles.inputSearchStyle}
+                iconStyle={styles.iconStyle}
+                data={cityData}
+                search
+                maxHeight={300}
+                labelField="label"
+                valueField="value"
+                placeholder="Select City"
+                searchPlaceholder="Search..."
+                value={city}
+                onFocus={() => setIsFocus(true)}
+                onBlur={() => setIsFocus(false)}
+                onChange={(item) => {
+                  setCity(item.value);
+                  setCityName(item.label);
+                }}
               />
             </View>
           </View>
@@ -919,9 +686,7 @@ const CreateEventScreen = ({ navigation }) => {
               style={styles.dateTimeButton}
             >
               <Text style={styles.dateTimeButtonText}>
-                {startDate
-                  ? startDate.toLocaleDateString()
-                  : "Select Start Date"}
+                {startDate ? startDate.toLocaleDateString() : "Select Date"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -938,7 +703,7 @@ const CreateEventScreen = ({ navigation }) => {
                       hour: "2-digit",
                       minute: "2-digit",
                     })
-                  : "Select Start Time"}
+                  : "Select Time"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -949,11 +714,7 @@ const CreateEventScreen = ({ navigation }) => {
             mode="date"
             onConfirm={handleConfirmDate}
             onCancel={hideDatePicker}
-            theme={{
-              background: "black",
-              primary: "#6200ee",
-              text: "#fff",
-            }}
+            textColor="#000"
           />
 
           {/* Time Picker Modal */}
@@ -962,11 +723,7 @@ const CreateEventScreen = ({ navigation }) => {
             mode="time"
             onConfirm={handleConfirmTime}
             onCancel={hideTimePicker}
-            // theme={{
-            //   background: "white",
-            //   // primary: "#6200ee",
-            //   text: "#000",
-            // }}
+            textColor="#000"
           />
         </View>
 
@@ -1019,7 +776,7 @@ const CreateEventScreen = ({ navigation }) => {
           onChangeText={setArtistName}
         />
 
-        <Text style={styles.label}>Video URL</Text>
+        {/* <Text style={styles.label}>Video URL</Text>
 
         <TouchableOpacity onPress={pickVideo} style={styles.videoUpload}>
           {videoUrl ? (
@@ -1027,7 +784,31 @@ const CreateEventScreen = ({ navigation }) => {
           ) : (
             <Ionicons name="videocam-outline" size={36} color="black" />
           )}
-        </TouchableOpacity>
+        </TouchableOpacity> */}
+
+        <Text style={styles.label}>Video URL</Text>
+        <View style={styles.videoContainer}>
+          <TouchableOpacity onPress={pickVideo} style={styles.videoUpload}>
+            {videoUrl ? (
+              <>
+                {videoThumbnailUrl ? (
+                  <Image
+                    source={{ uri: videoThumbnailUrl }}
+                    style={styles.videoThumbnail}
+                  />
+                ) : (
+                  <Ionicons name="videocam-outline" size={36} color="black" />
+                )}
+                <Text style={styles.videoText}>Video Selected</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="videocam-outline" size={36} color="black" />
+                <Text style={styles.videoText}>Upload Video</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.label}>Ticket Price</Text>
         <TextInput
@@ -1045,181 +826,6 @@ const CreateEventScreen = ({ navigation }) => {
     </TouchableWithoutFeedback>
   );
 };
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     padding: 16,
-//   },
-//   dropdownContainer: {
-//     marginVertical: 10,
-//   },
-//   label: {
-//     fontSize: 16,
-//     fontWeight: "bold",
-//     marginBottom: 8,
-//     color: "#333",
-//   },
-//   dropdown: {
-//     height: 50,
-//     borderColor: "#ccc",
-//     borderWidth: 1,
-//     borderRadius: 8,
-//     paddingHorizontal: 10,
-//     backgroundColor: "#fff",
-//     elevation: 1,
-//     shadowColor: "#000",
-//     shadowOpacity: 0.1,
-//     shadowRadius: 5,
-//   },
-//   dropdownContainerStyle: {
-//     borderRadius: 8,
-//     padding: 5,
-//   },
-//   iconStyle: {
-//     width: 20,
-//     height: 20,
-//   },
-//   searchInputStyle: {
-//     height: 40,
-//     borderColor: "#CCC",
-//     borderWidth: 1,
-//     borderRadius: 8,
-//     paddingLeft: 10,
-//   },
-//   placeholderStyle: {
-//     color: "#999",
-//     fontSize: 14,
-//   },
-//   selectedTextStyle: {
-//     color: "#333",
-//     fontSize: 16,
-//   },
-//   scrollContainer: {
-//     flexGrow: 1,
-//     justifyContent: "center",
-//   },
-//   backButton: {
-//     marginBottom: 16,
-//   },
-//   header: {
-//     fontSize: 24,
-//     fontWeight: "bold",
-//     marginBottom: 16,
-//   },
-//   subHeader: {
-//     fontSize: 18,
-//     fontWeight: "bold",
-//     marginBottom: 8,
-//   },
-//   photosContainer: {
-//     flexDirection: "row",
-//     marginBottom: 16,
-//   },
-//   picker: {
-//     height: 50,
-//     borderColor: "#ddd",
-//     borderWidth: 1,
-//     borderRadius: 5,
-//     marginBottom: 16,
-//   },
-//   largeImageUpload: {
-//     width: 150,
-//     height: 150,
-//     borderRadius: 10,
-//     borderWidth: 1,
-//     borderColor: "#ccc",
-//     marginRight: 8,
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-//   smallImagesContainer: {
-//     flex: 1,
-//     justifyContent: "space-between",
-//   },
-//   smallImageUpload: {
-//     width: 70,
-//     height: 70,
-//     borderRadius: 10,
-//     borderWidth: 1,
-//     borderColor: "#ccc",
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-//   image: {
-//     width: "100%",
-//     height: "100%",
-//     borderRadius: 10,
-//   },
-//   label: {
-//     fontSize: 16,
-//     fontWeight: "bold",
-//     marginBottom: 8,
-//   },
-//   input: {
-//     height: 40,
-//     borderColor: "#ddd",
-//     borderWidth: 1,
-//     borderRadius: 5,
-//     paddingHorizontal: 8,
-//     marginBottom: 16,
-//     justifyContent: "center",
-//   },
-//   dropdown: {
-//     borderColor: "#ddd",
-//     borderWidth: 1,
-//     borderRadius: 5,
-//     marginBottom: 16,
-//     position: "absolute",
-//     backgroundColor: "#fff",
-//     zIndex: 1,
-//     width: "100%",
-//   },
-//   dropdownItem: {
-//     padding: 10,
-//   },
-//   textArea: {
-//     height: 100,
-//     borderColor: "#ddd",
-//     borderWidth: 1,
-//     borderRadius: 5,
-//     paddingHorizontal: 8,
-//     marginBottom: 16,
-//     textAlignVertical: "top",
-//   },
-//   dateTimeContainer: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     marginBottom: 16,
-//   },
-//   dateTimeSection: {
-//     flex: 1,
-//     marginRight: 8,
-//   },
-//   dateTimeButton: {
-//     height: 40,
-//     borderColor: "#ddd",
-//     borderWidth: 1,
-//     borderRadius: 5,
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-//   dateTimeButtonText: {
-//     fontSize: 16,
-//   },
-//   publishButton: {
-//     backgroundColor: "#ff6347",
-//     padding: 16,
-//     borderRadius: 5,
-//     alignItems: "center",
-//     marginBottom: 100,
-//   },
-//   publishButtonText: {
-//     color: "#fff",
-//     fontSize: 18,
-//     fontWeight: "bold",
-//   },
-// });
 
 const styles = StyleSheet.create({
   container: {
@@ -1377,7 +983,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 8,
-    color: "#fff",
+    // color: "#fff",
     paddingHorizontal: 10,
     marginBottom: 16,
     backgroundColor: "#fff", // White background for better contrast

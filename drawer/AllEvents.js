@@ -42,29 +42,6 @@ const AllEvents = ({ navigation }) => {
     }
   };
 
-  // const renderEventItem = ({ item }) => {
-  //   return (
-  //     <TouchableOpacity
-  //       style={styles.eventItem}
-  //       onPress={() =>
-  //         navigation.navigate("EventDetailsScreen", { eventId: item._id })
-  //       }
-  //     >
-  //       <Image
-  //         source={{ uri: item.images[0]?.url }}
-  //         style={styles.eventImage}
-  //       />
-  //       <View style={styles.eventInfo}>
-  //         <Text style={styles.eventTitle}>{item.title}</Text>
-  //         <Text style={styles.eventDate}>
-  //           {new Date(item.date).toLocaleDateString()}
-  //         </Text>
-  //         <Text style={styles.eventLocation}>{item.location}</Text>
-  //       </View>
-  //     </TouchableOpacity>
-  //   );
-  // };
-
   const renderEventItem = ({ item }) => {
     // Format location string if it is an object
     const location =

@@ -41,6 +41,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const API_URL = process.env.API_URL; // Ensure you have the API_URL defined
 
 console.log("JWT_SECRET: ", JWT_SECRET);
+console.log("API_URL FROM NODE :", API_URL);
 
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
