@@ -92,6 +92,7 @@ const createEvent = async (req, res) => {
           city: location.city,
           state: location.state,
           country: location.country,
+          coordinates: [location.longitude, location.latitude],
         },
         images: imageUploads,
         videoUrl: videoUploadUrl,
@@ -222,7 +223,7 @@ const getEventById = async (req, res) => {
 const getEventsByLocation = async (req, res) => {
   const { city, state, country } = req.params; // Get parameters from URL
 
-  console.log("getEventsByLocation called with params:", req.params); // Log incoming parameters
+  // console.log("getEventsByLocation called with params:", req.params); // Log incoming parameters
 
   const query = {};
   if (city) {
@@ -235,11 +236,11 @@ const getEventsByLocation = async (req, res) => {
     query["location.country"] = country;
   }
 
-  console.log("Constructed query:", query); // Log constructed query
+  // console.log("Constructed query:", query); // Log constructed query
 
   try {
     const events = await Event.find(query);
-    console.log("Fetched events:", events); // Log fetched events
+    // console.log("Fetched events:", events); // Log fetched events
 
     if (events.length === 0) {
       return res
@@ -330,7 +331,192 @@ const getEventsByDateRange = async (req, res) => {
   }
 };
 
+const registerForEvent = async (req, res) => {
+  const eventId = req.params.eventId;
+  const userId = req.body.userId || req.user.id;
+
+  console.log("User ID:", userId);
+  console.log("Event ID:", eventId);
+
+  try {
+    // Find the event by ID
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" }); // Send 404 if event is not found
+    }
+
+    // Check if user is already registered for the event
+    if (event.participants.includes(userId)) {
+      return res
+        .status(400)
+        .json({ message: "User is already registered for this event" }); // Send 400 if already registered
+    }
+
+    // Add user to event participants
+    event.participants.push(userId);
+    await event.save();
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" }); // Handle user not found
+    }
+
+    // Initialize eventsBooked if it doesn't exist
+    if (!user.eventsBooked) {
+      user.eventsBooked = []; // Ensure eventsBooked is an array
+    }
+
+    // Add event to user's booked events
+    user.eventsBooked.push(eventId);
+    await user.save();
+
+    return res.status(200).json({ message: "User registered successfully" }); // Successful registration
+  } catch (error) {
+    console.error("Error registering for event:", error); // Log the error
+    return res
+      .status(500)
+      .json({ message: "An error occurred while registering for the event" }); // Handle generic server error
+  }
+};
+
+const getEventParticipants = async (req, res) => {
+  const { eventId } = req.params; // Get event ID from the request parameters
+
+  try {
+    // Find the event by ID
+    // const event = await Event.findById(eventId);
+    const event = await Event.findById(eventId).populate("participants");
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    // Return the participants of the event
+    return res.status(200).json(event.participants);
+  } catch (error) {
+    console.error("Error retrieving event participants:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// const getNearbyEvents = async (req, res) => {
+//   const { city, state, country, latitude, longitude, maxDistance } = req.params;
+
+//   try {
+//     let events = await Event.find({
+//       "location.coordinates": {
+//         $near: {
+//           $geometry: {
+//             type: "Point",
+//             coordinates: [parseFloat(longitude), parseFloat(latitude)],
+//           },
+//           $maxDistance: parseInt(maxDistance, 10),
+//         },
+//       },
+//       "location.city": city,
+//       "location.state": state,
+//       "location.country": country,
+//     });
+
+//     // Check if less than 5 events are found
+//     if (events.length < 5) {
+//       // Fetch additional nearby events without filtering by city
+//       const nearbyEvents = await Event.find({
+//         "location.coordinates": {
+//           $near: {
+//             $geometry: {
+//               type: "Point",
+//               coordinates: [parseFloat(longitude), parseFloat(latitude)],
+//             },
+//             $maxDistance: parseInt(maxDistance, 10),
+//           },
+//         },
+//       });
+
+//       // Merge the two arrays while avoiding duplicates
+//       events = [
+//         ...events,
+//         ...nearbyEvents.filter(
+//           (ne) => !events.some((e) => e._id.equals(ne._id))
+//         ),
+//       ];
+//     }
+
+//     console.log("from nearby events :", events);
+
+//     res.status(200).json(events);
+//   } catch (error) {
+//     console.error("Error in getNearbyEvents controller:", error);
+//     res.status(500).json({ error: "Failed to fetch nearby events" });
+//   }
+// };
+
 // Controller to handle likes
+
+const getNearbyEvents = async (req, res) => {
+  const { city, state, country, latitude, longitude, maxDistance } = req.params;
+
+  // Parse the coordinates and maxDistance
+  const parsedLongitude = parseFloat(longitude);
+  const parsedLatitude = parseFloat(latitude);
+  let parsedMaxDistance = parseInt(maxDistance, 10) || 1000000; // Default to 1000 if invalid
+  console.log("Parsed coordinates:", { parsedLongitude, parsedLatitude });
+
+  // Validate coordinates
+  if (isNaN(parsedLatitude) || isNaN(parsedLongitude)) {
+    return res.status(400).json({ error: "Invalid latitude or longitude" });
+  }
+
+  try {
+    let events = await Event.find({
+      "location.coordinates": {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [parsedLongitude, parsedLatitude], // Ensure correct order
+          },
+          $maxDistance: parsedMaxDistance,
+        },
+      },
+      "location.city": city,
+      "location.state": state,
+      "location.country": country,
+    });
+
+    // Check if less than 5 events are found
+    if (events.length < 5) {
+      // Fetch additional nearby events without filtering by city
+      const nearbyEvents = await Event.find({
+        "location.coordinates": {
+          $near: {
+            $geometry: {
+              type: "Point",
+              coordinates: [parsedLongitude, parsedLatitude],
+            },
+            $maxDistance: parsedMaxDistance,
+          },
+        },
+      });
+
+      // Merge the two arrays while avoiding duplicates
+      events = [
+        ...events,
+        ...nearbyEvents.filter(
+          (ne) => !events.some((e) => e._id.equals(ne._id))
+        ),
+      ];
+    }
+
+    console.log("from nearby events :", events);
+
+    res.status(200).json(events);
+  } catch (error) {
+    console.error("Error in getNearbyEvents controller:", error);
+    res.status(500).json({ error: "Failed to fetch nearby events" });
+  }
+};
+
 const likeEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -453,6 +639,9 @@ module.exports = {
   getEventsByUserId,
   getEventsByDateRange,
   getEventsByGenre,
+  registerForEvent,
+  getEventParticipants,
+  getNearbyEvents,
   likeEvent,
   addComment,
   incrementViews,

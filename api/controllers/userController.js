@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const Event = require("../models/event");
 const bcrypt = require("bcrypt"); // For password hashing
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
@@ -422,5 +423,24 @@ exports.getCreatedEventsByUserId = async (req, res) => {
       error.stack
     );
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.getUserBookedEvents = async (req, res) => {
+  const userId = req.params.userId; // Get the user ID from the authenticated user
+
+  try {
+    // Find the user by ID and populate the eventsBooked field
+    const user = await User.findById(userId).populate("eventsBooked");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Return the booked events
+    return res.status(200).json(user.eventsBooked);
+  } catch (error) {
+    console.error("Error retrieving booked events:", error);
+    return res.status(500).json({ message: error.message });
   }
 };

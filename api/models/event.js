@@ -54,6 +54,11 @@ const eventSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+        index: "2dsphere", // Geospatial index for querying nearby events
+        required: true,
+      },
     },
     images: [
       {

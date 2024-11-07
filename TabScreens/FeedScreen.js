@@ -283,11 +283,380 @@ import {
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { Video } from "expo-av";
 import axios from "axios";
-import { API_URL } from "@env";
+import { API_URL, OLA_MAPS_API_KEY } from "@env";
 import { getUserData, getUserId } from "../backend/registrationUtils";
 import Filter from "../components/FilterComponent";
+import { v4 as uuidv4 } from "uuid";
 
 const { width, height } = Dimensions.get("window");
+
+// export default function FeedScreen({ navigation }) {
+//   const fadeAnimation = useRef(new Animated.Value(0)).current;
+//   const [events, setEvents] = useState([]);
+//   const [searchText, setSearchText] = useState("");
+//   const [loading, setLoading] = useState(true);
+//   const [selectedGenre, setSelectedGenre] = useState("");
+//   const [showFilters, setShowFilters] = useState(false);
+//   const [filteredEvents, setFilteredEvents] = useState(events);
+//   const [refreshing, setRefreshing] = useState(false);
+//   const videoRefs = useRef({});
+//   const [isPlaying, setIsPlaying] = useState({}); // Track play/pause state for each video
+//   const [startDate, setStartDate] = useState(new Date());
+//   const [endDate, setEndDate] = useState(new Date());
+//   const [noEventsMessage, setNoEventsMessage] = useState("");
+
+//   useEffect(() => {
+//     Animated.timing(fadeAnimation, {
+//       toValue: 1,
+//       duration: 2000,
+//       useNativeDriver: true,
+//     }).start();
+//   }, [fadeAnimation]);
+
+//   const handleSearch = (text) => {
+//     setSearchText(text);
+//     const filtered = events.filter(
+//       (event) =>
+//         event.title.toLowerCase().includes(text.toLowerCase()) ||
+//         event.organizer.toLowerCase().includes(text.toLowerCase())
+//     );
+//     setFilteredEvents(filtered);
+//   };
+
+//   // Fetch events based on user location
+//   const fetchEventsByLocation = async (city, state, country) => {
+//     try {
+//       // Modify the endpoint to include parameters in the URL
+//       const response = await axios.get(
+//         `${API_URL}/api/events/location/${city}/${state}/${country}`
+//       );
+
+//       if (response.status === 200) {
+//         return response.data;
+//       }
+//     } catch (error) {
+//       console.error(
+//         "Error fetching events by location:",
+//         error.response ? error.response.data : error.message
+//       );
+
+//       return null;
+//     }
+//   };
+
+//   const fetchEventsByGenre = async (genre) => {
+//     try {
+//       // Modify the endpoint to include genre in the URL
+//       const response = await axios.get(`${API_URL}/api/events/genre/${genre}`);
+
+//       if (response.status === 200) {
+//         return response.data;
+//       }
+//     } catch (error) {
+//       console.error(
+//         "Error fetching events by genre:",
+//         error.response ? error.response.data : error.message
+//       );
+
+//       return [];
+//     }
+//   };
+
+// const fetchLocationCoordinates = async (locationString) => {
+//   try {
+//     console.log("ola api : ", OLA_MAPS_API_KEY);
+//     console.log("location FROM FEEDSCREEN :", locationString);
+
+//     const requestId = uuidv4();
+//     console.log("requestId", requestId);
+
+//     const geocodeUrl = `https://api.olamaps.io/places/v1/geocode?address=${locationString}&api_key=${OLA_MAPS_API_KEY}`;
+//     const response = await axios.get(geocodeUrl, {
+//       headers: { "X-Request-Id": requestId },
+//     });
+
+//     if (
+//       response.data.geocodingResults &&
+//       response.data.geocodingResults.length > 0
+//     ) {
+//       const { lat, lng } =
+//         response.data.geocodingResults[0].geometry.location;
+//       console.log("Coordinates:", { latitude: lat, longitude: lng });
+//       return { latitude: lat, longitude: lng }; // Return coordinates
+//     } else {
+//       console.error("No results found for the provided location.");
+//       return null; // Return null if no results found
+//     }
+//   } catch (error) {
+//     console.error(
+//       "Error fetching coordinates:",
+//       error.response || error.message
+//     );
+//     return null; // Return null on error
+//   }
+// };
+
+//   const handleGetNearbyEvents = async (city, state, country) => {
+//     const locationString = `${city}, ${state}, ${country}`;
+//     const coordinates = await fetchLocationCoordinates(locationString);
+//     const maxDistance = 5000000;
+//     if (coordinates) {
+//       console.log("Fetching nearby events with data:", {
+//         city,
+//         state,
+//         country,
+//         coordinates,
+//         maxDistance,
+//       });
+//       // Call your function to fetch nearby events using the obtained coordinates
+//       await fetchNearbyEvents(
+//         city,
+//         state,
+//         country,
+//         coordinates.latitude,
+//         coordinates.longitude
+//       );
+//     } else {
+//       console.error(
+//         "Could not fetch nearby events due to missing coordinates."
+//       );
+//     }
+//   };
+
+//   const fetchNearbyEvents = async (
+//     city,
+//     state,
+//     country,
+//     latitude,
+//     longitude,
+//     maxDistance = 5000000
+//   ) => {
+//     try {
+//       // Pass each parameter in the URL path
+//       const response = await axios.get(
+//         `${API_URL}/api/events/nearby/${city}/${state}/${country}/${latitude}/${longitude}/${maxDistance}`
+//       );
+
+//       console.log(
+//         `${API_URL}/api/events/nearby/${city}/${state}/${country}/${latitude}/${longitude}/${maxDistance}`
+//       );
+
+//       if (response.status === 200) {
+//         // setEvents(response.data);
+//         // setFilteredEvents(response.data);
+//         // setNoEventsMessage(
+//         //   response.data.length === 0 ? "No nearby events found." : ""
+//         // );
+//         console.log("Fetched nearby events:", response.data);
+//         return response.data;
+//       }
+//     } catch (error) {
+//       console.error(
+//         "Error fetching nearby events:",
+//         error.response ? error.response.data : error.message
+//       );
+//       return null;
+//     }
+//   };
+
+//   const loadEvents = async () => {
+//     try {
+//       setLoading(true);
+//       const userId = await getUserId();
+//       if (userId) {
+//         const userData = await getUserData(userId);
+//         console.log("user data from feedscreen :", userData);
+//         if (userData) {
+//           const { cityName, stateName, countryName } = userData;
+//           if (cityName && stateName && countryName) {
+//             // Pass parameters directly in the API calls
+//             const eventsDataByLocation =
+//               (await fetchEventsByLocation(cityName, stateName, countryName)) ||
+//               [];
+//             // if (eventsDataByLocation.length < 5) {
+//             //   await handleGetNearbyEvents(cityName, stateName, countryName);
+//             // }
+
+//             // if (!eventsDataByLocation || eventsDataByLocation.length < 5) {
+//             //   await handleGetNearbyEvents(cityName, stateName, countryName);
+//             // }
+
+//             const eventsDataByGenre = selectedGenre
+//               ? (await fetchEventsByGenre(selectedGenre)) || []
+//               : [];
+
+//             let locationSpecificEvents = eventsDataByLocation || [];
+//             let nearbyEvents =
+//               (await handleGetNearbyEvents(cityName, stateName, countryName)) ||
+//               [];
+//             // if (locationSpecificEvents.length < 5) {
+//             //   const nearbyEvents =
+//             //     (await handleGetNearbyEvents(
+//             //       cityName,
+//             //       stateName,
+//             //       countryName
+//             //     )) || [];
+
+//             // Combine both location-specific and nearby events, ensuring no duplicates
+//             // Merge location-specific and nearby events while avoiding duplicates
+//             const combinedEvents = [
+//               ...new Map(
+//                 [
+//                   ...(locationSpecificEvents || []),
+//                   // ...(eventsDataByGenre || []),
+//                   ...(nearbyEvents || []),
+//                 ].map((event) => [event._id, event])
+//               ).values(),
+//             ];
+
+//             setEvents(combinedEvents);
+//             setFilteredEvents(combinedEvents);
+//             setNoEventsMessage(
+//               eventsDataByGenre.length === 0
+//                 ? "No events found for this genre."
+//                 : ""
+//             );
+
+//             console.log("Fetched events by location:", eventsDataByLocation);
+//             console.log("Fetched events by genre:", eventsDataByGenre);
+//             console.log("combined events :", combinedEvents);
+//             console.log("Location Specific Events:", locationSpecificEvents);
+//             console.log("Nearby Events:", nearbyEvents);
+
+//             // const combinedEvents = [
+//             //   ...new Map(
+//             //     [
+//             //       ...(eventsDataByLocation || []),
+//             //       ...(eventsDataByGenre || []),
+//             //     ].map((event) => [event._id, event])
+//             //   ).values(),
+//             // ];
+
+//             // Set message if no events
+//           }
+//         }
+//       }
+//     } catch (error) {
+//       console.error("Error loading events or user data:", error);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     loadEvents();
+//   }, [selectedGenre]);
+
+//   const onRefresh = () => {
+//     setRefreshing(true);
+//     loadEvents().then(() => {
+//       setRefreshing(false);
+//     });
+//   };
+
+//   const handleVideoPlayback = (index) => {
+//     const video = videoRefs.current[index];
+//     video.getStatusAsync().then((status) => {
+//       const isCurrentlyPlaying = status.isPlaying;
+//       if (isCurrentlyPlaying) {
+//         video.pauseAsync(); // Pause if currently playing
+//         setIsPlaying((prev) => ({ ...prev, [index]: false })); // Update state
+//       } else {
+//         video.playAsync(); // Play if currently paused
+//         setIsPlaying((prev) => ({ ...prev, [index]: true })); // Update state
+//       }
+//     });
+//   };
+
+//   return (
+//     <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
+//       <ScrollView
+//         style={styles.scrollContainer}
+//         showsVerticalScrollIndicator={false}
+//         refreshControl={
+//           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+//         }
+//       >
+//         <View style={styles.headerContainer}>
+//           <TouchableOpacity onPress={() => navigation.openDrawer()}>
+//             <MaterialCommunityIcons name="menu" color={"#000"} size={30} />
+//           </TouchableOpacity>
+//           <View style={styles.searchContainer}>
+//             <TextInput
+//               style={styles.searchInput}
+//               placeholder="Search Events"
+//               value={searchText}
+//               onChangeText={handleSearch}
+//             />
+//           </View>
+//           <TouchableOpacity
+//             onPress={() => setShowFilters(!showFilters)}
+//             style={styles.filterIcon}
+//           >
+//             <MaterialCommunityIcons
+//               name="account-filter"
+//               color={"#000"}
+//               size={30}
+//             />
+//           </TouchableOpacity>
+//         </View>
+
+//         {showFilters && (
+//           <Filter
+//             setFilteredEvents={setFilteredEvents}
+//             setGenre={setSelectedGenre}
+//             loadEvents={loadEvents}
+//             // handleApplyDateFilters={handleApplyDateFilters}
+//           />
+//         )}
+
+//         {filteredEvents.map((event, index) => (
+//           <View key={event._id} style={styles.videoContainer}>
+//             <Video
+//               ref={(ref) => (videoRefs.current[index] = ref)}
+//               source={{ uri: event.videoUrl }}
+//               style={styles.video}
+//               resizeMode="contain"
+//               shouldPlay={isPlaying[index]} // Play based on state
+//               isLooping={false}
+//               onPlaybackStatusUpdate={(status) => {
+//                 if (!isPlaying[index] && status.isPlaying) {
+//                   Video.pauseAsync(); // Pause if scrolling
+//                 }
+//               }}
+//             />
+//             <View>
+//               <TouchableOpacity
+//                 onPress={() => handleVideoPlayback(index)}
+//                 style={styles.pauseIcon}
+//               >
+//                 <MaterialCommunityIcons
+//                   name={isPlaying[index] ? "pause-circle" : "play-circle"}
+//                   color={"#fff"} // Change to white for better visibility
+//                   size={40}
+//                 />
+//               </TouchableOpacity>
+//             </View>
+
+//             <TouchableOpacity
+//               style={styles.overlay}
+//               onPress={() =>
+//                 navigation.navigate("EventDetailsScreen", {
+//                   eventId: event._id,
+//                 })
+//               }
+//             >
+//               <View style={styles.bottomInfo}>
+//                 <Text style={styles.eventTitle}>{event.title}</Text>
+//                 <Text style={styles.organizer}>by {event.organizer}</Text>
+//               </View>
+//             </TouchableOpacity>
+//           </View>
+//         ))}
+//       </ScrollView>
+//     </Animated.View>
+//   );
+// }
 
 export default function FeedScreen({ navigation }) {
   const fadeAnimation = useRef(new Animated.Value(0)).current;
@@ -299,9 +668,7 @@ export default function FeedScreen({ navigation }) {
   const [filteredEvents, setFilteredEvents] = useState(events);
   const [refreshing, setRefreshing] = useState(false);
   const videoRefs = useRef({});
-  const [isPlaying, setIsPlaying] = useState({}); // Track play/pause state for each video
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
+  const [isPlaying, setIsPlaying] = useState({});
   const [noEventsMessage, setNoEventsMessage] = useState("");
 
   useEffect(() => {
@@ -325,7 +692,6 @@ export default function FeedScreen({ navigation }) {
   // Fetch events based on user location
   const fetchEventsByLocation = async (city, state, country) => {
     try {
-      // Modify the endpoint to include parameters in the URL
       const response = await axios.get(
         `${API_URL}/api/events/location/${city}/${state}/${country}`
       );
@@ -334,75 +700,118 @@ export default function FeedScreen({ navigation }) {
         return response.data;
       }
     } catch (error) {
-      console.error(
-        "Error fetching events by location:",
-        error.response ? error.response.data : error.message
-      );
-
+      console.error("Error fetching events by location:", error);
       return null;
     }
   };
 
-  const fetchEventsByGenre = async (genre) => {
+  const fetchLocationCoordinates = async (locationString) => {
     try {
-      // Modify the endpoint to include genre in the URL
-      const response = await axios.get(`${API_URL}/api/events/genre/${genre}`);
+      console.log("ola api : ", OLA_MAPS_API_KEY);
+      console.log("location FROM FEEDSCREEN :", locationString);
+
+      const requestId = uuidv4();
+      console.log("requestId", requestId);
+
+      const geocodeUrl = `https://api.olamaps.io/places/v1/geocode?address=${locationString}&api_key=${OLA_MAPS_API_KEY}`;
+      const response = await axios.get(geocodeUrl, {
+        headers: { "X-Request-Id": requestId },
+      });
+
+      if (
+        response.data.geocodingResults &&
+        response.data.geocodingResults.length > 0
+      ) {
+        const { lat, lng } =
+          response.data.geocodingResults[0].geometry.location;
+        console.log("Coordinates:", { latitude: lat, longitude: lng });
+        return { latitude: lat, longitude: lng }; // Return coordinates
+      } else {
+        console.error("No results found for the provided location.");
+        return null; // Return null if no results found
+      }
+    } catch (error) {
+      console.error(
+        "Error fetching coordinates:",
+        error.response || error.message
+      );
+      return null; // Return null on error
+    }
+  };
+
+  const fetchNearbyEvents = async (
+    city,
+    state,
+    country,
+    latitude,
+    longitude,
+    maxDistance = "1000000"
+  ) => {
+    try {
+      console.log("Fetching nearby events with parameters:");
+      console.log({ city, state, country, latitude, longitude, maxDistance });
+      const response = await axios.get(
+        `${API_URL}/api/events/nearby/${city}/${state}/${country}/${latitude}/${longitude}/${maxDistance}`
+      );
 
       if (response.status === 200) {
         return response.data;
       }
     } catch (error) {
       console.error(
-        "Error fetching events by genre:",
+        "Error fetching nearby events:",
         error.response ? error.response.data : error.message
       );
-
-      return [];
+      return null;
     }
   };
-
-  useEffect(() => {
-    loadEvents();
-  }, [selectedGenre]);
 
   const loadEvents = async () => {
     try {
       setLoading(true);
-      const userId = await getUserId();
+      const userId = await getUserId(); // Implement this to get userId
       if (userId) {
-        const userData = await getUserData(userId);
-        console.log("user data from feedscreen :", userData);
+        const userData = await getUserData(userId); // Implement this to get user data
         if (userData) {
           const { cityName, stateName, countryName } = userData;
           if (cityName && stateName && countryName) {
-            // Pass parameters directly in the API calls
-            const eventsDataByLocation = await fetchEventsByLocation(
-              cityName,
-              stateName,
-              countryName
-            );
-            const eventsDataByGenre = selectedGenre
-              ? await fetchEventsByGenre(selectedGenre)
-              : [];
+            const locationEvents =
+              (await fetchEventsByLocation(cityName, stateName, countryName)) ||
+              [];
 
+            // Create a location string for the coordinates lookup
+            const locationString = `${cityName}, ${stateName}, ${countryName}`;
+            const { latitude, longitude } =
+              (await fetchLocationCoordinates(locationString)) || {};
+
+            // Only fetch nearby events if coordinates are successfully retrieved
+            let nearbyEvents = [];
+            if (latitude && longitude) {
+              nearbyEvents =
+                (await fetchNearbyEvents(
+                  cityName,
+                  stateName,
+                  countryName,
+                  latitude,
+                  longitude
+                )) || [];
+            }
+
+            // Combine both event lists and avoid duplicates
             const combinedEvents = [
               ...new Map(
-                [
-                  ...(eventsDataByLocation || []),
-                  ...(eventsDataByGenre || []),
-                ].map((event) => [event._id, event])
+                [...locationEvents, ...nearbyEvents].map((event) => [
+                  event._id,
+                  event,
+                ])
               ).values(),
             ];
 
             setEvents(combinedEvents);
             setFilteredEvents(combinedEvents);
             setNoEventsMessage(
-              eventsDataByGenre.length === 0
-                ? "No events found for this genre."
-                : ""
-            ); // Set message if no events
-            console.log("Fetched events by location:", eventsDataByLocation);
-            console.log("Fetched events by genre:", eventsDataByGenre);
+              combinedEvents.length === 0 ? "No events found." : ""
+            );
           }
         }
       }
@@ -412,6 +821,10 @@ export default function FeedScreen({ navigation }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadEvents();
+  }, [selectedGenre]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -425,11 +838,11 @@ export default function FeedScreen({ navigation }) {
     video.getStatusAsync().then((status) => {
       const isCurrentlyPlaying = status.isPlaying;
       if (isCurrentlyPlaying) {
-        video.pauseAsync(); // Pause if currently playing
-        setIsPlaying((prev) => ({ ...prev, [index]: false })); // Update state
+        video.pauseAsync();
+        setIsPlaying((prev) => ({ ...prev, [index]: false }));
       } else {
-        video.playAsync(); // Play if currently paused
-        setIsPlaying((prev) => ({ ...prev, [index]: true })); // Update state
+        video.playAsync();
+        setIsPlaying((prev) => ({ ...prev, [index]: true }));
       }
     });
   };
@@ -447,14 +860,12 @@ export default function FeedScreen({ navigation }) {
           <TouchableOpacity onPress={() => navigation.openDrawer()}>
             <MaterialCommunityIcons name="menu" color={"#000"} size={30} />
           </TouchableOpacity>
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search location"
-              value={searchText}
-              onChangeText={handleSearch}
-            />
-          </View>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search Events"
+            value={searchText}
+            onChangeText={handleSearch}
+          />
           <TouchableOpacity
             onPress={() => setShowFilters(!showFilters)}
             style={styles.filterIcon}
@@ -472,7 +883,6 @@ export default function FeedScreen({ navigation }) {
             setFilteredEvents={setFilteredEvents}
             setGenre={setSelectedGenre}
             loadEvents={loadEvents}
-            // handleApplyDateFilters={handleApplyDateFilters}
           />
         )}
 
@@ -483,26 +893,24 @@ export default function FeedScreen({ navigation }) {
               source={{ uri: event.videoUrl }}
               style={styles.video}
               resizeMode="contain"
-              shouldPlay={isPlaying[index]} // Play based on state
+              shouldPlay={isPlaying[index]}
               isLooping={false}
               onPlaybackStatusUpdate={(status) => {
                 if (!isPlaying[index] && status.isPlaying) {
-                  Video.pauseAsync(); // Pause if scrolling
+                  Video.pauseAsync();
                 }
               }}
             />
-            <View>
-              <TouchableOpacity
-                onPress={() => handleVideoPlayback(index)}
-                style={styles.pauseIcon}
-              >
-                <MaterialCommunityIcons
-                  name={isPlaying[index] ? "pause-circle" : "play-circle"}
-                  color={"#fff"} // Change to white for better visibility
-                  size={40}
-                />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              onPress={() => handleVideoPlayback(index)}
+              style={styles.pauseIcon}
+            >
+              <MaterialCommunityIcons
+                name={isPlaying[index] ? "pause-circle" : "play-circle"}
+                color={"#fff"}
+                size={40}
+              />
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.overlay}
@@ -519,6 +927,9 @@ export default function FeedScreen({ navigation }) {
             </TouchableOpacity>
           </View>
         ))}
+        {noEventsMessage && (
+          <Text style={styles.noEventsMessage}>{noEventsMessage}</Text>
+        )}
       </ScrollView>
     </Animated.View>
   );

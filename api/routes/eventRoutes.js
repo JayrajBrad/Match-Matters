@@ -7,6 +7,9 @@ const {
   getEventsByUserId,
   getEventsByDateRange,
   getEventsByGenre,
+  registerForEvent,
+  getEventParticipants,
+  getNearbyEvents,
   likeEvent,
   addComment,
   incrementViews,
@@ -22,9 +25,15 @@ router.post("/events", authenticateToken, createEvent);
 router.get("/getEvents", getUserEvents);
 router.get("/all-events", getAllEvents);
 router.get("/events/:eventId", getEventById);
+router.post("/events/:eventId/register", authenticateToken, registerForEvent);
+router.get("/events/:eventId/participants", getEventParticipants);
+router.get(
+  "/events/nearby/:city/:state/:country/:latitude/:longitude/:maxDistance",
+  getNearbyEvents
+);
+
 router.get("/:userId/events", getEventsByUserId);
-// router.get("/events/location", getEventsByLocation);
-// router.get("/events/genre", getEventsByGenre);
+
 router.get("/events/location/:city/:state/:country", getEventsByLocation);
 router.get("/events/genre/:genre", getEventsByGenre);
 
