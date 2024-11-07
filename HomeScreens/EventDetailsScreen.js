@@ -15,7 +15,8 @@ import { Ionicons } from "@expo/vector-icons"; // For the back arrow icon
 import MapView, { Marker } from "react-native-maps";
 import axios from "axios";
 import { API_URL, OLA_MAPS_API_KEY } from "@env";
-import { getToken } from "../backend/token";
+import { getToken, getRefreshToken } from "../backend/token";
+import { getUserId } from "../backend/registrationUtils";
 import { v4 as uuidv4 } from "uuid";
 
 const EventDetailsScreen = ({ route, navigation }) => {
@@ -86,6 +87,92 @@ const EventDetailsScreen = ({ route, navigation }) => {
     const slideSize = event.nativeEvent.layoutMeasurement.width;
     const index = Math.round(event.nativeEvent.contentOffset.x / slideSize);
     setCurrentIndex(index);
+  };
+
+  // Function to handle booking the event
+  // const handleBookEvent = async () => {
+  //   try {
+  //     const token = await getToken();
+  //     const response = await axios.post(
+  //       `${API_URL}/api/events/${eventId}/register`, // Make sure your backend has this endpoint
+  //       {},
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "x-refresh-token": refreshToken,
+  //         },
+  //       }
+  //     );
+
+  //     if (response.status === 200) {
+  //       alert("Successfully registered for the event!");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error booking event:", error.response);
+  //     alert("Failed to register for the event. Please try again.");
+  //   }
+  // };
+
+  const handleBookEvent = async () => {
+    try {
+      let token = await getToken(); // Get the initial token
+      const userId = await getUserId();
+      const refreshToken = await getRefreshToken(); // Retrieve the refresh token
+      if (!token) {
+        alert("No access token found. Cannot proceed with registration.");
+        return; // Prevent proceeding without a valid token
+      }
+
+      const registerForEvent = async (token) => {
+        return await axios.post(
+          `${API_URL}/api/events/${eventId}/register`,
+          { userId }, // Ensure your backend has this endpoint
+
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "x-refresh-token": refreshToken,
+            },
+          }
+        );
+      };
+
+      try {
+        const response = await registerForEvent(token);
+        if (response.status === 200) {
+          alert("Successfully registered for the event!");
+        }
+      } catch (error) {
+        if (error.response && error.response.status === 403) {
+          console.log("Token expired, attempting to refresh...");
+          try {
+            // Refresh the token
+            token = await refreshAuthToken(refreshToken); // Refresh the token
+            await saveToken(token); // Optionally save the new token
+
+            // Retry the registration with the new token
+            const retryResponse = await registerForEvent(token);
+            if (retryResponse.status === 200) {
+              alert("Successfully registered for the event!");
+            } else {
+              alert(
+                `Failed to register for the event on retry. Status: ${retryResponse.status}`
+              );
+            }
+          } catch (refreshError) {
+            console.error("Error refreshing token:", refreshError);
+            alert("Session expired. Please log in again.");
+            // Optionally, redirect the user to the login page
+            // navigation.navigate("Login"); // Adjust according to your navigation setup
+          }
+        } else {
+          throw error; // Handle other errors
+        }
+      }
+    } catch (error) {
+      console.error("Error booking event:", error);
+      alert("Failed to register for the event. Please try again.");
+    }
   };
 
   if (loading) {
@@ -251,9 +338,9 @@ const EventDetailsScreen = ({ route, navigation }) => {
         </View>
 
         {/* Distance from Home */}
-        <Text style={styles.distanceText}>
+        {/* <Text style={styles.distanceText}>
           {event.distance || "Distance"} km distance from your home
-        </Text>
+        </Text> */}
 
         {/* Thin Line */}
         <View style={styles.thinLine} />
@@ -263,7 +350,7 @@ const EventDetailsScreen = ({ route, navigation }) => {
           <TouchableOpacity style={styles.inviteButton}>
             <Text style={styles.buttonText}>Invite</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.bookButton}>
+          <TouchableOpacity style={styles.bookButton} onPress={handleBookEvent}>
             <Text style={styles.buttonText}>Book Event</Text>
           </TouchableOpacity>
         </View>

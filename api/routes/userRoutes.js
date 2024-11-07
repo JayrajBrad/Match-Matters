@@ -17,5 +17,6 @@ router.delete(
   userController.deleteProfileImage
 );
 router.get("/:userId/events", userController.getCreatedEventsByUserId);
+router.get("/users/:userId/events", userController.getUserBookedEvents);
 
 module.exports = router;

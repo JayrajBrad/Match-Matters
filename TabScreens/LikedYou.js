@@ -1,11 +1,22 @@
-import { View, Text, StyleSheet, Image, Animated, ScrollView, TouchableOpacity } from 'react-native';
-import React, { useEffect, useRef } from 'react';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Video } from 'expo-av';
-import icon from "../assets/Match matters logo (1).png";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  Image,
+  Animated,
+  RefreshControl,
+} from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import axios from "axios";
+import { API_URL } from "@env";
+import { getUserId } from "../backend/registrationUtils";
 
 export default function Profile({ navigation }) {
   const fadeAnimation = useRef(new Animated.Value(0)).current;
+  const [events, setEvents] = useState([]);
+  const [refreshing, setRefreshing] = useState(false); // State to manage the refreshing status
 
   useEffect(() => {
     Animated.timing(fadeAnimation, {
@@ -15,128 +26,178 @@ export default function Profile({ navigation }) {
     }).start();
   }, [fadeAnimation]);
 
+  useEffect(() => {
+    fetchBookedEvents(); // Fetch events when the component mounts
+  }, []);
+
+  // Function to fetch booked events for the user
+  const fetchBookedEvents = async () => {
+    try {
+      const userId = await getUserId(); // Retrieve the user ID
+      console.log("User ID:", userId);
+      const response = await axios.get(
+        `${API_URL}/user/users/${userId}/events`
+      );
+      setEvents(response.data);
+    } catch (error) {
+      console.error("Error fetching booked events:", error.response);
+    }
+  };
+
+  // Function to handle pull-to-refresh
+  const onRefresh = async () => {
+    setRefreshing(true); // Set refreshing to true
+    await fetchBookedEvents(); // Fetch events again
+    setRefreshing(false); // Set refreshing to false after fetching
+  };
+
+  const handleEventPress = async (eventId) => {
+    navigation.navigate("EventParticipantsScreen", { eventId }); // Navigate to the participants screen
+  };
 
   return (
-     <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.banner}>Likes</Text>
-        <MaterialCommunityIcons name="view-dashboard-edit" color={"#000000"} size={40}  style={styles.filter} />       
-      </View>
-
-
-      <View style={styles.videoContainer}>
-      <MaterialCommunityIcons name="eye" color={"#000000"} size={45} />
-        <Text style = {styles.profileName}>You're sure to get noticed soon</Text>
-        <Text style ={{fontSize:15,}}>In the meantime,increase your visibility to get you first likes</Text>
-        </View>
-
-   
-        <View style={styles.premium}>
-          <TouchableOpacity > 
-            <View>
-              <Text style={styles.premiumText}>Boost Your Profile</Text>
+    <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
+      <FlatList
+        data={events}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => handleEventPress(item._id)}
+            style={styles.eventItem}
+          >
+            <Image
+              source={{ uri: item.images[0]?.url }} // Assuming images is an array and we get the first image
+              style={styles.eventImage}
+            />
+            <View style={styles.eventInfo}>
+              <Text style={styles.eventTitle}>{item.title}</Text>
+              <Text style={styles.eventDate}>
+                {new Date(item.date).toLocaleDateString()}
+              </Text>
+              <Text style={styles.eventOrganizer}>{item.organizer}</Text>
+              {/* <Text style={styles.eventDetails}>{item.eventDetails}</Text> */}
             </View>
-            </TouchableOpacity>
+          </TouchableOpacity>
+        )}
+        keyExtractor={(item) => item._id}
+        style={styles.eventsList}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> // Add RefreshControl
+        }
+        ListEmptyComponent={() => (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No liked events found</Text>
           </View>
-       
-          <View style={styles.premium1}>
-          <TouchableOpacity onPress={() => navigation.navigate("Profile")}> 
-              <Text style={styles.premiumText1}>Edit Your Profile</Text>
-            </TouchableOpacity>
+        )}
+      />
+
+      <View style={styles.premium}>
+        <TouchableOpacity>
+          <View>
+            <Text style={styles.premiumText}>Boost Your Profile</Text>
           </View>
-        
-          
-    
-     
+        </TouchableOpacity>
+      </View>
+      {/* 
+      <View style={styles.premium1}>
+        <TouchableOpacity onPress={() => navigation.navigate("Profile.js")}>
+          <Text style={styles.premiumText1}>Edit Your Profile</Text>
+        </TouchableOpacity>
+      </View> */}
     </Animated.View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
-  headerContainer: {
-    position: 'absolute',
-    // left: 10,
-    top:40,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 30,
-    paddingVertical: 10,
-    backgroundColor: '#fff', 
+  eventsList: {
+    marginTop: 20,
+    width: "100%",
+    paddingHorizontal: 10,
   },
-  banner: {
-    fontSize: 35,
-    fontWeight: 'bold',
-  },
-  filter: {
-    left:220,
-
-  },
-  videoContainer: {
-    flex: 1,
-    // justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 120, 
+  eventItem: {
+    marginTop: 15,
     marginBottom: 10,
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
   },
-  video: {
-    width: '50%', 
-    height: '30%', 
-    borderRadius: 500, 
+  eventImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
   },
-  profileName:{
-    marginTop:15,
+  eventInfo: {
+    marginLeft: 10,
+    justifyContent: "center",
+  },
+  eventTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  buttonEdit:{
-
+  eventDate: {
+    fontSize: 14,
+    color: "#555",
   },
-   premium:{
+  eventOrganizer: {
+    fontSize: 14,
+    color: "#888",
+  },
+  eventDetails: {
+    fontSize: 12,
+    color: "#aaa",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 18,
+    color: "#888",
+  },
+  premium: {
     marginTop: 40,
     padding: 25,
-    left:40,
+    left: 40,
     paddingHorizontal: 20,
-    backgroundColor: '#ffb3ba',
+    backgroundColor: "#ffb3ba",
     borderRadius: 30,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '80%',
-    height: '10%',
-   },
-   premiumIcon: {
-    marginRight: 10,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    width: "80%",
+    height: "10%",
   },
-   premiumText: {
+  premiumText: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  premium1:{
+  premium1: {
     marginTop: 40,
     marginBottom: 20,
     padding: 25,
-    left:40,
+    left: 40,
     paddingHorizontal: 20,
-    backgroundColor: '#bae1ff',
+    backgroundColor: "#bae1ff",
     borderRadius: 30,
-    flexDirection: 'row',
-    alignItems:'center',
-    justifyContent: 'center',
-    width: '80%',
-    height: '10%',
-   },
-   premiumIcon1: {
-    marginRight: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "80%",
+    height: "10%",
   },
-   premiumText1: {
+  premiumText1: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  
-  
 });

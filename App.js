@@ -41,6 +41,7 @@ import EventDetailsScreen from "./HomeScreens/EventDetailsScreen";
 import SignPassword from "./Screens/SignPassword";
 import ChatRoomScreen from "./TabScreens/ChatRoomScreen";
 import Filter from "./components/FilterComponent";
+import EventParticipantsScreen from "./TabScreens/EventParticipants";
 
 // Import custom icons
 import Connection from "./assets/Connection.png";
@@ -218,6 +219,15 @@ const App = () => {
           component={EventDetailsScreen}
           options={{
             title: "Event Details",
+            headerShown: true,
+            headerTitleAlign: "center", // Align title to center
+          }}
+        />
+        <Stack.Screen
+          name="EventParticipantsScreen"
+          component={EventParticipantsScreen}
+          options={{
+            title: "Participants",
             headerShown: true,
             headerTitleAlign: "center", // Align title to center
           }}
@@ -405,7 +415,7 @@ const TabNavigator = () => {
         name="Liked"
         component={LikedYou}
         options={{
-          title: "Liked",
+          title: "Vibed",
           headerShown: true,
           headerTitleAlign: "center", // Align title to center
           tabBarIcon: ({ focused }) => (
