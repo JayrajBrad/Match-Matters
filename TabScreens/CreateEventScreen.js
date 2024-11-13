@@ -13,6 +13,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode"; // Assuming you're using a package like jwt-decode
 import { Video } from "expo-av";
 import { Dropdown } from "react-native-element-dropdown";
 import { Country, State, City } from "country-state-city";
@@ -227,165 +228,16 @@ const CreateEventScreen = ({ navigation }) => {
     setShowDeleteIcon(null);
   };
 
-  const refreshAuthToken = async (refreshToken) => {
-    console.log("Attempting to refresh with token:", refreshToken);
-    try {
-      const response = await axios.post(`${API_URL}/user/refresh-token`, {
-        token: refreshToken,
-      });
-      return response.data.token; // Return the new token
-    } catch (error) {
-      console.error("Error refreshing token:", error);
-      throw error; // Rethrow error to handle it in the calling function
-    }
-  };
-
-  // const handlePublish = async () => {
+  // const refreshAuthToken = async (refreshToken) => {
+  //   console.log("Attempting to refresh with token:", refreshToken);
   //   try {
-  //     let token = await getToken(); // Get the token initially
-  //     console.log("token from createevent :", token);
-
-  //     if (!token) {
-  //       console.log("No access token found. Cannot proceed with publish.");
-  //       return; // Prevent proceeding without a valid token
-  //     }
-  //     const formattedDate = startDate ? new Date(startDate).toISOString() : "";
-  //     const formattedTime = startTime
-  //       ? startTime.toTimeString().split(" ")[0]
-  //       : "";
-
-  //     const uploadedImages = await Promise.all(
-  //       images.map(async (image) => {
-  //         if (image) {
-  //           return await uploadFile(image, "image");
-  //         }
-  //         return null;
-  //       })
-  //     );
-
-  //     // Filter out null values
-  //     const validImages = uploadedImages.filter(Boolean);
-
-  //     const uploadedVideo = videoUrl
-  //       ? await uploadFile(videoUrl, "video")
-  //       : null;
-
-  //     // Add the location data from the form
-  //     const locationData = {
-  //       baseAddress,
-  //       country: countryName,
-  //       state: stateName,
-  //       city: cityName,
-  //     };
-
-  //     // Prepare the event data
-  //     const eventData = {
-  //       userId: await getUserId(),
-  //       title,
-  //       date: formattedDate,
-  //       time: formattedTime,
-  //       organizer: organizerName,
-  //       eventDetails: description,
-  //       artists: [
-  //         {
-  //           name: artistName,
-  //           role: "Artist",
-  //         },
-  //       ],
-  //       location: locationData,
-  //       genre: eventGenre,
-  //       images: validImages.map((url) => ({ url })),
-  //       videoUrl: uploadedVideo,
-  //       ticketPrice: parseFloat(ticketPrice),
-  //     };
-
-  //     console.log("event data :", eventData);
-
-  //     // Function to send the publish request
-  //     const publishEvent = async (token) => {
-  //       return await axios.post(
-  //         `${API_URL}/api/events`, // Adjust the URL as needed
-  //         eventData,
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${token}`,
-  //             "Content-Type": "multipart/form-data",
-  //           },
-  //           timeout: 20000,
-  //         }
-  //       );
-  //     };
-
-  //     // Attempt to publish the event
-  //     try {
-  //       const response = await publishEvent(token);
-  //       if (response.status === 201) {
-  //         alert("Event successfully published!");
-  //         navigation.goBack();
-  //       } else {
-  //         alert(`Failed to publish event. Status: ${response.status}`);
-  //       }
-  //     } catch (error) {
-  //       // Handle token expiration
-  //       if (error.response && error.response.status === 403) {
-  //         console.log("Token expired, attempting to refresh...");
-  //         // Refresh the token
-  //         try {
-  //           // Use a different way to get refreshToken, if it’s stored in localStorage in your app
-  //           const refreshToken = await getRefreshToken(); // Implement this method based on your storage strategy
-  //           console.log("Using refresh token for request:", refreshToken);
-  //           // Refresh the token
-
-  //           if (!refreshToken) {
-  //             console.log(
-  //               "No refresh token found. User may need to log in again."
-  //             );
-  //             return; // Prevent proceeding if no refresh token is available
-  //           }
-
-  //           token = await refreshAuthToken(refreshToken); // Call the function with the correct token
-
-  //           // Store the new token if necessary
-  //           await saveToken(token); // Optional: save new token to localStorage
-
-  //           // Retry the publish request with the new token
-  //           const retryResponse = await publishEvent(token);
-  //           if (retryResponse.status === 201) {
-  //             alert("Event successfully published!");
-  //             navigation.goBack();
-  //           } else {
-  //             alert(
-  //               `Failed to publish event on retry. Status: ${retryResponse.status}`
-  //             );
-  //           }
-  //         } catch (refreshError) {
-  //           console.error("Error refreshing token:", refreshError);
-  //           alert("Session expired. Please log in again.");
-  //           // Optionally, redirect the user to the login page
-  //           // navigation.navigate("Login"); // Adjust according to your navigation setup
-  //         }
-  //       } else {
-  //         throw error; // Handle other errors
-  //       }
-  //     }
+  //     const response = await axios.post(`${API_URL}/user/refresh-token`, {
+  //       token: refreshToken,
+  //     });
+  //     return response.data.token; // Return the new token
   //   } catch (error) {
-  //     console.error("Error publishing event:", error);
-  //     if (error.response) {
-  //       console.error("Response data:", error.response.data);
-  //       console.error("Response status:", error.response.status);
-  //       console.error("Response headers:", error.response.headers);
-  //       alert(
-  //         `Error: ${
-  //           error.response.data.message || "Something went wrong"
-  //         } (Status: ${error.response.status})`
-  //       );
-  //     } else if (error.request) {
-  //       console.error("Request:", error.request);
-  //       alert("No response received from the server.");
-  //     } else {
-  //       console.error("Error message:", error.message);
-  //       alert(`Error: ${error.message}`);
-  //     }
+  //     console.error("Error refreshing token:", error);
+  //     throw error; // Rethrow error to handle it in the calling function
   //   }
   // };
 
@@ -431,148 +283,103 @@ const CreateEventScreen = ({ navigation }) => {
 
   const handlePublish = async () => {
     try {
-      let token = await getToken(); // Get the token initially
-      console.log("token from CreateEventScreen:", token);
+      // Step 1: Fetch and decode the token
+      let token = await getToken();
+      console.log("Token from CreateEventScreen:", token);
 
       if (!token) {
         console.log("No access token found. Cannot proceed with publish.");
         return; // Prevent proceeding without a valid token
       }
 
+      const decodedToken = jwtDecode(token);
+      const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+
+      console.log("Token expiration time (exp):", decodedToken.exp);
+      console.log("Current time in seconds:", currentTimeInSeconds);
+
+      if (decodedToken.exp < currentTimeInSeconds) {
+        console.log("Token expired. Please log in again.");
+        alert("Session expired. Please log in again.");
+        return; // Exit the publish function if the token is expired
+      }
+
+      // Step 2: Prepare date and time in the required format
       const formattedDate = startDate ? new Date(startDate).toISOString() : "";
       const formattedTime = startTime
         ? startTime.toTimeString().split(" ")[0]
         : "";
 
+      // Step 3: Upload images and video if available
       const uploadedImages = await Promise.all(
-        images.map(async (image) => {
-          if (image) {
-            return await uploadFile(image, "image");
-          }
-          return null;
-        })
+        images.map(async (image) =>
+          image ? await uploadFile(image, "image") : null
+        )
       );
-
       const validImages = uploadedImages.filter(Boolean);
       const uploadedVideo = videoUrl
         ? await uploadFile(videoUrl, "video")
         : null;
 
-      // Fetch location coordinates based on baseAddress
+      // Step 4: Fetch coordinates based on baseAddress
       const locationCoordinates = await fetchLocationCoordinates(
         baseAddress,
         cityName,
         stateName,
         countryName
       );
-      if (locationCoordinates) {
-        const { latitude, longitude } = locationCoordinates;
 
-        const locationData = {
-          baseAddress,
-          country: countryName,
-          state: stateName,
-          city: cityName,
-          latitude, // Use the fetched latitude
-          longitude, // Use the fetched longitude
-        };
+      if (!locationCoordinates) {
+        alert("Failed to fetch location coordinates.");
+        return;
+      }
 
-        // Prepare the event data
-        const eventData = {
-          userId: await getUserId(),
-          title,
-          date: formattedDate,
-          time: formattedTime,
-          organizer: organizerName,
-          eventDetails: description,
-          artists: [
-            {
-              name: artistName,
-              role: "Artist",
-            },
-          ],
-          location: locationData,
-          genre: eventGenre,
-          images: validImages.map((url) => ({ url })),
-          videoUrl: uploadedVideo,
-          ticketPrice: parseFloat(ticketPrice),
-        };
+      const { latitude, longitude } = locationCoordinates;
+      const locationData = {
+        baseAddress,
+        country: countryName,
+        state: stateName,
+        city: cityName,
+        latitude,
+        longitude,
+      };
 
-        console.log("event data:", eventData);
+      // Step 5: Assemble event data
+      const eventData = {
+        userId: await getUserId(),
+        title,
+        date: formattedDate,
+        time: formattedTime,
+        organizer: organizerName,
+        eventDetails: description,
+        artists: [{ name: artistName, role: "Artist" }],
+        location: locationData,
+        genre: eventGenre,
+        images: validImages.map((url) => ({ url })),
+        videoUrl: uploadedVideo,
+        ticketPrice: parseFloat(ticketPrice),
+      };
 
-        // Function to send the publish request
-        const publishEvent = async (token) => {
-          return await axios.post(`${API_URL}/api/events`, eventData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-            timeout: 20000,
-          });
-        };
+      console.log("Event data:", eventData);
 
-        // Attempt to publish the event
-        try {
-          const response = await publishEvent(token);
-          if (response.status === 201) {
-            alert("Event successfully published!");
-            navigation.goBack();
-          } else {
-            alert(`Failed to publish event. Status: ${response.status}`);
-          }
-        } catch (error) {
-          // Handle token expiration
-          if (error.response && error.response.status === 403) {
-            console.log("Token expired, attempting to refresh...");
-            // Refresh the token
-            try {
-              const refreshToken = await getRefreshToken();
-              if (!refreshToken) {
-                console.log(
-                  "No refresh token found. User may need to log in again."
-                );
-                return; // Prevent proceeding if no refresh token is available
-              }
+      // Step 6: Make the publish request
+      const response = await axios.post(`${API_URL}/api/events`, eventData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+        timeout: 20000,
+      });
 
-              token = await refreshAuthToken(refreshToken);
-
-              // Store the new token if necessary
-              await saveToken(token);
-
-              // Retry the publish request with the new token
-              const retryResponse = await publishEvent(token);
-              if (retryResponse.status === 201) {
-                alert("Event successfully published!");
-                navigation.goBack();
-              } else {
-                alert(
-                  `Failed to publish event on retry. Status: ${retryResponse.status}`
-                );
-              }
-            } catch (refreshError) {
-              console.error("Error refreshing token:", refreshError);
-              alert("Session expired. Please log in again.");
-            }
-          } else {
-            throw error; // Handle other errors
-          }
-        }
+      if (response.status === 201) {
+        alert("Event successfully published!");
+        navigation.goBack();
       } else {
-        alert(
-          "Failed to fetch location coordinates. Please check the address."
-        );
+        alert(`Failed to publish event. Status: ${response.status}`);
       }
     } catch (error) {
-      console.error("Error publishing event:", error);
-      if (error.response) {
-        alert(
-          `Error: ${
-            error.response.data.message || "Something went wrong"
-          } (Status: ${error.response.status})`
-        );
-      } else {
-        alert(`Error: ${error.message}`);
-      }
+      console.error("Error publishing event:", error.message);
+      alert("An error occurred. Please try again.");
     }
   };
 
@@ -817,6 +624,7 @@ const CreateEventScreen = ({ navigation }) => {
             onConfirm={handleConfirmDate}
             onCancel={hideDatePicker}
             textColor="#000"
+            // minimumDate={today}
           />
 
           {/* Time Picker Modal */}

@@ -400,60 +400,6 @@ const getEventParticipants = async (req, res) => {
   }
 };
 
-// const getNearbyEvents = async (req, res) => {
-//   const { city, state, country, latitude, longitude, maxDistance } = req.params;
-
-//   try {
-//     let events = await Event.find({
-//       "location.coordinates": {
-//         $near: {
-//           $geometry: {
-//             type: "Point",
-//             coordinates: [parseFloat(longitude), parseFloat(latitude)],
-//           },
-//           $maxDistance: parseInt(maxDistance, 10),
-//         },
-//       },
-//       "location.city": city,
-//       "location.state": state,
-//       "location.country": country,
-//     });
-
-//     // Check if less than 5 events are found
-//     if (events.length < 5) {
-//       // Fetch additional nearby events without filtering by city
-//       const nearbyEvents = await Event.find({
-//         "location.coordinates": {
-//           $near: {
-//             $geometry: {
-//               type: "Point",
-//               coordinates: [parseFloat(longitude), parseFloat(latitude)],
-//             },
-//             $maxDistance: parseInt(maxDistance, 10),
-//           },
-//         },
-//       });
-
-//       // Merge the two arrays while avoiding duplicates
-//       events = [
-//         ...events,
-//         ...nearbyEvents.filter(
-//           (ne) => !events.some((e) => e._id.equals(ne._id))
-//         ),
-//       ];
-//     }
-
-//     console.log("from nearby events :", events);
-
-//     res.status(200).json(events);
-//   } catch (error) {
-//     console.error("Error in getNearbyEvents controller:", error);
-//     res.status(500).json({ error: "Failed to fetch nearby events" });
-//   }
-// };
-
-// Controller to handle likes
-
 const getNearbyEvents = async (req, res) => {
   const { city, state, country, latitude, longitude, maxDistance } = req.params;
 
@@ -461,7 +407,7 @@ const getNearbyEvents = async (req, res) => {
   const parsedLongitude = parseFloat(longitude);
   const parsedLatitude = parseFloat(latitude);
   let parsedMaxDistance = parseInt(maxDistance, 10) || 1000000; // Default to 1000 if invalid
-  console.log("Parsed coordinates:", { parsedLongitude, parsedLatitude });
+  // console.log("Parsed coordinates:", { parsedLongitude, parsedLatitude });
 
   // Validate coordinates
   if (isNaN(parsedLatitude) || isNaN(parsedLongitude)) {
@@ -508,7 +454,7 @@ const getNearbyEvents = async (req, res) => {
       ];
     }
 
-    console.log("from nearby events :", events);
+    // console.log("from nearby events :", events);
 
     res.status(200).json(events);
   } catch (error) {

@@ -34,6 +34,7 @@
     "expo-linear-gradient": "^13.0.2",
     "expo-location": "^17.0.1",
     "expo-status-bar": "~1.12.1",
+    "jwt-decode": "^4.0.0",
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
     "pod-install": "^0.2.2",
@@ -65,7 +66,8 @@
     "react-native-swiper": "^1.6.0",
     "react-native-thumbnail-video": "^0.1.2",
     "react-native-vector-icons": "^10.1.0",
-    "socket.io-client": "^4.7.5"
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

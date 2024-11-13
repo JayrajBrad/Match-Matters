@@ -89,85 +89,91 @@ const EventDetailsScreen = ({ route, navigation }) => {
     setCurrentIndex(index);
   };
 
-  // Function to handle booking the event
   // const handleBookEvent = async () => {
   //   try {
-  //     const token = await getToken();
-  //     const response = await axios.post(
-  //       `${API_URL}/api/events/${eventId}/register`, // Make sure your backend has this endpoint
-  //       {},
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //           "x-refresh-token": refreshToken,
-  //         },
-  //       }
-  //     );
+  //     let token = await getToken(); // Get the initial token
+  //     const userId = await getUserId();
+  //     const refreshToken = await getRefreshToken(); // Retrieve the refresh token
+  //     if (!token) {
+  //       alert("No access token found. Cannot proceed with registration.");
+  //       return; // Prevent proceeding without a valid token
+  //     }
 
-  //     if (response.status === 200) {
-  //       alert("Successfully registered for the event!");
+  //     const registerForEvent = async (token) => {
+  //       return await axios.post(
+  //         `${API_URL}/api/events/${eventId}/register`,
+  //         { userId }, // Ensure your backend has this endpoint
+
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //             "x-refresh-token": refreshToken,
+  //           },
+  //         }
+  //       );
+  //     };
+
+  //     try {
+  //       const response = await registerForEvent(token);
+  //       if (response.status === 200) {
+  //         alert("Successfully registered for the event!");
+  //       }
+  //     } catch (error) {
+  //       if (error.response && error.response.status === 403) {
+  //         console.log("Token expired, attempting to refresh...");
+  //         try {
+  //           // Refresh the token
+  //           token = await refreshAuthToken(refreshToken); // Refresh the token
+  //           await saveToken(token); // Optionally save the new token
+
+  //           // Retry the registration with the new token
+  //           const retryResponse = await registerForEvent(token);
+  //           if (retryResponse.status === 200) {
+  //             alert("Successfully registered for the event!");
+  //           } else {
+  //             alert(
+  //               `Failed to register for the event on retry. Status: ${retryResponse.status}`
+  //             );
+  //           }
+  //         } catch (refreshError) {
+  //           console.error("Error refreshing token:", refreshError);
+  //           alert("Session expired. Please log in again.");
+  //           // Optionally, redirect the user to the login page
+  //           // navigation.navigate("Login"); // Adjust according to your navigation setup
+  //         }
+  //       } else {
+  //         throw error; // Handle other errors
+  //       }
   //     }
   //   } catch (error) {
-  //     console.error("Error booking event:", error.response);
+  //     console.error("Error booking event:", error);
   //     alert("Failed to register for the event. Please try again.");
   //   }
   // };
 
   const handleBookEvent = async () => {
     try {
-      let token = await getToken(); // Get the initial token
-      const userId = await getUserId();
-      const refreshToken = await getRefreshToken(); // Retrieve the refresh token
+      const token = await getToken(); // Get the access token
+      const userId = await getUserId(); // Retrieve the user ID
       if (!token) {
         alert("No access token found. Cannot proceed with registration.");
         return; // Prevent proceeding without a valid token
       }
 
-      const registerForEvent = async (token) => {
-        return await axios.post(
-          `${API_URL}/api/events/${eventId}/register`,
-          { userId }, // Ensure your backend has this endpoint
-
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "x-refresh-token": refreshToken,
-            },
-          }
-        );
-      };
-
-      try {
-        const response = await registerForEvent(token);
-        if (response.status === 200) {
-          alert("Successfully registered for the event!");
+      const response = await axios.post(
+        `${API_URL}/api/events/${eventId}/register`, // Ensure your backend has this endpoint
+        { userId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      } catch (error) {
-        if (error.response && error.response.status === 403) {
-          console.log("Token expired, attempting to refresh...");
-          try {
-            // Refresh the token
-            token = await refreshAuthToken(refreshToken); // Refresh the token
-            await saveToken(token); // Optionally save the new token
+      );
 
-            // Retry the registration with the new token
-            const retryResponse = await registerForEvent(token);
-            if (retryResponse.status === 200) {
-              alert("Successfully registered for the event!");
-            } else {
-              alert(
-                `Failed to register for the event on retry. Status: ${retryResponse.status}`
-              );
-            }
-          } catch (refreshError) {
-            console.error("Error refreshing token:", refreshError);
-            alert("Session expired. Please log in again.");
-            // Optionally, redirect the user to the login page
-            // navigation.navigate("Login"); // Adjust according to your navigation setup
-          }
-        } else {
-          throw error; // Handle other errors
-        }
+      if (response.status === 200) {
+        alert("Successfully registered for the event!");
+      } else {
+        alert("Failed to register for the event. Please try again.");
       }
     } catch (error) {
       console.error("Error booking event:", error);
