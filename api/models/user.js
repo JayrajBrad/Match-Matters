@@ -21,14 +21,6 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
-  // firstName: {
-  //   type: String,
-  //   required: true,
-  // },
-  // lastName: {
-  //   type: String,
-  //   required: true,
-  // },
   age: {
     type: Number,
     required: true,
@@ -61,6 +53,30 @@ const userSchema = new Schema({
   images: [
     {
       type: String,
+    },
+  ],
+  requests: [
+    {
+      from: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+      // message: {
+      //   type: String,
+      //   required: true,
+      // },
+      status: {
+        type: String,
+        enum: ["pending", "accepted", "rejected"],
+        default: "pending",
+      },
+    },
+  ],
+  friends: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
   ],
   receivedLikes: [

@@ -70,15 +70,15 @@ export default function EmailLogin({ navigation }) {
           await AsyncStorage.removeItem("userData");
           await AsyncStorage.removeItem("userId");
           await AsyncStorage.removeItem("token");
-          await AsyncStorage.removeItem("refresh_token"); // Clear previous refresh token if needed
+          // await AsyncStorage.removeItem("refresh_token"); // Clear previous refresh token if needed
 
           // Store user data and tokens
           await AsyncStorage.setItem("userData", JSON.stringify(user));
           await AsyncStorage.setItem("userId", user._id);
           await AsyncStorage.setItem("token", token); // Save the access token
-          if (refreshToken) {
-            await AsyncStorage.setItem("refresh_token", refreshToken); // Save the refresh token
-          }
+          // if (refreshToken) {
+          //   await AsyncStorage.setItem("refresh_token", refreshToken); // Save the refresh token
+          // }
 
           console.log("Tokens and user data saved successfully!");
           navigation.navigate("HomeScreen");

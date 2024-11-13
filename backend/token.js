@@ -15,7 +15,7 @@ export const saveToken = async (token) => {
 // Get JWT Token
 export const getToken = async () => {
   try {
-    const token = await AsyncStorage.getItem("user_token");
+    const token = await AsyncStorage.getItem("token");
     return token !== null ? token : null;
   } catch (error) {
     console.log("Error retrieving the token", error);
@@ -33,21 +33,21 @@ export const clearToken = async () => {
   }
 };
 
-export const getRefreshToken = async () => {
-  try {
-    const token = await AsyncStorage.getItem("refresh_token");
-    return token !== null ? token : null; // Ensure you're returning the token correctly
-  } catch (error) {
-    console.log("Error retrieving the refresh token", error);
-    return null; // Indicate failure
-  }
-};
+// export const getRefreshToken = async () => {
+//   try {
+//     const token = await AsyncStorage.getItem("refresh_token");
+//     return token !== null ? token : null; // Ensure you're returning the token correctly
+//   } catch (error) {
+//     console.log("Error retrieving the refresh token", error);
+//     return null; // Indicate failure
+//   }
+// };
 
-export const saveRefreshToken = async (token) => {
-  try {
-    await AsyncStorage.setItem("refresh_token", token);
-    console.log("Refresh token saved successfully.");
-  } catch (error) {
-    console.log("Error saving the refresh token", error);
-  }
-};
+// export const saveRefreshToken = async (token) => {
+//   try {
+//     await AsyncStorage.setItem("refresh_token", token);
+//     console.log("Refresh token saved successfully.");
+//   } catch (error) {
+//     console.log("Error saving the refresh token", error);
+//   }
+// };
