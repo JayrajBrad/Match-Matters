@@ -25,21 +25,31 @@ export default function ProfilePicScreen({ navigation }) {
     (async () => {
       const galleryStatus =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
-      setHasGalleryPermission(galleryStatus.status === "granted");
       const cameraStatus = await ImagePicker.requestCameraPermissionsAsync();
+
+      if (
+        galleryStatus.status !== "granted" ||
+        cameraStatus.status !== "granted"
+      ) {
+        alert(
+          "Permission denied. Please enable access to your gallery and camera."
+        );
+      }
+
+      setHasGalleryPermission(galleryStatus.status === "granted");
       setHasCameraPermission(cameraStatus.status === "granted");
     })();
   }, []);
 
   const pickImage = async (index) => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: ImagePicker.mediaTypes,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
 
-    console.log(result);
+    console.log("Gallery result: ", result);
 
     if (!result.canceled) {
       const newImages = [...images];
@@ -68,7 +78,11 @@ export default function ProfilePicScreen({ navigation }) {
   };
 
   if (hasGalleryPermission === false || hasCameraPermission === false) {
-    return <Text>No Access To Internal Storage or Camera</Text>;
+    return (
+      <View>
+        <Text>No Access To Internal Storage or Camera</Text>
+      </View>
+    );
   }
 
   useEffect(() => {
@@ -110,7 +124,11 @@ export default function ProfilePicScreen({ navigation }) {
                   style={styles.uploadContainer}
                   onPress={() => pickImage(index)}
                 >
-                  <Text>Upload Picture {index + 1}</Text>
+                  {!images[index] && ( // Only show text if no image is selected
+                    <Text style={styles.uploadText}>
+                      Upload Picture {index + 1}
+                    </Text>
+                  )}
                   {images[index] && (
                     <Image
                       source={{ uri: images[index] }}
@@ -128,7 +146,11 @@ export default function ProfilePicScreen({ navigation }) {
                   style={styles.uploadContainer}
                   onPress={() => pickImage(index)}
                 >
-                  <Text>Upload Picture {index + 1}</Text>
+                  {!images[index] && ( // Only show text if no image is selected
+                    <Text style={styles.uploadText}>
+                      Upload Picture {index + 1}
+                    </Text>
+                  )}
                   {images[index] && (
                     <Image
                       source={{ uri: images[index] }}
@@ -189,12 +211,16 @@ const styles = StyleSheet.create({
     height: 180,
     borderWidth: 1,
     borderColor: "#ccc",
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     // margin: 10,
     marginTop: 20,
     marginBottom: 40,
     borderRadius: 10,
+  },
+  uploadText: {
+    // paddingBottom: 20,
   },
   imageRow: {
     flexDirection: "row",
@@ -206,6 +232,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     resizeMode: "cover",
+    borderRadius: 10,
   },
   skipButton: {
     width: 150,

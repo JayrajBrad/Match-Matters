@@ -6,7 +6,9 @@ const {
   getEventById,
   getEventsByUserId,
   getEventsByDateRange,
+  getEventsByLocationAndDateRange,
   getEventsByGenre,
+  getEventsByRadius,
   registerForEvent,
   getEventParticipants,
   getNearbyEvents,
@@ -31,6 +33,7 @@ router.get(
   "/events/nearby/:city/:state/:country/:latitude/:longitude/:maxDistance",
   getNearbyEvents
 );
+router.get("/events/nearby/:latitude/:longitude/:radius", getEventsByRadius);
 
 router.get("/:userId/events", getEventsByUserId);
 
@@ -38,6 +41,10 @@ router.get("/events/location/:city/:state/:country", getEventsByLocation);
 router.get("/events/genre/:genre", getEventsByGenre);
 
 router.get("/events/filterByDate/:startDate/:endDate", getEventsByDateRange);
+router.get(
+  "/events/locationAndDateRange/:city/:state/:country/:startDate/:endDate",
+  getEventsByLocationAndDateRange
+);
 
 // Interaction routes
 router.post("/events/:eventId/like", authenticateToken, likeEvent); // Like/unlike event

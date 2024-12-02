@@ -8,7 +8,7 @@ const userRoutes = require("./routes/userRoutes");
 const eventRoutes = require("./routes/eventRoutes");
 const requestRoutes = require("./routes/requestRoutes");
 const authenticateToken = require("./middlewares/authenticateToken");
-
+const cloudinaryApp = require("./utils/cloudinary");
 const app = express();
 const port = 4000;
 
@@ -42,6 +42,8 @@ mongoose
     console.log("Error connecting to MongoDB", error);
   });
 
+app.use("/api", cloudinaryApp);
+
 app.use("/user", userRoutes);
 app.use("/api", eventRoutes);
 app.use("/api", requestRoutes);
@@ -55,14 +57,19 @@ io.on("connection", (socket) => {
   console.log("User connected:", userId, "Socket ID:", socket.id);
 
   if (userId && userId !== "undefined") {
-    global.userSocketMap[userId] = socket.id;
-    console.log("User socket map updated:", global.userSocketMap);
+    if (!global.userSocketMap[userId]) {
+      global.userSocketMap[userId] = [];
+    }
+    global.userSocketMap[userId].push(socket.id);
+    console.log("Updated userSocketMap:", global.userSocketMap);
   } else {
     console.log("No valid userId received during connection");
   }
 
   socket.on("sendMessage", ({ senderId, receiverId, message }) => {
-    const receiverSocketId = global.userSocketMap[receiverId];
+    const receiverSocketIds = global.userSocketMap[receiverId] || [];
+    console.log("Current userSocketMap:", global.userSocketMap);
+
     console.log(
       "Received message:",
       message,
@@ -72,23 +79,35 @@ io.on("connection", (socket) => {
       receiverId
     );
 
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("receiveMessage", {
-        senderId,
-        receiverId,
-        message,
+    if (receiverSocketIds && receiverSocketIds.length > 0) {
+      receiverSocketIds.forEach((receiverSocketId) => {
+        io.to(receiverSocketId).emit("receiveMessage", {
+          senderId,
+          receiverId,
+          message,
+        });
       });
-      console.log("Message sent to receiver:", receiverSocketId);
+      console.log("Message sent to receiver(s):", receiverSocketIds);
     } else {
-      console.log("Receiver not connected");
+      console.log("Receiver not connected :", receiverId);
     }
   });
 
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
     if (userId && global.userSocketMap[userId]) {
-      delete global.userSocketMap[userId]; // Ensure userId exists before deleting
-      console.log(`User ${userId} removed from socket map`);
+      // Remove the socket ID from the userSocketMap
+      global.userSocketMap[userId] = global.userSocketMap[userId].filter(
+        (id) => id !== socket.id
+      );
+
+      // If the user has no active sockets, remove them from the map
+      if (global.userSocketMap[userId].length === 0) {
+        delete global.userSocketMap[userId];
+        console.log(`User ${userId} removed from socket map`);
+      } else {
+        console.log(`User ${userId} still has active sockets`);
+      }
     }
   });
 });

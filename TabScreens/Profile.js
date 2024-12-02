@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   View,
   Text,
@@ -8,53 +8,14 @@ import {
   Alert,
   ScrollView,
 } from "react-native";
-import { useNavigation, useFocusEffect } from "@react-navigation/native"; // Import useFocusEffect
+import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { getUserData, getUserId } from "../backend/registrationUtils"; // Adjust the path to your authUtils
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { UserContext } from "../navigation/UserProvider"; // Import UserContext
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
-  const [data, setData] = useState({});
-  const [profileImage, setProfileImage] = useState(null);
+  const { user, userId } = useContext(UserContext); // Get user and userId from context
   const [activeTab, setActiveTab] = useState("Plans");
-
-  // Function to fetch user data
-  const fetchUserData = async () => {
-    try {
-      const userId = await getUserId();
-      console.log("Fetched user ID:", userId); // Debug log
-      if (userId) {
-        const userData = await getUserData(userId);
-        if (userData) {
-          setData(userData);
-          // Fetch the first image from the "images" array
-          if (userData.images && userData.images.length > 0) {
-            setProfileImage(userData.images[0]); // Assuming the first image is the profile picture
-          }
-        } else {
-          Alert.alert(
-            "Error",
-            "Failed to load profile data. Please try again later."
-          );
-        }
-      } else {
-        Alert.alert("Error", "Failed to load user ID. Please try again later.");
-      }
-    } catch (error) {
-      console.error("Error fetching user data", error);
-      Alert.alert(
-        "Error",
-        "Failed to load profile data. Please try again later."
-      );
-    }
-  };
-
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchUserData(); // Fetch user data when screen is focused
-    }, [])
-  );
 
   const handleEditProfile = () => {
     navigation.navigate("EditProfileScreen");
@@ -75,17 +36,17 @@ const ProfileScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.profileSection}>
-        {profileImage ? (
-          <Image source={{ uri: profileImage }} style={styles.profileImage} />
+        {user?.images && user.images.length > 0 ? (
+          <Image source={{ uri: user.images[0] }} style={styles.profileImage} />
         ) : (
           <Image
-            source={{ uri: "default_fallback_image_url" }} // If no image is provided, use a fallback
+            source={{ uri: "default_fallback_image_url" }} // Fallback image
             style={styles.profileImage}
           />
         )}
         <View style={styles.profileInfo}>
           <Text style={styles.profileName}>
-            {data.username ? `${data.username}, ${data.age}` : "Loading...."}
+            {user?.username ? `${user.username}, ${user.age}` : "Loading..."}
           </Text>
           <View style={styles.editProfile}>
             <TouchableOpacity

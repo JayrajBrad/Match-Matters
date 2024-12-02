@@ -1,4 +1,10 @@
-import React, { useEffect, useLayoutEffect, useState, useRef } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useState,
+  useRef,
+  useContext,
+} from "react";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSocketContext } from "../SocketContext";
 import {
@@ -8,21 +14,28 @@ import {
   View,
   Pressable,
   KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  SafeAreaView,
 } from "react-native";
 import axios from "axios";
 import { API_URL } from "@env";
 import { getUserId } from "../backend/registrationUtils";
+import { UserContext } from "../navigation/UserProvider";
 
 const ChatRoom = () => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
-  const [userId, setUserId] = useState(null);
+  const { userId, user } = useContext(UserContext);
+  // const [userId, setUserId] = useState(null);
   const { socket } = useSocketContext();
   const navigation = useNavigation();
   const route = useRoute();
   const scrollViewRef = useRef(null);
   const receiverId = route?.params?.receiverId;
   const receiverName = route?.params?.name;
+  const [sending, setSending] = useState(false);
   const hasFetchedMessages = useRef(false);
 
   useLayoutEffect(() => {
@@ -31,14 +44,14 @@ const ChatRoom = () => {
     });
   }, [navigation, receiverName]);
 
-  useEffect(() => {
-    const fetchUserId = async () => {
-      const id = await getUserId();
-      setUserId(id);
-    };
+  // useEffect(() => {
+  //   const fetchUserId = async () => {
+  //     const id = await getUserId();
+  //     setUserId(id);
+  //   };
 
-    fetchUserId();
-  }, []);
+  //   fetchUserId();
+  // }, []);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -69,6 +82,11 @@ const ChatRoom = () => {
   }, [userId, receiverId]);
 
   useEffect(() => {
+    if (socket && !socket.connected) {
+      socket.connect(); // Connect if not already connected
+    }
+    console.log("Socket connected:", socket?.connected);
+
     const handleReceiveMessage = (newMessage) => {
       console.log("Received new message:", newMessage);
       const isValidTimeStamp = !isNaN(new Date(newMessage.timeStamp).getTime());
@@ -84,17 +102,10 @@ const ChatRoom = () => {
         setMessages((prevMessages) => [...prevMessages, newMessage]);
       }
     };
+    socket.on("receiveMessage", handleReceiveMessage);
 
-    if (socket?.connected) {
-      socket.on("receiveMessage", handleReceiveMessage);
-    } else {
-      console.warn("Socket is not connected");
-      socket?.connect();
-    }
     return () => {
-      if (socket?.connected) {
-        socket.off("receiveMessage", handleReceiveMessage);
-      }
+      socket.off("receiveMessage", handleReceiveMessage);
     };
   }, [socket, messages]);
 
@@ -105,7 +116,7 @@ const ChatRoom = () => {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!userId || message.trim() === "") return;
+    if (sending || !message.trim()) return;
 
     const newMessage = {
       senderId: userId,
@@ -118,7 +129,7 @@ const ChatRoom = () => {
 
     try {
       await axios.post(`${API_URL}/api/sendMessage`, newMessage);
-      console.log(newMessage);
+      console.log("new message from chatroom", newMessage);
 
       if (socket?.connected) {
         socket.emit("sendMessage", newMessage);
@@ -133,69 +144,84 @@ const ChatRoom = () => {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: "white" }}>
-      <ScrollView ref={scrollViewRef} contentContainerStyle={{ padding: 10 }}>
-        {messages.map((msg, index) => (
-          <View
-            key={index}
-            style={{
-              alignSelf: msg.senderId === userId ? "flex-end" : "flex-start",
-              backgroundColor: msg.senderId === userId ? "#DCF8C6" : "#FFF",
-              padding: 10,
-              marginVertical: 5,
-              borderRadius: 10,
-              maxWidth: "70%",
-            }}
-          >
-            <Text>{msg.message}</Text>
-            <Text
-              style={{
-                fontSize: 10,
-                color: "gray",
-                textAlign: "right",
-                marginTop: 5,
-              }}
-            >
-              {new Date(msg.timeStamp).toLocaleTimeString()}
-            </Text>
-          </View>
-        ))}
-      </ScrollView>
-
-      <View
-        style={{
-          flexDirection: "row",
-          padding: 10,
-          borderTopWidth: 1,
-          borderColor: "#ddd",
-          marginBottom: 25,
-        }}
+    <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"} // Adjust behavior for iOS and Android
       >
-        <TextInput
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            ref={scrollViewRef}
+            contentContainerStyle={{ padding: 10 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {messages.map((msg, index) => (
+              <View
+                key={index}
+                style={{
+                  alignSelf:
+                    msg.senderId === userId ? "flex-end" : "flex-start",
+                  backgroundColor: msg.senderId === userId ? "#DCF8C6" : "#FFF",
+                  padding: 10,
+                  marginVertical: 5,
+                  borderRadius: 10,
+                  maxWidth: "70%",
+                }}
+              >
+                <Text>{msg.message}</Text>
+                <Text
+                  style={{
+                    fontSize: 10,
+                    color: "gray",
+                    textAlign: "right",
+                    marginTop: 5,
+                  }}
+                >
+                  {new Date(msg.timeStamp).toLocaleTimeString()}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+        </TouchableWithoutFeedback>
+
+        <View
           style={{
-            flex: 1,
-            borderColor: "#ddd",
-            borderWidth: 1,
-            borderRadius: 20,
-            paddingHorizontal: 10,
-          }}
-          placeholder="Type a message..."
-          value={message}
-          onChangeText={setMessage}
-        />
-        <Pressable
-          onPress={sendMessage}
-          style={{
-            backgroundColor: "#0066b2",
+            flexDirection: "row",
             padding: 10,
-            borderRadius: 20,
-            marginLeft: 8,
+            borderTopWidth: 1,
+            borderColor: "#ddd",
+            marginBottom: "auto",
+            position: "absolute",
+            bottom: 100,
+            width: "100%",
           }}
         >
-          <Text style={{ color: "white" }}>Send</Text>
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+          <TextInput
+            style={{
+              flex: 1,
+              borderColor: "#ddd",
+              borderWidth: 1,
+              borderRadius: 20,
+              paddingHorizontal: 10,
+            }}
+            placeholder="Type a message..."
+            value={message}
+            onChangeText={setMessage}
+          />
+          <Pressable
+            onPress={sendMessage}
+            style={{
+              backgroundColor: "#0066b2",
+              padding: 10,
+              borderRadius: 20,
+              marginLeft: 8,
+            }}
+          >
+            <Text style={{ color: "white" }}>Send</Text>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 

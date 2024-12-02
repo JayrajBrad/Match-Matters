@@ -1,4 +1,4 @@
-// import React, { useState } from "react";
+// import React, { useState, useMemo } from "react";
 // import {
 //   View,
 //   Text,
@@ -10,6 +10,19 @@
 // } from "react-native";
 // import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 
+// const preferenceIcons = {
+//   Clubbing: "glass-cocktail",
+//   Party: "party-popper",
+//   Movies: "movie",
+//   Travel: "airplane",
+//   Music: "music-note",
+//   Fitness: "dumbbell",
+//   Cooking: "chef-hat",
+//   Gaming: "gamepad-variant",
+//   Art: "palette",
+//   Photography: "camera",
+// };
+
 // const PreferencesDropdown = ({
 //   preferences,
 //   selectedPreferences,
@@ -18,27 +31,12 @@
 //   const [modalVisible, setModalVisible] = useState(false);
 //   const [localPreferences, setLocalPreferences] = useState(selectedPreferences);
 
-//   const preferenceIcons = {
-//     Clubbing: "glass-cocktail",
-//     Party: "party-popper",
-//     Movies: "movie",
-//     Travel: "airplane",
-//     Music: "music-note",
-//     Fitness: "dumbbell",
-//     Cooking: "chef-hat",
-//     Gaming: "gamepad-variant",
-//     Art: "palette",
-//     Photography: "camera",
-//   };
-
 //   const togglePreference = (preference) => {
-//     if (localPreferences.includes(preference)) {
-//       setLocalPreferences(
-//         localPreferences.filter((item) => item !== preference)
-//       );
-//     } else {
-//       setLocalPreferences([...localPreferences, preference]);
-//     }
+//     setLocalPreferences((prev) =>
+//       prev.includes(preference)
+//         ? prev.filter((item) => item !== preference)
+//         : [...prev, preference]
+//     );
 //   };
 
 //   const handleSave = () => {
@@ -46,7 +44,6 @@
 //     setModalVisible(false);
 //   };
 
-//   // Handle closing modal when tapping outside of it
 //   const handleOutsidePress = () => {
 //     setModalVisible(false);
 //   };
@@ -56,6 +53,8 @@
 //       <TouchableOpacity
 //         onPress={() => setModalVisible(true)}
 //         style={styles.dropdown}
+//         accessibilityLabel="Open preferences dropdown"
+//         accessibilityRole="button"
 //       >
 //         <Text style={styles.selectedText}>
 //           {localPreferences.length
@@ -67,7 +66,7 @@
 //       <Modal
 //         transparent={true}
 //         visible={modalVisible}
-//         onRequestClose={() => setModalVisible(false)}
+//         onRequestClose={handleOutsidePress}
 //       >
 //         <TouchableWithoutFeedback onPress={handleOutsidePress}>
 //           <View style={styles.modalContainer}>
@@ -76,6 +75,7 @@
 //                 <FlatList
 //                   data={preferences}
 //                   keyExtractor={(item) => item}
+//                   contentContainerStyle={{ paddingVertical: 10 }}
 //                   renderItem={({ item }) => (
 //                     <TouchableOpacity
 //                       onPress={() => togglePreference(item)}
@@ -84,6 +84,8 @@
 //                         localPreferences.includes(item) &&
 //                           styles.selectedOption,
 //                       ]}
+//                       accessibilityLabel={`Toggle ${item} preference`}
+//                       accessibilityRole="checkbox"
 //                     >
 //                       <View style={styles.iconTextContainer}>
 //                         <MaterialCommunityIcons
@@ -107,6 +109,8 @@
 //                 <TouchableOpacity
 //                   onPress={handleSave}
 //                   style={styles.saveButton}
+//                   accessibilityLabel="Save selected preferences"
+//                   accessibilityRole="button"
 //                 >
 //                   <Text style={styles.saveButtonText}>Save</Text>
 //                 </TouchableOpacity>
@@ -129,10 +133,6 @@
 //     borderWidth: 1,
 //     borderRadius: 8,
 //     backgroundColor: "#f9f9f9",
-//     // shadowColor: "#000",
-//     // shadowOffset: { width: 0, height: 2 },
-//     // shadowOpacity: 0.2,
-//     // shadowRadius: 4,
 //     elevation: 5,
 //   },
 //   selectedText: {
@@ -150,10 +150,6 @@
 //     backgroundColor: "#fff",
 //     borderRadius: 12,
 //     padding: 20,
-//     // shadowColor: "#000",
-//     // shadowOffset: { width: 0, height: 2 },
-//     // shadowOpacity: 0.3,
-//     // shadowRadius: 6,
 //     elevation: 10,
 //   },
 //   option: {
@@ -195,7 +191,7 @@
 
 // export default PreferencesDropdown;
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -204,6 +200,7 @@ import {
   StyleSheet,
   FlatList,
   TouchableWithoutFeedback,
+  Animated,
 } from "react-native";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 
@@ -227,6 +224,8 @@ const PreferencesDropdown = ({
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [localPreferences, setLocalPreferences] = useState(selectedPreferences);
+  const [fadeAnim] = useState(new Animated.Value(0)); // For background fade
+  const [slideAnim] = useState(new Animated.Value(0)); // For bottom sheet slide
 
   const togglePreference = (preference) => {
     setLocalPreferences((prev) =>
@@ -236,19 +235,46 @@ const PreferencesDropdown = ({
     );
   };
 
-  const handleSave = () => {
-    onSelect(localPreferences);
-    setModalVisible(false);
+  const openModal = () => {
+    setModalVisible(true);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
-  const handleOutsidePress = () => {
-    setModalVisible(false);
+  const closeModal = () => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 300, // Hide below the screen
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setModalVisible(false));
+  };
+
+  const handleSave = () => {
+    onSelect(localPreferences);
+    closeModal();
   };
 
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        onPress={() => setModalVisible(true)}
+        onPress={openModal}
         style={styles.dropdown}
         accessibilityLabel="Open preferences dropdown"
         accessibilityRole="button"
@@ -260,62 +286,66 @@ const PreferencesDropdown = ({
         </Text>
       </TouchableOpacity>
 
-      <Modal
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={handleOutsidePress}
-      >
-        <TouchableWithoutFeedback onPress={handleOutsidePress}>
-          <View style={styles.modalContainer}>
-            <TouchableWithoutFeedback>
-              <View style={styles.modalContent}>
-                <FlatList
-                  data={preferences}
-                  keyExtractor={(item) => item}
-                  contentContainerStyle={{ paddingVertical: 10 }}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      onPress={() => togglePreference(item)}
-                      style={[
-                        styles.option,
-                        localPreferences.includes(item) &&
-                          styles.selectedOption,
-                      ]}
-                      accessibilityLabel={`Toggle ${item} preference`}
-                      accessibilityRole="checkbox"
-                    >
-                      <View style={styles.iconTextContainer}>
-                        <MaterialCommunityIcons
-                          name={preferenceIcons[item]}
-                          size={20}
-                          color="#555"
-                          style={styles.icon}
-                        />
-                        <Text style={styles.optionText}>{item}</Text>
-                      </View>
-                      {localPreferences.includes(item) && (
-                        <MaterialCommunityIcons
-                          name="check-circle"
-                          size={20}
-                          color="#BF1013"
-                        />
-                      )}
-                    </TouchableOpacity>
-                  )}
-                />
+      {modalVisible && (
+        <Modal transparent={true} visible={modalVisible} animationType="none">
+          <TouchableWithoutFeedback onPress={closeModal}>
+            <Animated.View
+              style={[
+                styles.modalBackdrop,
+                { opacity: fadeAnim }, // Background fade effect
+              ]}
+            />
+          </TouchableWithoutFeedback>
+          <Animated.View
+            style={[
+              styles.bottomSheet,
+              { transform: [{ translateY: slideAnim }] }, // Slide from bottom
+            ]}
+          >
+            <FlatList
+              data={preferences}
+              keyExtractor={(item) => item}
+              contentContainerStyle={{ paddingVertical: 10 }}
+              renderItem={({ item }) => (
                 <TouchableOpacity
-                  onPress={handleSave}
-                  style={styles.saveButton}
-                  accessibilityLabel="Save selected preferences"
-                  accessibilityRole="button"
+                  onPress={() => togglePreference(item)}
+                  style={[
+                    styles.option,
+                    localPreferences.includes(item) && styles.selectedOption,
+                  ]}
+                  accessibilityLabel={`Toggle ${item} preference`}
+                  accessibilityRole="checkbox"
                 >
-                  <Text style={styles.saveButtonText}>Save</Text>
+                  <View style={styles.iconTextContainer}>
+                    <MaterialCommunityIcons
+                      name={preferenceIcons[item]}
+                      size={20}
+                      color="#555"
+                      style={styles.icon}
+                    />
+                    <Text style={styles.optionText}>{item}</Text>
+                  </View>
+                  {localPreferences.includes(item) && (
+                    <MaterialCommunityIcons
+                      name="check-circle"
+                      size={20}
+                      color="#BF1013"
+                    />
+                  )}
                 </TouchableOpacity>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+              )}
+            />
+            <TouchableOpacity
+              onPress={handleSave}
+              style={styles.saveButton}
+              accessibilityLabel="Save selected preferences"
+              accessibilityRole="button"
+            >
+              <Text style={styles.saveButtonText}>Save</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -336,16 +366,22 @@ const styles = StyleSheet.create({
     color: "#333",
     fontWeight: "500",
   },
-  modalContainer: {
+  modalBackdrop: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.6)",
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
-  modalContent: {
-    width: "80%",
+  bottomSheet: {
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
     backgroundColor: "#fff",
-    borderRadius: 12,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     padding: 20,
     elevation: 10,
   },

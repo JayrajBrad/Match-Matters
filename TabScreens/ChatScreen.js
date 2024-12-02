@@ -6,8 +6,11 @@ import {
   Image,
   ScrollView,
   RefreshControl,
+  TextInput,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { StatusBar } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Entypo from "@expo/vector-icons/Entypo";
@@ -16,23 +19,27 @@ import { getUserId } from "../backend/registrationUtils";
 import { API_URL } from "@env";
 import axios from "axios";
 import Chat from "../components/Chat";
+import { UserContext } from "../navigation/UserProvider";
 
 const ChatScreen = () => {
   const [options, setOptions] = useState(["Chats"]);
   const [chats, setChats] = useState([]);
   const [requests, setRequests] = useState([]);
-  const [userId, setUserId] = useState(null);
+  // const [userId, setUserId] = useState(null);
   const [refreshing, setRefreshing] = useState(false); // State to handle the refreshing state
+  const [requestCount, setRequestCount] = useState(0);
   const navigation = useNavigation();
 
+  const { userId } = useContext(UserContext);
+
   // Fetch UserId on initial mount
-  useEffect(() => {
-    const fetchUserId = async () => {
-      const userIdFromToken = await getUserId();
-      setUserId(userIdFromToken);
-    };
-    fetchUserId();
-  }, []);
+  // useEffect(() => {
+  //   const fetchUserId = async () => {
+  //     const userIdFromToken = await getUserId();
+  //     setUserId(userIdFromToken);
+  //   };
+  //   fetchUserId();
+  // }, []);
 
   // Fetch Requests when userId is available
   useEffect(() => {
@@ -53,6 +60,7 @@ const ChatScreen = () => {
     try {
       const response = await axios.get(`${API_URL}/api/getrequests/${userId}`);
       setRequests(response.data);
+      setRequestCount(response.data.length);
       console.log("requests :", response.data);
     } catch (error) {
       console.log("get request :", error.message);
@@ -110,22 +118,27 @@ const ChatScreen = () => {
   ).map((id) => requests.find((item) => item.from._id === id));
 
   return (
-    <SafeAreaView>
-      <ScrollView
-        style={{ padding: 10 }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      <SafeAreaView
+        style={styles.chatList}
+        contentContainerStyle={{ flexGrow: 1 }}
       >
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 10,
-            justifyContent: "space-between",
-          }}
-        >
-          <Text style={{ fontSize: 15, fontWeight: "500" }}>Chats</Text>
+        {/* <StatusBar backgroundColor="transparent" translucent={true} /> */}
+        <View style={styles.header}>
+          <TextInput placeholder="Search message..." style={styles.searchBar} />
+          <Pressable onPress={() => navigation.navigate("RequestScreen")}>
+            <AntDesign name="hearto" size={24} color="red" />
+            {requestCount > 0 && (
+              <View style={styles.requestBadge}>
+                <Text style={styles.requestBadgeText}>{requestCount}</Text>
+              </View>
+            )}
+          </Pressable>
         </View>
 
         <View style={{ padding: 10 }}>
@@ -137,8 +150,8 @@ const ChatScreen = () => {
               justifyContent: "space-between",
             }}
           >
-            <View>
-              <Text>Chats</Text>
+            <View style={styles.header}>
+              <Text style={styles.noChatsText}>Chats</Text>
             </View>
             <Entypo name="chevron-down" size={24} color="black" />
           </Pressable>
@@ -159,83 +172,93 @@ const ChatScreen = () => {
                     alignItems: "center",
                   }}
                 >
-                  <Text style={{ textAlign: "center", color: "gray" }}>
-                    No Chats
-                  </Text>
-                  <Text style={{ marginTop: 4, color: "gray" }}>
-                    Get Started by messaging a friend
-                  </Text>
+                  <View style={styles.noChats}>
+                    <Text style={styles.noChatsText}>No Chats</Text>
+                    <Text style={styles.getStartedText}>
+                      Get Started by messaging a friend
+                    </Text>
+                  </View>
                 </View>
               ))}
           </View>
-
-          <Pressable
-            onPress={() => chooseOption("Requests")}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <View>
-              <Text>Requests</Text>
-            </View>
-            <Entypo name="chevron-down" size={24} color="black" />
-          </Pressable>
-
-          <View style={{ marginVertical: 12 }}>
-            {options?.includes("Requests") && (
-              <View>
-                <Text style={{ fontSize: 15, fontWeight: "500" }}>
-                  Checkout all the requests
-                </Text>
-                {uniqueRequests?.map((item, index) => (
-                  <Pressable
-                    key={item?.from?._id || index}
-                    style={{ marginVertical: 12 }}
-                  >
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 10,
-                      }}
-                    >
-                      <Pressable></Pressable>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 15, fontWeight: "500" }}>
-                          {item?.from?.username} sent you a request
-                        </Text>
-                        {/* <Text style={{ marginTop: 4, color: "gray" }}>
-                          {item?.message}
-                        </Text> */}
-                      </View>
-                      <Pressable
-                        onPress={() => acceptRequest(item?.from?._id)}
-                        style={{
-                          padding: 8,
-                          backgroundColor: "#005187",
-                          width: 75,
-                          borderRadius: 5,
-                        }}
-                      >
-                        <Text style={{ textAlign: "center", color: "white" }}>
-                          Accept
-                        </Text>
-                      </Pressable>
-                      <AntDesign name="delete" size={24} color="red" />
-                    </View>
-                  </Pressable>
-                ))}
-              </View>
-            )}
-          </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </ScrollView>
   );
 };
 
 export default ChatScreen;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingTop: 0,
+    // borderWidth: 2, // Debug border
+    // borderColor: "blue",
+    marginTop: 0,
+  },
+  // header: {
+  //   flexDirection: "row",
+  //   alignItems: "center",
+  //   justifyContent: "space-between",
+  //   padding: 15,
+  //   borderBottomWidth: 1,
+  //   borderBottomColor: "#f0f0f0",
+  // },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 15, // Remove or reduce this value
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+    // borderWidth: 2, // Debug border
+    // borderColor: "red",
+    marginTop: 0,
+  },
+  searchBar: {
+    flex: 1,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    marginRight: 10,
+    fontSize: 16,
+  },
+  requestBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "red",
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  requestBadgeText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  noChats: {
+    height: 300,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noChatsText: {
+    textAlign: "center",
+    color: "gray",
+  },
+  getStartedText: {
+    marginTop: 4,
+    color: "gray",
+  },
+  chatList: {
+    flex: 1,
+    padding: 0,
+    margin: 0,
+    paddingTop: -50,
+  },
+});

@@ -32,7 +32,21 @@ exports.updateUserProfile = async (req, res) => {
       countryName,
       stateName,
       cityName,
+      userData,
     } = req.body;
+
+    console.log("Received user data:", req.body);
+
+    const aboutYou = {
+      height: userData.height || null,
+      work: userData.work || "",
+      educationLevel: userData.educationLevel || "",
+      smokes: userData.smokes || "",
+      drinks: userData.drinks || "",
+      zodiac: userData.zodiac || "",
+      religion: userData.religion || "",
+      languages: userData.languages || [],
+    };
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
@@ -46,6 +60,7 @@ exports.updateUserProfile = async (req, res) => {
           countryName,
           stateName,
           cityName,
+          aboutYou,
         },
       },
       { new: true }
@@ -83,6 +98,7 @@ exports.getUserData = async (req, res) => {
 exports.updateProfileImage = async (req, res) => {
   try {
     const { userId } = req.params;
+    console.log("user id: ", userId);
     console.log("Request body:", req.body); // Get userId from URL params
     const { images } = req.body; // Get imageUrl from the request body
 

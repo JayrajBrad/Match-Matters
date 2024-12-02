@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const User = require("../models/user");
 const cloudinary = require("../utils/cloudinary"); // Import your Cloudinary configuration
 const parser = require("../middlewares/upload");
+const moment = require("moment");
 
 const createEvent = async (req, res) => {
   console.log("Received a request to create an event");
@@ -240,7 +241,7 @@ const getEventsByLocation = async (req, res) => {
 
   try {
     const events = await Event.find(query);
-    // console.log("Fetched events:", events); // Log fetched events
+    console.log("Fetched events by location:", events); // Log fetched events
 
     if (events.length === 0) {
       return res
@@ -292,8 +293,8 @@ const getEventsByDateRange = async (req, res) => {
     }
 
     // Parse the dates and validate them
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = moment(startDate).startOf("day").toDate(); // Start of the day in UTC
+    const end = moment(endDate).endOf("day").toDate();
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return res.status(400).json({
@@ -304,6 +305,9 @@ const getEventsByDateRange = async (req, res) => {
 
     // Adjust the end date to include the entire day
     end.setHours(23, 59, 59, 999);
+
+    console.log("Start Date:", start);
+    console.log("End Date:", end);
 
     // Query events that fall within the specified date range
     const events = await Event.find({
@@ -319,7 +323,7 @@ const getEventsByDateRange = async (req, res) => {
         .status(404)
         .json({ message: "No events found in this date range." });
     }
-
+    console.log("EVENTS BY DATE :", events);
     res.status(200).json(events);
   } catch (error) {
     console.error(
@@ -328,6 +332,135 @@ const getEventsByDateRange = async (req, res) => {
       error.stack
     );
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// const getEventsByLocationAndDateRange = async (req, res) => {
+//   try {
+//     const { city, state, country, startDate, endDate } = req.params;
+
+//     // Validate date range inputs
+//     if (!startDate || !endDate) {
+//       return res.status(400).json({
+//         error: "Both startDate and endDate parameters are required.",
+//       });
+//     }
+
+//     const start = new Date(startDate);
+//     const end = new Date(endDate);
+
+//     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+//       return res.status(400).json({
+//         error:
+//           "Invalid date format. Please use a valid date format (YYYY-MM-DD).",
+//       });
+//     }
+
+//     // Adjust end date to include the entire day
+//     end.setHours(23, 59, 59, 999);
+
+//     // Build location query dynamically
+//     const locationQuery = {};
+//     if (city) locationQuery["location.city"] = city;
+//     if (state) locationQuery["location.state"] = state;
+//     if (country) locationQuery["location.country"] = country;
+
+//     // Construct the combined query
+//     const query = {
+//       ...locationQuery,
+//       date: {
+//         $gte: start,
+//         $lte: end,
+//       },
+//     };
+
+//     console.log("Combined Query:", query);
+
+//     // Fetch events matching the combined query
+//     const events = await Event.find(query);
+
+//     if (events.length === 0) {
+//       return res.status(404).json({
+//         message: "No events found for the given location and date range.",
+//       });
+//     }
+
+//     res.status(200).json(events);
+//   } catch (error) {
+//     console.error(
+//       "Error fetching events by location and date range:",
+//       error.message,
+//       error.stack
+//     );
+//     res.status(500).json({ message: "Internal server error." });
+//   }
+// };
+
+const getEventsByLocationAndDateRange = async (req, res) => {
+  try {
+    const { city, state, country, startDate, endDate } = req.params;
+
+    // Initialize location query and date query
+    const locationQuery = {};
+    const dateQuery = {};
+
+    // If location is provided, add location filters
+    if (city) locationQuery["location.city"] = city;
+    if (state) locationQuery["location.state"] = state;
+    if (country) locationQuery["location.country"] = country;
+
+    // If date range is provided, validate and add date filters
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return res.status(400).json({
+          error:
+            "Invalid date format. Please use a valid date format (YYYY-MM-DD).",
+        });
+      }
+
+      // Adjust end date to include the entire day
+      end.setHours(23, 59, 59, 999);
+
+      // Add date filters to the query
+      dateQuery.date = {
+        $gte: start,
+        $lte: end,
+      };
+    } else if (startDate || endDate) {
+      return res.status(400).json({
+        error:
+          "Both startDate and endDate parameters are required when using a date range.",
+      });
+    }
+
+    // Combine location and date query
+    const query = {
+      ...locationQuery,
+      ...dateQuery, // Only add date filters if they exist
+    };
+
+    console.log("Combined Query:", query);
+
+    // Fetch events matching the combined query
+    const events = await Event.find(query);
+
+    if (events.length === 0) {
+      return res.status(404).json({
+        message: "No events found for the given location and date range.",
+      });
+    }
+
+    res.status(200).json(events);
+  } catch (error) {
+    console.error(
+      "Error fetching events by location and date range:",
+      error.message,
+      error.stack
+    );
+    res.status(500).json({ message: "Internal server error." });
   }
 };
 
@@ -406,7 +539,7 @@ const getNearbyEvents = async (req, res) => {
   // Parse the coordinates and maxDistance
   const parsedLongitude = parseFloat(longitude);
   const parsedLatitude = parseFloat(latitude);
-  let parsedMaxDistance = parseInt(maxDistance, 10) || 1000000; // Default to 1000 if invalid
+  let parsedMaxDistance = parseInt(maxDistance, 10) || 300000; // Default to 1000 if invalid
   // console.log("Parsed coordinates:", { parsedLongitude, parsedLatitude });
 
   // Validate coordinates
@@ -460,6 +593,49 @@ const getNearbyEvents = async (req, res) => {
   } catch (error) {
     console.error("Error in getNearbyEvents controller:", error);
     res.status(500).json({ error: "Failed to fetch nearby events" });
+  }
+};
+
+const getEventsByRadius = async (req, res) => {
+  const { latitude, longitude, radius } = req.params; // radius in kilometers
+
+  // Parse the coordinates and radius
+  const parsedLatitude = parseFloat(latitude);
+  const parsedLongitude = parseFloat(longitude);
+  let parsedRadius = parseFloat(radius) || 10; // Default to 10 km if invalid
+
+  // Validate coordinates
+  if (isNaN(parsedLatitude) || isNaN(parsedLongitude)) {
+    return res.status(400).json({ error: "Invalid latitude or longitude" });
+  }
+
+  // Convert the radius from kilometers to meters (MongoDB requires meters for $maxDistance)
+  const maxDistanceInMeters = parsedRadius * 1000;
+
+  try {
+    // Fetch events based on the user's location and the radius
+    const events = await Event.find({
+      "location.coordinates": {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [parsedLongitude, parsedLatitude], // Longitude first, then Latitude
+          },
+          $maxDistance: maxDistanceInMeters, // Use the radius in meters
+        },
+      },
+    });
+
+    if (events.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No events found within the specified radius." });
+    }
+
+    res.status(200).json(events);
+  } catch (error) {
+    console.error("Error in getEventsByRadius controller:", error);
+    res.status(500).json({ error: "Failed to fetch events by radius" });
   }
 };
 
@@ -584,7 +760,9 @@ module.exports = {
   getEventById,
   getEventsByUserId,
   getEventsByDateRange,
+  getEventsByLocationAndDateRange,
   getEventsByGenre,
+  getEventsByRadius,
   registerForEvent,
   getEventParticipants,
   getNearbyEvents,

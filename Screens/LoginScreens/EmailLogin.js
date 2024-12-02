@@ -1,51 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useRef, useEffect } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Animated,
 } from "react-native";
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { UserContext } from "../../navigation/UserProvider"; // Adjust the import based on your project structure
 import { API_URL } from "@env";
 
 export default function EmailLogin({ navigation }) {
+  const { loginUser } = useContext(UserContext); // Get loginUser from context
   const [emailId, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // const handleLogin = async () => {
-  //   console.log("API URL:", API_URL);
-  //   if (!emailId || !password) {
-  //     alert("Please enter both email and password.");
-  //     return;
-  //   }
-
-  //   try {
-  //     const response = await axios.post(`${API_URL}/user/login`, {
-  //       emailId: emailId,
-  //       password: password,
-  //     });
-
-  //     if (response.data.success) {
-  //       const { token, user } = response.data; // Assuming the token and user are in response.data
-  //       if (token && user) {
-  //         await AsyncStorage.setItem("userData", JSON.stringify(user));
-  //         await AsyncStorage.setItem("userId", user._id);
-  //         await AsyncStorage.setItem("token", token); // Save the token
-  //         console.log("JWT token and user data saved successfully!");
-  //         navigation.navigate("HomeScreen");
-  //       } else {
-  //         alert("No token or user data received from the server.");
-  //       }
-  //     } else {
-  //       alert("Login failed. Please check your email or password.");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error logging in:", error);
-  //     alert("An error occurred. Please try again later.");
-  //   }
-  // };
+  const fadeAnimation = useRef(new Animated.Value(0)).current;
 
   const handleLogin = async () => {
     console.log("API URL:", API_URL);
@@ -63,25 +33,16 @@ export default function EmailLogin({ navigation }) {
       console.log("Login Response:", response.data);
 
       if (response.data.success) {
-        const { token, refreshToken, user } = response.data; // Capture the refresh token if it exists
+        const { token, user } = response.data; // Capture token and user data
 
         if (token && user) {
-          // Optional: Clear previous data
-          await AsyncStorage.removeItem("userData");
-          await AsyncStorage.removeItem("userId");
-          await AsyncStorage.removeItem("token");
-          // await AsyncStorage.removeItem("refresh_token"); // Clear previous refresh token if needed
+          // Use the loginUser function from context to save token and user data
+          loginUser({ token, user }); // This will save token, user, and userId in the context
 
-          // Store user data and tokens
-          await AsyncStorage.setItem("userData", JSON.stringify(user));
-          await AsyncStorage.setItem("userId", user._id);
-          await AsyncStorage.setItem("token", token); // Save the access token
-          // if (refreshToken) {
-          //   await AsyncStorage.setItem("refresh_token", refreshToken); // Save the refresh token
-          // }
+          console.log("Login successful!");
 
-          console.log("Tokens and user data saved successfully!");
-          navigation.navigate("HomeScreen");
+          // Redirect to the home screen after successful login
+          navigation.navigate("Home");
         } else {
           alert("No token or user data received from the server.");
         }
@@ -90,7 +51,6 @@ export default function EmailLogin({ navigation }) {
       }
     } catch (error) {
       console.error("Error logging in:", error);
-      // Display more detailed error messages based on response
       if (error.response) {
         alert(`Error: ${error.response.data.message || error.message}`);
       } else {
@@ -99,8 +59,16 @@ export default function EmailLogin({ navigation }) {
     }
   };
 
+  useEffect(() => {
+    Animated.timing(fadeAnimation, {
+      toValue: 1,
+      duration: 1500,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnimation]);
+
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
       <Text style={styles.title}>Login</Text>
       <TextInput
         style={styles.input}
@@ -120,7 +88,7 @@ export default function EmailLogin({ navigation }) {
       <TouchableOpacity onPress={handleLogin} style={styles.button}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 }
 
