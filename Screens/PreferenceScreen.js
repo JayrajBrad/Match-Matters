@@ -157,16 +157,18 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_URL, CLOUDINARY_CLOUD_NAME } from "@env";
+import { API_URL, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY } from "@env";
 import {
   getRegistrationProgress,
   saveRegistrationProgress,
   getUserId,
 } from "../backend/registrationUtils";
 import FormData from "form-data";
+import LottieView from "lottie-react-native";
+import { UserContext } from "../navigation/UserProvider";
 
 const preferences = [
   "Clubbing",
@@ -184,6 +186,9 @@ const preferences = [
 export default function PreferenceScreen({ navigation }) {
   const [selectedPreferences, setSelectedPreferences] = useState([]);
   const [userData, setUserData] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  const { loginUser } = useContext(UserContext);
 
   useEffect(() => {
     getAllUserData();
@@ -305,13 +310,36 @@ export default function PreferenceScreen({ navigation }) {
         return;
       }
     }
-
-    await sendData(userData);
-    await clearAllScreenData();
-    navigation.navigate("HomeScreen", { userData });
+    setLoading(true);
+    // await sendData(userData);
+    // await clearAllScreenData();
+    // setLoading(false);
+    // navigation.navigate("FeedScreen", { userData });
+    try {
+      const response = await sendData(userData); // Make sure sendData returns the response
+      if (response && response.token && response.user) {
+        // Call loginUser function to save token and user info in context
+        await loginUser(response); // now this call updates the context and stores it
+        // Navigate to the FeedScreen after successful login
+        navigation.navigate("MainDrawer", {
+          screen: "FeedScreen",
+          params: { userData },
+        });
+      } else {
+        Alert.alert("Registration failed, please try again.");
+      }
+    } catch (error) {
+      console.error("Error during user registration:", error);
+      Alert.alert("An error occurred during registration. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const uploadImageToCloudinary = async (imageUri) => {
+    const { data } = await axios.get(`${API_URL}/api/cloudinary-signature`);
+    const { signature, timestamp } = data;
+
     const formData = new FormData();
     formData.append("file", {
       uri: imageUri,
@@ -321,6 +349,16 @@ export default function PreferenceScreen({ navigation }) {
     formData.append("upload_preset", "profilepic_preset");
     formData.append("folder", "profile_pictures");
 
+    formData.append("signature", signature);
+    formData.append("timestamp", timestamp);
+
+    formData.append("api_key", CLOUDINARY_API_KEY);
+    console.log(CLOUDINARY_API_KEY); // This should print your API key
+
+    //image resize////
+    // formData.append("transformation", "w_400,h_400,c_fill");
+    formData.append("transformation", "w_800,h_800,c_fill,q_80,f_auto"); // Resize to 800x800, 80% quality, auto format (like WebP)
+
     try {
       const response = await axios.post(
         `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -329,37 +367,53 @@ export default function PreferenceScreen({ navigation }) {
       );
       return response.data.secure_url;
     } catch (error) {
-      console.error("Error uploading to Cloudinary:", error.message);
+      console.error(
+        "Error uploading to Cloudinary:",
+        error.response?.data || error.message
+      );
       throw error;
     }
   };
 
-  const sendData = async () => {
+  // const sendData = async () => {
+  //   try {
+  //     const response = await axios.post(`${API_URL}/user/register`, userData, {
+  //       headers: { "Content-Type": "application/json" },
+  //       timeout: 60000,
+  //     });
+
+  //     if (response.status === 200) {
+  //       const token = response.data.token;
+  //       const user = response.data.user;
+
+  //       if (token && user) {
+  //         await AsyncStorage.setItem("token", token);
+  //         await AsyncStorage.setItem("userData", JSON.stringify(user));
+  //         await AsyncStorage.setItem("userId", user._id);
+
+  //         const userId = await getUserId();
+  //         console.log("New User ID:", userId);
+  //       } else {
+  //         console.log("No token received from the server.");
+  //       }
+  //     } else {
+  //       console.log("Failed to register user. Status:", response.status);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error registering user:", error.message);
+  //   }
+  // };
+
+  const sendData = async (userData) => {
     try {
       const response = await axios.post(`${API_URL}/user/register`, userData, {
         headers: { "Content-Type": "application/json" },
         timeout: 60000,
       });
-
-      if (response.status === 200) {
-        const token = response.data.token;
-        const user = response.data.user;
-
-        if (token && user) {
-          await AsyncStorage.setItem("token", token);
-          await AsyncStorage.setItem("userData", JSON.stringify(user));
-          await AsyncStorage.setItem("userId", user._id);
-
-          const userId = await getUserId();
-          console.log("New User ID:", userId);
-        } else {
-          console.log("No token received from the server.");
-        }
-      } else {
-        console.log("Failed to register user. Status:", response.status);
-      }
+      return response.data; // Return the response data directly
     } catch (error) {
       console.error("Error registering user:", error.message);
+      throw error; // Rethrow error to handle it in registerUser
     }
   };
 
@@ -390,7 +444,16 @@ export default function PreferenceScreen({ navigation }) {
 
         <TouchableOpacity onPress={registerUser}>
           <View style={styles.skipButton}>
-            <Text style={styles.skipText}>Register</Text>
+            {loading ? (
+              <LottieView
+                source={require("../Onboarding-Screen-2/src/assets/animations/loader.json")} // Path to your loader animation
+                autoPlay
+                loop
+                style={styles.loader}
+              />
+            ) : (
+              <Text style={styles.skipText}>Register</Text>
+            )}
           </View>
         </TouchableOpacity>
       </ScrollView>

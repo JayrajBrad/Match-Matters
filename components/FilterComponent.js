@@ -1,355 +1,20 @@
-//////DATE LOGIC FILTER/////////
-// import React, { useState, useEffect, useCallback } from "react";
-// import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
-// import { Dropdown } from "react-native-element-dropdown";
-// import { Country, State, City } from "country-state-city";
-// import DateTimePickerModal from "react-native-modal-datetime-picker"; // Import date picker
-// import axios from "axios";
-// import { API_URL } from "@env";
-// import DateTimePicker from "@react-native-community/datetimepicker";
-
-// const Filter = ({ setFilteredEvents, loadEvents }) => {
-//   const [countryData, setCountryData] = useState([]);
-//   const [stateData, setStateData] = useState([]);
-//   const [cityData, setCityData] = useState([]);
-//   const [country, setCountry] = useState(null);
-//   const [state, setState] = useState(null);
-//   const [city, setCity] = useState(null);
-//   const [countryName, setCountryName] = useState(null);
-//   const [stateName, setStateName] = useState(null);
-//   const [cityName, setCityName] = useState(null);
-//   const [isFocus, setIsFocus] = useState(false);
-
-//   // Date range states
-//   const [startDate, setStartDate] = useState(null);
-//   const [endDate, setEndDate] = useState(null);
-// const [isLoading, setLoading] = useState(false);
-// const [startDate, setStartDate] = useState(new Date());
-// const [endDate, setEndDate] = useState(new Date());
-// const [isStartDatePickerVisible, setStartDatePickerVisible] = useState(false);
-// const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
-
-//   useEffect(() => {
-//     const loadCountries = () => {
-//       const countryArray = Country.getAllCountries().map((country) => ({
-//         value: country.isoCode,
-//         label: country.name,
-//       }));
-//       setCountryData(countryArray);
-//     };
-//     loadCountries();
-//   }, []);
-
-//   const handleState = useCallback((countryCode) => {
-//     const states = State.getStatesOfCountry(countryCode).map((state) => ({
-//       value: state.isoCode,
-//       label: state.name,
-//     }));
-//     setStateData(states);
-//     setState(null);
-//     setCity(null);
-//     setCityData([]);
-//   }, []);
-
-//   const handleCity = useCallback((countryCode, stateCode) => {
-//     const cities = City.getCitiesOfState(countryCode, stateCode).map(
-//       (city) => ({
-//         value: city.name,
-//         label: city.name,
-//       })
-//     );
-//     setCityData(cities);
-//     setCity(null);
-//   }, []);
-
-//   const handleApplyLocationFilters = async () => {
-//     if (!countryName || !stateName || !cityName) return; // Prevent making the request if filters are not set
-//     setLoading(true);
-//     try {
-//       const response = await axios.get(`${API_URL}/api/events/location`, {
-//         params: {
-//           cityName: cityName,
-//           stateName: stateName,
-//           countryName: countryName,
-//         },
-//       });
-//       setFilteredEvents(response.data);
-//     } catch (error) {
-//       console.error("Error fetching events by location:", error.response.data);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-// const handleApplyDateFilters = async () => {
-//   if (!startDate || !endDate) return;
-//   setLoading(true);
-//   try {
-//     const response = await axios.get(`${API_URL}/api/events/filterByDate`, {
-//       params: {
-//         startDate: startDate.toISOString(),
-//         endDate: endDate.toISOString(),
-//       },
-//     });
-//     setFilteredEvents(response.data);
-//   } catch (error) {
-//     console.error("Error fetching events by date range:", error);
-//   } finally {
-//     setLoading(false);
-//   }
-// };
-
-//   const handleApplyFilters = async () => {
-//     // Reset filtered events
-//     setFilteredEvents([]);
-
-//     // Apply location filters if any
-//     if (cityName || stateName || countryName) {
-//       await handleApplyLocationFilters();
-//     }
-
-// // Apply date filters if any
-// if (startDate && endDate) {
-//   await handleApplyDateFilters();
-// }
-
-//     loadEvents(startDate, endDate);
-//   };
-
-// // Date picker handlers
-// const showStartDatePicker = () => setStartDatePickerVisible(true);
-// const hideStartDatePicker = () => setStartDatePickerVisible(false);
-// const handleConfirmStartDate = (date) => {
-//   setStartDate(date);
-//   hideStartDatePicker();
-// };
-
-// const showEndDatePicker = () => setEndDatePickerVisible(true);
-// const hideEndDatePicker = () => setEndDatePickerVisible(false);
-// const handleConfirmEndDate = (date) => {
-//   setEndDate(date);
-//   hideEndDatePicker();
-// };
-
-//   return (
-//     <View style={styles.container}>
-//       {/* Country Dropdown */}
-//       <View style={styles.dropdownContainer}>
-//         <Text style={styles.label}>Country</Text>
-//         <Dropdown
-//           style={styles.dropdown}
-//           placeholderStyle={styles.placeholderStyle}
-//           selectedTextStyle={styles.selectedTextStyle}
-//           inputSearchStyle={styles.inputSearchStyle}
-//           iconStyle={styles.iconStyle}
-//           data={countryData}
-//           search
-//           maxHeight={300}
-//           labelField="label"
-//           valueField="value"
-//           placeholder="Select Country"
-//           searchPlaceholder="Search..."
-//           value={country}
-//           onFocus={() => setIsFocus(true)}
-//           onBlur={() => setIsFocus(false)}
-//           onChange={(item) => {
-//             setCountry(item.value);
-//             setCountryName(item.label);
-//             handleState(item.value);
-//           }}
-//         />
-//       </View>
-
-//       {/* State and City Dropdown */}
-//       <View style={styles.dropdownlocationRowContainer}>
-//         <View style={styles.dropdownContainer}>
-//           <Text style={styles.label}>State</Text>
-//           <Dropdown
-//             style={styles.dropdown}
-//             placeholderStyle={styles.placeholderStyle}
-//             selectedTextStyle={styles.selectedTextStyle}
-//             inputSearchStyle={styles.inputSearchStyle}
-//             iconStyle={styles.iconStyle}
-//             data={stateData}
-//             search
-//             maxHeight={300}
-//             labelField="label"
-//             valueField="value"
-//             placeholder="Select State"
-//             searchPlaceholder="Search..."
-//             value={state}
-//             onFocus={() => setIsFocus(true)}
-//             onBlur={() => setIsFocus(false)}
-//             onChange={(item) => {
-//               setState(item.value);
-//               setStateName(item.label);
-//               handleCity(country, item.value);
-//             }}
-//           />
-//         </View>
-
-//         <View style={[styles.dropdownContainer, styles.dropdownContainerLast]}>
-//           <Text style={styles.label}>City</Text>
-//           <Dropdown
-//             style={styles.dropdown}
-//             placeholderStyle={styles.placeholderStyle}
-//             selectedTextStyle={styles.selectedTextStyle}
-//             inputSearchStyle={styles.inputSearchStyle}
-//             iconStyle={styles.iconStyle}
-//             data={cityData}
-//             search
-//             maxHeight={300}
-//             labelField="label"
-//             valueField="value"
-//             placeholder="Select City"
-//             searchPlaceholder="Search..."
-//             value={city}
-//             onFocus={() => setIsFocus(true)}
-//             onBlur={() => setIsFocus(false)}
-//             onChange={(item) => {
-//               setCity(item.value);
-//               setCityName(item.label);
-//             }}
-//           />
-//         </View>
-//       </View>
-
-// {/* Date Range Pickers */}
-// {/* <View style={styles.datePickerContainer}>
-//   <Text style={styles.label}>Start Date</Text>
-//   <TouchableOpacity
-//     style={styles.dateButton}
-//     onPress={showStartDatePicker}
-//   >
-//     <Text style={styles.dateButtonText}>
-//       {startDate ? startDate.toDateString() : "Select Start Date"}
-//     </Text>
-//   </TouchableOpacity>
-
-//   <DateTimePickerModal
-//     isVisible={isStartDatePickerVisible}
-//     mode="date"
-//     onConfirm={handleConfirmStartDate}
-//     onCancel={hideStartDatePicker}
-//     textColor="#000"
-//   />
-// </View>
-
-// <View style={styles.datePickerContainer}>
-//   <Text style={styles.label}>End Date</Text>
-//   <TouchableOpacity style={styles.dateButton} onPress={showEndDatePicker}>
-//     <Text style={styles.dateButtonText}>
-//       {endDate ? endDate.toDateString() : "Select End Date"}
-//     </Text>
-//   </TouchableOpacity>
-
-//   <DateTimePickerModal
-//     isVisible={isEndDatePickerVisible}
-//     mode="date"
-//     onConfirm={handleConfirmEndDate}
-//     onCancel={hideEndDatePicker}
-//     textColor="#000"
-//   />
-// </View> */}
-
-// <Text>Select Start Date:</Text>
-// <DateTimePicker
-//   value={startDate || new Date()}
-//   mode="date"
-//   display="default"
-//   onChange={(event, date) => setStartDate(date || startDate)}
-// />
-// <Text>Select End Date:</Text>
-// <DateTimePicker
-//   value={endDate || new Date()}
-//   mode="date"
-//   display="default"
-//   onChange={(event, date) => setEndDate(date || endDate)}
-// />
-
-//       <TouchableOpacity style={styles.applyButton} onPress={handleApplyFilters}>
-//         <Text style={styles.applyButtonText}>Apply Filters</Text>
-//       </TouchableOpacity>
-//     </View>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     padding: 16,
-//   },
-//   dropdownContainer: {
-//     flex: 1,
-//     marginRight: 10,
-//   },
-//   label: {
-//     fontSize: 16,
-//     fontWeight: "600",
-//     marginVertical: 8,
-//     color: "#333",
-//   },
-//   dropdownlocationRowContainer: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//     marginVertical: 10,
-//   },
-//   dropdownContainerLast: {
-//     marginRight: 0,
-//   },
-//   dropdown: {
-//     height: 50,
-//     borderColor: "#ccc",
-//     borderWidth: 1,
-//     borderRadius: 8,
-//     paddingHorizontal: 10,
-//     backgroundColor: "#fff",
-//     elevation: 1,
-//     shadowColor: "#000",
-//     shadowOpacity: 0.1,
-//     shadowRadius: 5,
-//   },
-//   datePickerContainer: {
-//     marginVertical: 10,
-//   },
-//   dateButton: {
-//     borderColor: "#ccc",
-//     borderWidth: 1,
-//     borderRadius: 8,
-//     padding: 10,
-//     backgroundColor: "#fff",
-//     elevation: 1,
-//   },
-//   dateButtonText: {
-//     color: "#333",
-//     fontSize: 16,
-//   },
-//   applyButton: {
-//     backgroundColor: "#2196F3",
-//     padding: 15,
-//     borderRadius: 8,
-//     alignItems: "center",
-//     marginTop: 20,
-//   },
-//   applyButtonText: {
-//     color: "#fff",
-//     fontWeight: "600",
-//     fontSize: 18,
-//   },
-// });
-
-// export default Filter;
-//////DATE LOGIC FILTER/////////
-
-import React, { useState, useEffect, useCallback } from "react";
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import React, { useState, useEffect, useCallback, useContext } from "react";
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  TextInput,
+} from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import { Country, State, City } from "country-state-city";
 import axios from "axios";
 import { API_URL } from "@env";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import DateTimePickerModal from "react-native-modal-datetime-picker"; // Import date picker
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { MaterialIcons } from "@expo/vector-icons"; // Import pencil icon
+import { UserContext } from "../navigation/UserProvider";
+import Slider from "@react-native-community/slider";
 
 const eventGenres = [
   "Business Event",
@@ -364,23 +29,37 @@ const eventGenres = [
   "Travel Meetup",
 ];
 
-const Filter = ({ setFilteredEvents, setGenre }) => {
+const Filter = ({
+  setFilteredEvents,
+  setStartDate,
+  setSelectedDateRange,
+  setEndDate,
+  loadEvents,
+}) => {
   const [countryData, setCountryData] = useState([]);
   const [stateData, setStateData] = useState([]);
   const [cityData, setCityData] = useState([]);
-  const [country, setCountry] = useState(null);
-  const [state, setState] = useState(null);
-  const [city, setCity] = useState(null);
+  const [showEditCountry, setShowEditCountry] = useState(false);
+  const [showEditState, setShowEditState] = useState(false);
+  const [showEditCity, setShowEditCity] = useState(false);
   const [countryName, setCountryName] = useState(null);
   const [stateName, setStateName] = useState(null);
   const [cityName, setCityName] = useState(null);
-  const [selectedGenre, setSelectedGenre] = useState(null); // Ensure selectedGenre is defined
-  const [isFocus, setIsFocus] = useState(false);
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
-  const [isLoading, setLoading] = useState(false);
+  const [selectedGenre, setSelectedGenre] = useState(null);
+  const [isEditingLocation, setIsEditingLocation] = useState(false); // Toggle for editing location
   const [isStartDatePickerVisible, setStartDatePickerVisible] = useState(false);
   const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
+  // const [startDate, setLocalStartDate] = useState(new Date()); // Local state for start date
+  // const [endDate, setLocalEndDate] = useState(new Date());
+  const [startDate, setLocalStartDate] = useState(null);
+  const [endDate, setLocalEndDate] = useState(null);
+  const [isLoading, setLoading] = useState(false);
+
+  const [radius, setRadius] = useState(5000);
+
+  const [isFocus, setIsFocus] = useState(false);
+
+  const { user, userId } = useContext(UserContext);
 
   useEffect(() => {
     const loadCountries = () => {
@@ -394,15 +73,39 @@ const Filter = ({ setFilteredEvents, setGenre }) => {
     loadCountries();
   }, []);
 
+  // Load state and city data based on saved country and state
+  useEffect(() => {
+    if (countryName) {
+      const countryCode = Country.getAllCountries().find(
+        (country) => country.name === countryName
+      )?.isoCode;
+      if (countryCode) handleState(countryCode);
+    }
+  }, [countryName]);
+
+  useEffect(() => {
+    if (stateName && countryName) {
+      const countryCode = Country.getAllCountries().find(
+        (country) => country.name === countryName
+      )?.isoCode;
+      const stateCode = State.getStatesOfCountry(countryCode).find(
+        (state) => state.name === stateName
+      )?.isoCode;
+      if (stateCode) handleCity(countryCode, stateCode);
+    }
+  }, [stateName, countryName]);
+
   const handleState = useCallback((countryCode) => {
     const states = State.getStatesOfCountry(countryCode).map((state) => ({
       value: state.isoCode,
       label: state.name,
     }));
     setStateData(states);
-    setState(null);
-    setCity(null);
+    // setState(null);
+    // setCity(null);
     setCityData([]);
+    // setStateName(null);
+    // setCityName(null);
   }, []);
 
   const handleCity = useCallback((countryCode, stateCode) => {
@@ -413,20 +116,66 @@ const Filter = ({ setFilteredEvents, setGenre }) => {
       })
     );
     setCityData(cities);
-    setCity(null);
+    // setCity(null);
   }, []);
 
-  const fetchEventsByLocation = async () => {
-    // Construct the endpoint directly with the values
-    const endpoint = `${API_URL}/api/events/location/${cityName}/${stateName}/${countryName}`;
-    try {
-      const response = await axios.get(endpoint);
-      return response.data; // Return the fetched events
-    } catch (error) {
-      console.error("Error fetching events by location:", error);
-      return []; // Return an empty array in case of an error
-    }
+  const handleCountryChange = (selectedCountry) => {
+    setCountryName(selectedCountry.label);
+    setShowEditCountry(false);
+    // Fetch states for the newly selected country
+    handleState(selectedCountry.value);
+    setStateName(""); // Reset state and city when country changes
+    setCityName("");
   };
+
+  const handleStateChange = (selectedState) => {
+    setStateName(selectedState.label);
+    setShowEditState(false);
+    // Fetch cities for the newly selected state
+    const countryCode = Country.getAllCountries().find(
+      (country) => country.name === countryName
+    )?.isoCode;
+    handleCity(countryCode, selectedState.value);
+    setCityName(""); // Reset city when state changes
+  };
+
+  const handleCityChange = (selectedCity) => {
+    setCityName(selectedCity.label);
+    setShowEditCity(false);
+  };
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      setLoading(true);
+      try {
+        // const storedUserId = userId;
+        // setUserId(storedUserId);
+        const response = await axios.get(`${API_URL}/user/${userId}`);
+        // console.log("User Data:", response.data);
+        if (response.status === 200) {
+          const userData = response.data;
+
+          // Set country, state, and city from userData
+          setCountryName(userData.countryName || "");
+          setStateName(userData.stateName || "");
+          setCityName(userData.cityName || "");
+        } else {
+          Alert.alert(
+            "Error",
+            "Failed to load profile data. Please try again later."
+          );
+        }
+      } catch (error) {
+        Alert.alert(
+          "Error",
+          "Failed to load profile data. Please try again later."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUserData();
+  }, []);
 
   const fetchEventsByGenre = async () => {
     if (!selectedGenre) return []; // Add check for selectedGenre
@@ -441,209 +190,326 @@ const Filter = ({ setFilteredEvents, setGenre }) => {
     }
   };
 
-  const handleApplyDateFilters = async () => {
-    if (!startDate || !endDate) return;
-    setLoading(true);
+  // const fetchEventsByLocation = async () => {
+  //   // Construct the endpoint directly with the values
+  //   const endpoint = `${API_URL}/api/events/location/${cityName}/${stateName}/${countryName}`;
+  //   try {
+  //     const response = await axios.get(endpoint);
+  //     console.log("LOG FROM FILTER COMPONENT :", response.data);
+  //     return response.data; // Return the fetched events
+  //   } catch (error) {
+  //     console.error("Error fetching events by location:", error);
+  //     return []; // Return an empty array in case of an error
+  //   }
+  // };
 
-    // Format the start and end dates to YYYY-MM-DD for better URL structure
-    const formattedStartDate = startDate.toISOString().split("T")[0]; // Get just the date part
-    const formattedEndDate = endDate.toISOString().split("T")[0]; // Get just the date part
+  const fetchEventsByLocation = async () => {
+    if (!cityName || !stateName || !countryName) return [];
+
+    // If no date range provided, set a default range (e.g., one month ago)
+    const defaultStartDate = new Date();
+    defaultStartDate.setMonth(defaultStartDate.getMonth() - 1); // Set to one month ago
+
+    const defaultEndDate = new Date();
+    const endpoint = `${API_URL}/api/events/locationAndDateRange/${cityName}/${stateName}/${countryName}/${
+      defaultStartDate.toISOString().split("T")[0]
+    }/${defaultEndDate.toISOString().split("T")[0]}`;
 
     try {
-      const endpoint = `${API_URL}/api/events/filterByDate/${formattedStartDate}/${formattedEndDate}`;
       const response = await axios.get(endpoint);
-      setFilteredEvents(response.data);
+      console.log("LOG FROM FILTER COMPONENT:", response.data);
+      return response.data; // Return the fetched events
+    } catch (error) {
+      console.error("Error fetching events by location:", error);
+      return []; // Return an empty array in case of an error
+    }
+  };
+
+  // const fetchEventsByLocationAndDate = async () => {
+  //   if (!cityName || !stateName || !countryName || !startDate || !endDate)
+  //     return [];
+
+  //   // Construct the endpoint for filtering events by location and date range
+  //   const endpoint = `${API_URL}/api/events/locationAndDateRange/${cityName}/${stateName}/${countryName}/${
+  //     startDate.toISOString().split("T")[0]
+  //   }/${endDate.toISOString().split("T")[0]}`;
+  //   try {
+  //     const response = await axios.get(endpoint);
+  //     console.log("Events fetched by location and date range:", response.data);
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error("Error fetching events by location and date:", error);
+  //     return [];
+  //   }
+  // };
+
+  const fetchEventsByLocationAndDate = async () => {
+    if (!cityName || !stateName || !countryName || !startDate || !endDate)
+      return [];
+
+    // If `startDate` and `endDate` are not set, use default date range (e.g., one month ago)
+    const defaultStartDate =
+      startDate || new Date(new Date().setMonth(new Date().getMonth() - 1));
+    const defaultEndDate = endDate || new Date();
+
+    const endpoint = `${API_URL}/api/events/locationAndDateRange/${cityName}/${stateName}/${countryName}/${
+      defaultStartDate.toISOString().split("T")[0]
+    }/${defaultEndDate.toISOString().split("T")[0]}`;
+
+    try {
+      const response = await axios.get(endpoint);
+      console.log("LOG FROM FILTER COMPONENT:", response.data);
+      return response.data; // Return the fetched events
+    } catch (error) {
+      console.error("Error fetching events by location and date:", error);
+      return []; // Return an empty array in case of an error
+    }
+  };
+
+  const fetchEventsByDateRange = async () => {
+    if (!startDate || !endDate) return [];
+
+    // Construct the endpoint for filtering events by date range only
+    const endpoint = `${API_URL}/api/events/filterByDate/${
+      startDate.toISOString().split("T")[0]
+    }/${endDate.toISOString().split("T")[0]}`;
+    try {
+      const response = await axios.get(endpoint);
+      console.log("Events fetched by date range:", response.data);
+      return response.data;
     } catch (error) {
       console.error("Error fetching events by date range:", error);
-    } finally {
-      setLoading(false);
+      return [];
     }
   };
 
   const handleApplyFilters = async () => {
-    // Fetch events based on genre if selected
+    let filteredResults = [];
+
     if (selectedGenre) {
       const genreEvents = await fetchEventsByGenre();
-      setFilteredEvents(genreEvents); // Update filtered events with genre events
-      setGenre(selectedGenre); // Update the genre in parent state
+      filteredResults = [...filteredResults, ...genreEvents];
     }
 
-    // Fetch events based on location if all location fields are filled
-    if (countryName && stateName && cityName) {
+    if (cityName && stateName && countryName && startDate && endDate) {
+      const locationAndDateEvents = await fetchEventsByLocationAndDate();
+      filteredResults = [...filteredResults, ...locationAndDateEvents];
+    }
+
+    if (cityName && stateName && countryName && !startDate && !endDate) {
       const locationEvents = await fetchEventsByLocation();
-      setFilteredEvents(locationEvents); // Update filtered events with location events
-      setGenre(null); // Reset genre in parent state since we're filtering by location
+      filteredResults = [...filteredResults, ...locationEvents];
     }
 
-    // Apply date filters if any
-    if (startDate && endDate) {
-      filteredResults = filteredResults.filter((event) => {
-        const eventDate = new Date(event.date);
-        return eventDate >= startDate && eventDate <= endDate;
-      });
+    if (!cityName || !stateName || (!countryName && startDate && endDate)) {
+      const dateRangeEvents = await fetchEventsByDateRange();
+      filteredResults = [...filteredResults, ...dateRangeEvents];
     }
+    const uniqueEvents = Array.from(
+      new Set(filteredResults.map((event) => event._id.toString()))
+    ).map((id) => filteredResults.find((event) => event._id.toString() === id));
 
-    // If neither genre nor location is selected, you can optionally clear the events
-    if (!selectedGenre && (!countryName || !stateName || !cityName)) {
-      setFilteredEvents([]); // Clear events if no filters are applied
-    }
+    setFilteredEvents(uniqueEvents);
+    setSelectedDateRange({ startDate, endDate });
+    console.log("Unique filtered events:", uniqueEvents);
   };
 
-  // Date picker handlers
-  // const showStartDatePicker = () => setStartDatePickerVisible(true);
-  // const hideStartDatePicker = () => setStartDatePickerVisible(false);
-  // const handleConfirmStartDate = (date) => {
-  //   setStartDate(date);
-  //   hideStartDatePicker();
-  // };
+  const showStartDatePicker = () => setStartDatePickerVisible(true);
+  const hideStartDatePicker = () => setStartDatePickerVisible(false);
 
-  // const showEndDatePicker = () => setEndDatePickerVisible(true);
-  // const hideEndDatePicker = () => setEndDatePickerVisible(false);
-  // const handleConfirmEndDate = (date) => {
-  //   if (date < startDate) {
-  //     alert("End date cannot be earlier than start date.");
-  //     return;
-  //   }
-  //   setEndDate(date);
-  //   hideEndDatePicker();
-  // };
+  const handleConfirmStartDate = (date) => {
+    setLocalStartDate(date);
+    // setStartDate(date);
+    hideStartDatePicker();
+  };
+
+  const showEndDatePicker = () => setEndDatePickerVisible(true);
+  const hideEndDatePicker = () => setEndDatePickerVisible(false);
+  const handleConfirmEndDate = (date) => {
+    if (date < startDate) {
+      alert("End date cannot be earlier than start date.");
+      return;
+    }
+    setLocalEndDate(date);
+    hideEndDatePicker();
+  };
+
+  const toggleEditLocation = () => {
+    setIsEditingLocation(!isEditingLocation);
+  };
 
   return (
     <View style={styles.container}>
-      {/* Country Dropdown */}
-      <View style={styles.dropdownContainer}>
+      <View style={styles.locContainer}>
         <Text style={styles.label}>Country</Text>
-        <Dropdown
-          style={styles.dropdown}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={styles.selectedTextStyle}
-          inputSearchStyle={styles.inputSearchStyle}
-          iconStyle={styles.iconStyle}
-          data={countryData}
-          search
-          maxHeight={300}
-          labelField="label"
-          valueField="value"
-          placeholder="Select Country"
-          searchPlaceholder="Search..."
-          value={country}
-          onFocus={() => setIsFocus(true)}
-          onBlur={() => setIsFocus(false)}
-          onChange={(item) => {
-            setCountry(item.value);
-            setCountryName(item.label);
-            handleState(item.value);
-          }}
-        />
-      </View>
-
-      {/* State Dropdown */}
-      <View style={styles.dropdownlocationRowContainer}>
-        <View style={styles.dropdownContainer}>
-          <Text style={styles.label}>State</Text>
+        <View style={styles.row}>
+          <Text style={styles.infoText}>{countryName}</Text>
+          <TouchableOpacity
+            onPress={() => setShowEditCountry(!showEditCountry)}
+            style={styles.editIconWrapper}
+          >
+            <Ionicons name="pencil" size={20} color="grey" />
+          </TouchableOpacity>
+        </View>
+        {showEditCountry && (
           <Dropdown
-            style={styles.dropdown}
-            placeholderStyle={styles.placeholderStyle}
-            selectedTextStyle={styles.selectedTextStyle}
-            inputSearchStyle={styles.inputSearchStyle}
-            iconStyle={styles.iconStyle}
+            data={countryData}
+            valueField="value"
+            labelField="label"
+            placeholder="Select Country"
+            search
+            onChange={handleCountryChange}
+            containerStyle={styles.dropdown}
+          />
+        )}
+
+        {/* State */}
+        <Text style={styles.label}>State</Text>
+        <View style={styles.row}>
+          <Text style={styles.infoText}>{stateName}</Text>
+          <TouchableOpacity
+            onPress={() => setShowEditState(!showEditState)}
+            style={styles.editIconWrapper}
+          >
+            <Ionicons name="pencil" size={20} color="grey" />
+          </TouchableOpacity>
+        </View>
+        {showEditState && (
+          <Dropdown
             data={stateData}
-            search
-            maxHeight={300}
-            labelField="label"
             valueField="value"
+            labelField="label"
             placeholder="Select State"
-            searchPlaceholder="Search..."
-            value={state}
-            onFocus={() => setIsFocus(true)}
-            onBlur={() => setIsFocus(false)}
-            onChange={(item) => {
-              setState(item.value);
-              setStateName(item.label);
-              handleCity(country, item.value);
-            }}
-          />
-        </View>
-
-        {/* City Dropdown */}
-        <View style={[styles.dropdownContainer, styles.dropdownContainerLast]}>
-          <Text style={styles.label}>City</Text>
-          <Dropdown
-            style={styles.dropdown}
-            placeholderStyle={styles.placeholderStyle}
-            selectedTextStyle={styles.selectedTextStyle}
-            inputSearchStyle={styles.inputSearchStyle}
-            iconStyle={styles.iconStyle}
-            data={cityData}
             search
-            maxHeight={300}
-            labelField="label"
-            valueField="value"
-            placeholder="Select City"
-            searchPlaceholder="Search..."
-            value={city}
-            onFocus={() => setIsFocus(true)}
-            onBlur={() => setIsFocus(false)}
-            onChange={(item) => {
-              setCity(item.value);
-              setCityName(item.label);
-            }}
+            onChange={handleStateChange}
+            containerStyle={styles.dropdown}
           />
+        )}
+
+        {/* City */}
+        <Text style={styles.label}>City</Text>
+        <View style={styles.row}>
+          <Text style={styles.infoText}>{cityName}</Text>
+          <TouchableOpacity
+            onPress={() => setShowEditCity(!showEditCity)}
+            style={styles.editIconWrapper}
+          >
+            <Ionicons name="pencil" size={20} color="grey" />
+          </TouchableOpacity>
         </View>
+        {showEditCity && (
+          <Dropdown
+            data={cityData}
+            valueField="value"
+            labelField="label"
+            placeholder="Select City"
+            search
+            onChange={handleCityChange}
+            containerStyle={styles.dropdown}
+          />
+        )}
       </View>
 
       {/* Genre Dropdown */}
       <View style={styles.dropdownContainer}>
         <Text style={styles.label}>Event Genre</Text>
         <Dropdown
-          style={styles.dropdown}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={styles.selectedTextStyle}
-          inputSearchStyle={styles.inputSearchStyle}
-          iconStyle={styles.iconStyle}
+          style={styles.eventdropdown}
           data={eventGenres.map((genre) => ({ value: genre, label: genre }))}
-          search
-          maxHeight={300}
           labelField="label"
           valueField="value"
           placeholder="Select Genre"
-          searchPlaceholder="Search..."
-          value={selectedGenre} // Update to use selectedGenre
-          onFocus={() => setIsFocus(true)}
-          onBlur={() => setIsFocus(false)}
-          onChange={(item) => {
-            setSelectedGenre(item.value); // Update the local state
-            setGenre(item.value); // Optionally update the parent state if needed
-          }}
+          value={selectedGenre}
+          onChange={(item) => setSelectedGenre(item.value)}
         />
       </View>
 
-      {/* Date Filters */}
-      {/* <TouchableOpacity onPress={showStartDatePicker} style={styles.dateButton}>
-        <Text style={styles.dateButtonText}>
-          Start Date: {startDate.toDateString()}
-        </Text>
-      </TouchableOpacity>
-      <DateTimePickerModal
-        isVisible={isStartDatePickerVisible}
-        mode="date"
-        onConfirm={handleConfirmStartDate}
-        onCancel={hideStartDatePicker}
-        textColor="#000"
-      />
+      {/* <View style={styles.DateContainer}>
+        <TouchableOpacity
+          style={styles.dateButton}
+          onPress={() => setStartDatePickerVisible(true)}
+        >
+          <Text style={styles.dateButtonText}>
+            Start Date: {startDate.toDateString()}
+          </Text>
+        </TouchableOpacity>
+        <DateTimePickerModal
+          isVisible={isStartDatePickerVisible}
+          mode="date"
+          onConfirm={(date) => {
+            setStartDate(date);
+            setStartDatePickerVisible(false);
+            textColor = "#000";
+          }}
+          onCancel={() => setStartDatePickerVisible(false)}
+        />
+        <TouchableOpacity
+          style={styles.dateButton}
+          onPress={() => setEndDatePickerVisible(true)}
+        >
+          <Text style={styles.dateButtonText}>
+            End Date: {endDate.toDateString()}
+          </Text>
+        </TouchableOpacity>
+        <DateTimePickerModal
+          isVisible={isEndDatePickerVisible}
+          mode="date"
+          onConfirm={(date) => {
+            setEndDate(date);
+            setEndDatePickerVisible(false);
+          }}
+          onCancel={() => setEndDatePickerVisible(false)}
+          textColor="#000"
+        />
+      </View> */}
 
-      <TouchableOpacity onPress={showEndDatePicker} style={styles.dateButton}>
-        <Text style={styles.dateButtonText}>
-          End Date: {endDate.toDateString()}
-        </Text>
-      </TouchableOpacity>
-      <DateTimePickerModal
-        isVisible={isEndDatePickerVisible}
-        mode="date"
-        onConfirm={handleConfirmEndDate}
-        onCancel={hideEndDatePicker}
-        textColor="#000"
-      /> */}
+      <View style={styles.DateContainer}>
+        <Text style={styles.label}>Date Range</Text>
+
+        <TouchableOpacity
+          onPress={showStartDatePicker}
+          style={styles.dateButton}
+        >
+          <Text style={styles.dateButtonText}>
+            Start Date:{" "}
+            {startDate ? startDate.toDateString() : "Select start date"}
+          </Text>
+        </TouchableOpacity>
+        <DateTimePickerModal
+          isVisible={isStartDatePickerVisible}
+          mode="date"
+          onConfirm={handleConfirmStartDate}
+          onCancel={hideStartDatePicker}
+          textColor="#000"
+        />
+
+        <TouchableOpacity onPress={showEndDatePicker} style={styles.dateButton}>
+          <Text style={styles.dateButtonText}>
+            End Date: {endDate ? endDate.toDateString() : "Select end date"}
+          </Text>
+        </TouchableOpacity>
+        <DateTimePickerModal
+          isVisible={isEndDatePickerVisible}
+          mode="date"
+          onConfirm={handleConfirmEndDate}
+          onCancel={hideEndDatePicker}
+          textColor="#000"
+        />
+      </View>
+
+      {/* RADIUS  */}
+      {/* <View style={styles.radiusContainer}>
+        <Text style={styles.label}>Radius (meters)</Text>
+        <Slider
+          style={styles.slider}
+          minimumValue={1000}
+          maximumValue={50000}
+          step={1000}
+          value={radius}
+          onValueChange={(value) => setRadius(value)}
+        />
+        <Text style={styles.radiusText}>{`Radius: ${radius} meters`}</Text>
+      </View> */}
 
       <TouchableOpacity
         style={styles.applyButton}
@@ -663,24 +529,26 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  locationHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   dropdownContainer: {
-    flex: 1,
-    marginRight: 10,
+    marginVertical: 8,
   },
   label: {
     fontSize: 16,
     fontWeight: "600",
-    marginVertical: 8,
+  },
+  locationText: {
+    fontSize: 16,
     color: "#333",
+    marginVertical: 8,
   },
-  dropdownlocationRowContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginVertical: 10,
-  },
-  dropdownContainerLast: {
+  DateContainer: {
     marginRight: 0,
+    paddingTop: 10,
   },
   dateButton: {
     height: 50,
@@ -691,44 +559,92 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   dateButtonText: {
+    fontStyle: "bold",
     fontSize: 16,
-  },
-  dropdown: {
-    height: 50,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    backgroundColor: "#fff",
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
   },
   applyButton: {
     backgroundColor: "#2196F3",
-    padding: 10,
-    borderRadius: 5,
-    marginVertical: 5,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
   applyButtonText: {
-    color: "#fff",
     textAlign: "center",
+    color: "#FFF",
+    fontSize: 16,
   },
-  placeholderStyle: {
-    color: "#999",
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
   },
-  selectedTextStyle: {
+  input: {
+    height: 50,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    marginBottom: 15,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 15,
+  },
+  countryStateCityWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  infoText: {
+    height: 50,
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
     fontSize: 16,
     color: "#333",
+    backgroundColor: "#f9f9f9",
+    flex: 1,
+    marginRight: 10,
   },
-  inputSearchStyle: {
-    height: 40,
-    fontSize: 16,
+  // editIconWrapper: {
+  //   padding: 5,
+  //   borderRadius: 5,
+  //   backgroundColor: "#e0e0e0",
+  //   elevation: 2,
+  // },
+  editIconWrapper: {
+    marginLeft: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 5,
+    borderRadius: 5,
+    backgroundColor: "#e0e0e0",
   },
-  iconStyle: {
-    width: 20,
-    height: 20,
+  dropdown: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  eventdropdown: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+  },
+  placeholderStyle: {
+    fontSize: 14,
+    color: "#aaa",
   },
 });
 

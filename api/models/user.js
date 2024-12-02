@@ -102,7 +102,43 @@ const userSchema = new Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: "Event",
     },
-  ],
+  ], // New "about you" section
+  aboutYou: {
+    height: {
+      type: Number, // In centimeters or inches (you can specify the unit as needed)
+      required: false,
+    },
+    work: {
+      type: String, // Job/occupation
+      required: false,
+    },
+    educationLevel: {
+      type: String,
+
+      required: false,
+    },
+    smokes: {
+      type: String, // True if smokes, false otherwise
+      required: false,
+    },
+    drinks: {
+      type: String, // True if drinks, false otherwise
+      required: false,
+    },
+    zodiac: {
+      type: String, // Zodiac sign
+      required: false,
+    },
+    religion: {
+      type: String, // Religion
+      required: false,
+    },
+    languages: [
+      {
+        type: String, // Languages they know
+      },
+    ],
+  },
   isAdmin: {
     type: Boolean,
     default: false,

@@ -1,10 +1,12 @@
 {
   "expo": {
+    "sdkVersion": "52.0.0",
     "name": "match-matters",
     "slug": "match-matters",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
@@ -18,7 +20,8 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-asset"
+      "expo-asset",
+       "expo-image-picker"
     ],
     "assetBundlePatterns": [
       "assets/*"

@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useContext,
+} from "react";
 import {
   View,
   Text,
@@ -24,8 +30,11 @@ import FormData from "form-data";
 import { getUserId } from "../backend/registrationUtils";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { v4 as uuidv4 } from "uuid";
+import { UserContext } from "../navigation/UserProvider";
 
 const CreateEventScreen = ({ navigation }) => {
+  const { userId, token } = useContext(UserContext);
+
   const [images, setImages] = useState([null, null, null]);
   const [title, setTitle] = useState("");
   // const [location, setLocation] = useState("");
@@ -148,11 +157,11 @@ const CreateEventScreen = ({ navigation }) => {
   };
 
   const pickImage = (index) =>
-    pickMedia(index, setImages, images, ImagePicker.MediaTypeOptions.Images);
+    pickMedia(index, setImages, images, ImagePicker.MediaType.Images);
 
   const pickVideo = async () => {
     let options = {
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      mediaTypes: ImagePicker.MediaType.Videos,
       allowsEditing: true,
       quality: 1,
     };
@@ -252,7 +261,8 @@ const CreateEventScreen = ({ navigation }) => {
       const locationString = `${baseAddress}, ${city}, ${state}, ${country}`;
       console.log("location FROM FEEDSCREEN :", locationString);
 
-      const requestId = uuidv4();
+      const generateId = () => Math.random().toString(36).substring(2, 15);
+      const requestId = generateId();
       console.log("requestId", requestId);
 
       const geocodeUrl = `https://api.olamaps.io/places/v1/geocode?address=${locationString}&api_key=${OLA_MAPS_API_KEY}`;
@@ -284,7 +294,7 @@ const CreateEventScreen = ({ navigation }) => {
   const handlePublish = async () => {
     try {
       // Step 1: Fetch and decode the token
-      let token = await getToken();
+      // let token = token;
       console.log("Token from CreateEventScreen:", token);
 
       if (!token) {
@@ -346,7 +356,7 @@ const CreateEventScreen = ({ navigation }) => {
 
       // Step 5: Assemble event data
       const eventData = {
-        userId: await getUserId(),
+        userId,
         title,
         date: formattedDate,
         time: formattedTime,
