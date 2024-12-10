@@ -13,6 +13,7 @@ import axios from "axios";
 import { API_URL } from "@env";
 import { getUserId } from "../backend/registrationUtils";
 import { UserContext } from "../navigation/UserProvider";
+import LottieView from "lottie-react-native";
 
 const MyBookingsScreen = ({ navigation }) => {
   const fadeAnimation = useRef(new Animated.Value(0)).current;
@@ -59,6 +60,8 @@ const MyBookingsScreen = ({ navigation }) => {
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
+      <Text style={styles.title}>Booked Events :</Text>
+
       <FlatList
         data={events}
         renderItem={({ item }) => (
@@ -87,6 +90,12 @@ const MyBookingsScreen = ({ navigation }) => {
         }
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
+            <LottieView
+              source={require("../Onboarding-Screen-2/src/assets/animations/NO_request.json")} // Replace with your own Lottie animation
+              autoPlay
+              loop
+              style={styles.lottieAnimation}
+            />
             <Text style={styles.emptyText}>No liked events found</Text>
           </View>
         )}
@@ -149,6 +158,11 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontFamily: "Chalkboard SE",
   },
+  lottieAnimation: {
+    width: 200, // Adjust size of the Lottie animation
+    height: 200,
+    marginBottom: 20,
+  },
   eventDetails: {
     fontSize: 12,
     color: "#ccc",
@@ -158,6 +172,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    top: 120,
   },
   emptyText: {
     fontSize: 18,

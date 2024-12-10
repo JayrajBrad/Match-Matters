@@ -209,6 +209,7 @@ export default function PreferenceScreen({ navigation }) {
     try {
       const screens = [
         "PhoneNum",
+        "CountryCode",
         "Email",
         "Password",
         "Username",
@@ -226,6 +227,7 @@ export default function PreferenceScreen({ navigation }) {
         }
       }
       setUserData(userData);
+      console.log("get data :", userData);
     } catch (error) {
       console.log("Error", error);
     }
@@ -236,6 +238,8 @@ export default function PreferenceScreen({ navigation }) {
     try {
       const screens = [
         "PhoneNum",
+        "CountryCode",
+
         "Email",
         "Password",
         "Username",
@@ -264,6 +268,7 @@ export default function PreferenceScreen({ navigation }) {
   const validateUserData = (data) => {
     const requiredFields = [
       "phoneNumber",
+      "countryCode",
       "emailId",
       "password",
       "username",
@@ -315,12 +320,16 @@ export default function PreferenceScreen({ navigation }) {
     // await clearAllScreenData();
     // setLoading(false);
     // navigation.navigate("FeedScreen", { userData });
+
+    console.log("user data from pref :", userData);
     try {
       const response = await sendData(userData); // Make sure sendData returns the response
       if (response && response.token && response.user) {
         // Call loginUser function to save token and user info in context
         await loginUser(response); // now this call updates the context and stores it
         // Navigate to the FeedScreen after successful login
+        await clearAllScreenData();
+
         navigation.navigate("MainDrawer", {
           screen: "FeedScreen",
           params: { userData },

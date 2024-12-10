@@ -5,18 +5,19 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 
 console.log("JWT_SECRET from usercontroller: ", JWT_SECRET);
-console.log("REFRESH_TOKEN_SECRET from usercontroller: ", REFRESH_TOKEN_SECRET);
+// console.log("REFRESH_TOKEN_SECRET from usercontroller: ", REFRESH_TOKEN_SECRET);
 
 exports.registerUser = async (req, res) => {
   try {
     const {
       username,
       phoneNumber,
+      countryCode,
       emailId,
       password,
+
       age,
       birthdate,
       cityName,
@@ -38,6 +39,7 @@ exports.registerUser = async (req, res) => {
     const newUser = new User({
       username,
       phoneNumber,
+      countryCode,
       emailId,
       password: hashedPassword,
       age,
@@ -69,6 +71,7 @@ exports.registerUser = async (req, res) => {
         username: newUser.username,
         emailId: newUser.emailId,
         phoneNumber: newUser.phoneNumber,
+        countryCode: newUser.countryCode,
         age: newUser.age,
         birthdate: newUser.birthdate,
 
@@ -129,6 +132,8 @@ exports.loginUser = async (req, res) => {
         username: user.username,
         emailId: user.emailId,
         phoneNumber: user.phoneNumber,
+        countryCode: user.countryCode,
+
         age: user.age,
         birthdate: user.birthdate,
 

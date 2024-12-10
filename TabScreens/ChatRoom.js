@@ -53,28 +53,70 @@ const ChatRoom = () => {
   //   fetchUserId();
   // }, []);
 
+  // useEffect(() => {
+  //   const fetchMessages = async () => {
+  //     if (!userId || hasFetchedMessages.current) return;
+  //     try {
+  //       const response = await axios.get(`${API_URL}/api/messages`, {
+  //         params: { senderId: userId, receiverId },
+  //       });
+  //       // console.log("Fetched Messages:", response.data);
+
+  //       setMessages(
+  //         response.data.map((msg) => ({
+  //           ...msg,
+  //           senderId:
+  //             typeof msg.senderId === "object"
+  //               ? msg.senderId._id
+  //               : msg.senderId,
+  //           receiverId: msg.receiverId,
+  //         }))
+  //       );
+  //       hasFetchedMessages.current = true;
+  //     } catch (error) {
+  //       console.error("Error fetching messages:", error);
+  //     }
+  //   };
+
+  //   fetchMessages();
+  // }, [userId, receiverId]);
+
   useEffect(() => {
     const fetchMessages = async () => {
-      if (!userId || hasFetchedMessages.current) return;
+      if (hasFetchedMessages.current) return; // Prevent re-fetching
       try {
         const response = await axios.get(`${API_URL}/api/messages`, {
           params: { senderId: userId, receiverId },
         });
-        // console.log("Fetched Messages:", response.data);
+        console.log("Fetched Messages:", response.data);
 
-        setMessages(
-          response.data.map((msg) => ({
-            ...msg,
-            senderId:
-              typeof msg.senderId === "object"
-                ? msg.senderId._id
-                : msg.senderId,
-            receiverId: msg.receiverId,
-          }))
-        );
-        hasFetchedMessages.current = true;
+        // setMessages(response.data.map(msg => ({
+        //   ...msg,
+        //   senderId: typeof msg.senderId === 'object' ? msg.senderId._id : msg.senderId,
+        //   receiverId: msg.receiverId,
+        // })));
+        if (Array.isArray(response.data.messages)) {
+          setMessages(
+            response.data.messages.map((msg) => ({
+              ...msg,
+              senderId:
+                typeof msg.senderId === "object"
+                  ? msg.senderId._id
+                  : msg.senderId,
+              receiverId:
+                typeof msg.receiverId === "object"
+                  ? msg.receiverId._id
+                  : msg.receiverId,
+            }))
+          );
+        } else {
+          console.error("Fetched data is not an array:", response.data);
+          setMessages([]); // Set messages to an empty array to avoid crashes
+        }
+
+        hasFetchedMessages.current = true; // Mark as fetched
       } catch (error) {
-        console.error("Error fetching messages:", error);
+        console.error("Error fetching messages from chatroom :", error);
       }
     };
 

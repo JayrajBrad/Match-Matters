@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import React, { useState, useEffect, useContext } from "react";
 import { StatusBar } from "react-native";
+import LottieView from "lottie-react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
@@ -172,7 +173,13 @@ const ChatScreen = () => {
                     alignItems: "center",
                   }}
                 >
-                  <View style={styles.noChats}>
+                  <View style={styles.animationContainer}>
+                    <LottieView
+                      source={require("../Onboarding-Screen-2/src/assets/animations/no_chat.json")} // Replace with your animation file path
+                      autoPlay
+                      loop
+                      style={styles.lottie}
+                    />
                     <Text style={styles.noChatsText}>No Chats</Text>
                     <Text style={styles.getStartedText}>
                       Get Started by messaging a friend
@@ -198,14 +205,15 @@ const styles = StyleSheet.create({
     // borderColor: "blue",
     marginTop: 0,
   },
-  // header: {
-  //   flexDirection: "row",
-  //   alignItems: "center",
-  //   justifyContent: "space-between",
-  //   padding: 15,
-  //   borderBottomWidth: 1,
-  //   borderBottomColor: "#f0f0f0",
-  // },
+  animationContainer: {
+    height: 300,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  lottie: {
+    width: 200,
+    height: 200,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",

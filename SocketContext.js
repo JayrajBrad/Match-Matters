@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import io from "socket.io-client";
 import { getUserId } from "./backend/registrationUtils"; // Assuming this path
-import { API_URL_SOCKET } from "@env";
+import { API_URL } from "@env";
 import { UserContext } from "./navigation/UserProvider";
 
 const SocketContext = createContext();
@@ -16,27 +16,16 @@ export const SocketProvider = ({ children }) => {
 
   console.log("user_id from SOCKET :", userId);
 
-  // Fetch the userId once when the component mounts
-  // useEffect(() => {
-  //   const fetchUserId = async () => {
-  //     const id = await getUserId();
-  //     console.log("id at socketcontext : ", id);
-  //     setUserId(id);
-  //   };
-
-  //   fetchUserId();
-  // }, []); // Empty dependency array ensures this runs only once
-
   // Set up socket connection when userId is available
   useEffect(() => {
     if (userId) {
       console.log("User ID being passed to socket:", userId);
 
-      const socketInstance = io(`${API_URL_SOCKET}`, {
+      const socketInstance = io(`${API_URL}`, {
         query: { userId: userId },
       });
 
-      console.log("---------------", socketInstance);
+      // console.log("---------------", socketInstance);
 
       // Listen for socket connection events
       socketInstance.on("connect", () => {

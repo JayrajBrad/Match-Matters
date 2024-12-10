@@ -12,6 +12,10 @@ const userSchema = new Schema({
     // type : String,
     required: true,
   },
+  countryCode: {
+    type: String,
+    required: true,
+  },
   emailId: {
     type: String,
     unique: true,
@@ -21,6 +25,7 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
+
   age: {
     type: Number,
     required: true,
@@ -104,12 +109,12 @@ const userSchema = new Schema({
     },
   ], // New "about you" section
   aboutYou: {
-    height: {
-      type: Number, // In centimeters or inches (you can specify the unit as needed)
+    lookingFor: {
+      type: String,
       required: false,
     },
-    work: {
-      type: String, // Job/occupation
+    jobIndustry: {
+      type: String, // e.g., Tech, Healthcare, Education
       required: false,
     },
     educationLevel: {
@@ -117,6 +122,11 @@ const userSchema = new Schema({
 
       required: false,
     },
+    relationshipStatus: {
+      type: String,
+      required: false,
+    },
+
     smokes: {
       type: String, // True if smokes, false otherwise
       required: false,
@@ -133,11 +143,11 @@ const userSchema = new Schema({
       type: String, // Religion
       required: false,
     },
-    languages: [
-      {
-        type: String, // Languages they know
-      },
-    ],
+
+    exerciseFrequency: {
+      type: String,
+      required: false,
+    },
   },
   isAdmin: {
     type: Boolean,

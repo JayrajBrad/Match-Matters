@@ -7,24 +7,40 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "scheme": "matchmatters",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.atharvbrad.matchmatters"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.atharvbrad.matchmatters"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-asset",
-       "expo-image-picker"
+      "expo-image-picker"
     ],
     "assetBundlePatterns": [
       "assets/*"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "37e7b414-0166-4b10-890c-8acbeee7ee75"
+      }
+    }
   }
 }

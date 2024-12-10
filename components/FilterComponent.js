@@ -191,11 +191,20 @@ const Filter = ({
   };
 
   // const fetchEventsByLocation = async () => {
-  //   // Construct the endpoint directly with the values
-  //   const endpoint = `${API_URL}/api/events/location/${cityName}/${stateName}/${countryName}`;
+  //   if (!cityName || !stateName || !countryName) return [];
+
+  //   // If no date range provided, set a default range (e.g., one month ago)
+  //   const defaultStartDate = new Date();
+  //   defaultStartDate.setMonth(defaultStartDate.getMonth() - 1); // Set to one month ago
+
+  //   const defaultEndDate = new Date();
+  //   const endpoint = `${API_URL}/api/events/locationAndDateRange/${cityName}/${stateName}/${countryName}/${
+  //     defaultStartDate.toISOString().split("T")[0]
+  //   }/${defaultEndDate.toISOString().split("T")[0]}`;
+
   //   try {
   //     const response = await axios.get(endpoint);
-  //     console.log("LOG FROM FILTER COMPONENT :", response.data);
+  //     console.log("LOG FROM FILTER COMPONENT:", response.data);
   //     return response.data; // Return the fetched events
   //   } catch (error) {
   //     console.error("Error fetching events by location:", error);
@@ -203,54 +212,77 @@ const Filter = ({
   //   }
   // };
 
+  // const fetchEventsByLocationAndDate = async () => {
+  //   if (!cityName || !stateName || !countryName || !startDate || !endDate)
+  //     return [];
+
+  //   // If `startDate` and `endDate` are not set, use default date range (e.g., one month ago)
+  //   const defaultStartDate =
+  //     startDate || new Date(new Date().setMonth(new Date().getMonth() - 1));
+  //   const defaultEndDate = endDate || new Date();
+
+  //   const endpoint = `${API_URL}/api/events/locationAndDateRange/${cityName}/${stateName}/${countryName}/${
+  //     defaultStartDate.toISOString().split("T")[0]
+  //   }/${defaultEndDate.toISOString().split("T")[0]}`;
+
+  //   try {
+  //     const response = await axios.get(endpoint);
+  //     console.log("LOG FROM FILTER COMPONENT:", response.data);
+  //     return response.data; // Return the fetched events
+  //   } catch (error) {
+  //     console.error("Error fetching events by location and date:", error);
+  //     return []; // Return an empty array in case of an error
+  //   }
+  // };
+
+  // const fetchEventsByDateRange = async () => {
+  //   if (!startDate || !endDate) return [];
+
+  //   // Construct the endpoint for filtering events by date range only
+  //   const endpoint = `${API_URL}/api/events/filterByDate/${
+  //     startDate.toISOString().split("T")[0]
+  //   }/${endDate.toISOString().split("T")[0]}`;
+  //   try {
+  //     const response = await axios.get(endpoint);
+  //     console.log("Events fetched by date range:", response.data);
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error("Error fetching events by date range:", error);
+  //     return [];
+  //   }
+  // };
+
   const fetchEventsByLocation = async () => {
     if (!cityName || !stateName || !countryName) return [];
 
-    // If no date range provided, set a default range (e.g., one month ago)
-    const defaultStartDate = new Date();
-    defaultStartDate.setMonth(defaultStartDate.getMonth() - 1); // Set to one month ago
-
+    const defaultStartDate = new Date(); // Start from the current date
     const defaultEndDate = new Date();
+    defaultEndDate.setMonth(defaultEndDate.getMonth() + 2); // Set to one month ahead for safety
+
     const endpoint = `${API_URL}/api/events/locationAndDateRange/${cityName}/${stateName}/${countryName}/${
       defaultStartDate.toISOString().split("T")[0]
     }/${defaultEndDate.toISOString().split("T")[0]}`;
 
     try {
       const response = await axios.get(endpoint);
-      console.log("LOG FROM FILTER COMPONENT:", response.data);
-      return response.data; // Return the fetched events
+      const futureEvents = response.data.filter(
+        (event) => new Date(event.date) >= new Date()
+      ); // Exclude past events
+      console.log("LOG FROM FILTER COMPONENT (future events):", futureEvents);
+      return futureEvents;
     } catch (error) {
       console.error("Error fetching events by location:", error);
-      return []; // Return an empty array in case of an error
+      return [];
     }
   };
-
-  // const fetchEventsByLocationAndDate = async () => {
-  //   if (!cityName || !stateName || !countryName || !startDate || !endDate)
-  //     return [];
-
-  //   // Construct the endpoint for filtering events by location and date range
-  //   const endpoint = `${API_URL}/api/events/locationAndDateRange/${cityName}/${stateName}/${countryName}/${
-  //     startDate.toISOString().split("T")[0]
-  //   }/${endDate.toISOString().split("T")[0]}`;
-  //   try {
-  //     const response = await axios.get(endpoint);
-  //     console.log("Events fetched by location and date range:", response.data);
-  //     return response.data;
-  //   } catch (error) {
-  //     console.error("Error fetching events by location and date:", error);
-  //     return [];
-  //   }
-  // };
 
   const fetchEventsByLocationAndDate = async () => {
     if (!cityName || !stateName || !countryName || !startDate || !endDate)
       return [];
 
-    // If `startDate` and `endDate` are not set, use default date range (e.g., one month ago)
-    const defaultStartDate =
-      startDate || new Date(new Date().setMonth(new Date().getMonth() - 1));
+    const defaultStartDate = startDate || new Date();
     const defaultEndDate = endDate || new Date();
+    defaultEndDate.setMonth(defaultEndDate.getMonth() + 2); // Ensure range goes forward
 
     const endpoint = `${API_URL}/api/events/locationAndDateRange/${cityName}/${stateName}/${countryName}/${
       defaultStartDate.toISOString().split("T")[0]
@@ -258,25 +290,34 @@ const Filter = ({
 
     try {
       const response = await axios.get(endpoint);
-      console.log("LOG FROM FILTER COMPONENT:", response.data);
-      return response.data; // Return the fetched events
+      const futureEvents = response.data.filter(
+        (event) => new Date(event.date) >= new Date()
+      ); // Exclude past events
+      console.log("LOG FROM FILTER COMPONENT (future events):", futureEvents);
+      return futureEvents;
     } catch (error) {
       console.error("Error fetching events by location and date:", error);
-      return []; // Return an empty array in case of an error
+      return [];
     }
   };
 
   const fetchEventsByDateRange = async () => {
     if (!startDate || !endDate) return [];
 
-    // Construct the endpoint for filtering events by date range only
     const endpoint = `${API_URL}/api/events/filterByDate/${
       startDate.toISOString().split("T")[0]
     }/${endDate.toISOString().split("T")[0]}`;
+
     try {
       const response = await axios.get(endpoint);
-      console.log("Events fetched by date range:", response.data);
-      return response.data;
+      const futureEvents = response.data.filter(
+        (event) => new Date(event.date) >= new Date()
+      ); // Exclude past events
+      console.log(
+        "Events fetched by date range (future events):",
+        futureEvents
+      );
+      return futureEvents;
     } catch (error) {
       console.error("Error fetching events by date range:", error);
       return [];
@@ -309,6 +350,11 @@ const Filter = ({
       new Set(filteredResults.map((event) => event._id.toString()))
     ).map((id) => filteredResults.find((event) => event._id.toString() === id));
 
+    // Set only future events
+    // const futureUniqueEvents = uniqueEvents.filter(
+    //   (event) => new Date(event.date) >= new Date()
+    // );
+    // setFilteredEvents(futureUniqueEvents);
     setFilteredEvents(uniqueEvents);
     setSelectedDateRange({ startDate, endDate });
     console.log("Unique filtered events:", uniqueEvents);
@@ -341,6 +387,7 @@ const Filter = ({
   return (
     <View style={styles.container}>
       <View style={styles.locContainer}>
+        <Text style={styles.headlabel}>Set location :</Text>
         <Text style={styles.label}>Country</Text>
         <View style={styles.row}>
           <Text style={styles.infoText}>{countryName}</Text>
@@ -411,7 +458,7 @@ const Filter = ({
       </View>
 
       {/* Genre Dropdown */}
-      <View style={styles.dropdownContainer}>
+      {/* <View style={styles.dropdownContainer}>
         <Text style={styles.label}>Event Genre</Text>
         <Dropdown
           style={styles.eventdropdown}
@@ -422,7 +469,7 @@ const Filter = ({
           value={selectedGenre}
           onChange={(item) => setSelectedGenre(item.value)}
         />
-      </View>
+      </View> */}
 
       {/* <View style={styles.DateContainer}>
         <TouchableOpacity
@@ -464,7 +511,7 @@ const Filter = ({
       </View> */}
 
       <View style={styles.DateContainer}>
-        <Text style={styles.label}>Date Range</Text>
+        <Text style={styles.headlabel}>Set Date Range :</Text>
 
         <TouchableOpacity
           onPress={showStartDatePicker}
@@ -525,10 +572,10 @@ const Filter = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
+  // container: {
+  //   flex: 1,
+  //   padding: 16,
+  // },
   locationHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -540,6 +587,11 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: "600",
+  },
+  headlabel: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 10,
   },
   locationText: {
     fontSize: 16,
@@ -563,7 +615,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   applyButton: {
-    backgroundColor: "#2196F3",
+    backgroundColor: "#252355",
     paddingVertical: 12,
     borderRadius: 8,
   },

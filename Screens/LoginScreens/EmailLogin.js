@@ -42,7 +42,12 @@ export default function EmailLogin({ navigation }) {
           console.log("Login successful!");
 
           // Redirect to the home screen after successful login
-          navigation.navigate("Home");
+          // navigation.navigate("Feedscreen");
+          navigation.navigate("MainTabs", { screen: "FeedScreen" });
+          // navigation.navigate("MainDrawer", {
+          //   screen: "FeedScreen",
+          // });
+          // navigation.navigate("AppStack");
         } else {
           alert("No token or user data received from the server.");
         }
@@ -87,6 +92,12 @@ export default function EmailLogin({ navigation }) {
       />
       <TouchableOpacity onPress={handleLogin} style={styles.button}>
         <Text style={styles.buttonText}>Login</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => navigation.navigate("ForgotPasswordScreen")}
+        style={{ marginTop: 40 }}
+      >
+        <Text style={{ color: "#BF1013" }}>Forgot Password?</Text>
       </TouchableOpacity>
     </Animated.View>
   );

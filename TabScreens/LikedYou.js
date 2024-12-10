@@ -13,6 +13,7 @@ import axios from "axios";
 import { API_URL } from "@env";
 import { getUserId } from "../backend/registrationUtils";
 import { UserContext } from "../navigation/UserProvider";
+import LottieView from "lottie-react-native";
 
 export default function Profile({ navigation }) {
   const fadeAnimation = useRef(new Animated.Value(0)).current;
@@ -86,8 +87,14 @@ export default function Profile({ navigation }) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> // Add RefreshControl
         }
         ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No liked events found</Text>
+          <View style={styles.animationContainer}>
+            <LottieView
+              source={require("../Onboarding-Screen-2/src/assets/animations/no_event.json")} // Replace with your animation file path
+              autoPlay
+              loop
+              style={styles.lottie}
+            />
+            <Text style={styles.emptyText}>No events Booked</Text>
           </View>
         )}
       />
@@ -104,6 +111,15 @@ const styles = StyleSheet.create({
     marginTop: 20,
     width: "100%",
     paddingHorizontal: 10,
+  },
+  animationContainer: {
+    height: 400,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  lottie: {
+    width: 300,
+    height: 300,
   },
   eventItem: {
     marginVertical: 15,

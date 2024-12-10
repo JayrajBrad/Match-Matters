@@ -40,7 +40,6 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import BottomSheet, {
   BottomSheetMethods,
 } from "../components/EditProfile/BottomSheet";
-import BottomSheetFlatList from "../components/EditProfile/BottomSheetFlatList";
 
 const preferences = [
   "Clubbing",
@@ -79,24 +78,16 @@ const EditProfileScreen = () => {
   const [stateName, setStateName] = useState("");
   const [cityName, setCityName] = useState("");
 
-  const [userheight, setUserHeight] = useState("");
-  const [work, setWork] = useState("");
-  const [educationLevel, setEducationLevel] = useState("");
-  const [smokes, setSmokes] = useState("");
-  const [drinks, setDrinks] = useState("");
-  const [zodiac, setZodiac] = useState("");
-  const [religion, setReligion] = useState("");
-  const [languages, setLanguages] = useState([]);
-
   const [userData, setUserData] = useState({
-    height: "",
-    work: "",
+    lookingFor: "",
+    jobIndustry: "",
+    relationshipStatus: "",
     educationLevel: "",
     smokes: false,
     drinks: false,
     zodiac: "",
     religion: "",
-    languages: [],
+    exerciseFrequency: "",
   });
 
   const { height } = Dimensions.get("screen");
@@ -132,8 +123,51 @@ const EditProfileScreen = () => {
       "Sikhism",
       "Judaism",
     ],
-    work: [],
-
+    lookingFor: [
+      "Friendship",
+      "Relationship",
+      "Networking",
+      "Dating",
+      "Job Opportunities",
+      "Collaborations",
+      "Mentorship",
+      "Partnership",
+    ],
+    jobIndustry: [
+      "Technology",
+      "Healthcare",
+      "Education",
+      "Finance",
+      "Entertainment",
+      "Engineering",
+      "Marketing",
+      "Design",
+      "Sales",
+      "Law",
+      "Consulting",
+      "Real Estate",
+      "Arts",
+    ],
+    relationshipStatus: [
+      "Single",
+      "In a Relationship",
+      "Married",
+      "Engaged",
+      "Divorced",
+      "Widowed",
+      "Complicated",
+      "In an Open Relationship",
+    ],
+    exerciseFrequency: [
+      "Daily",
+      "Weekly",
+      "Monthly",
+      "Rarely",
+      "Never",
+      "Occasionally",
+      "Several times a week",
+      "A few times a month",
+    ],
     educationLevel: [
       "High School",
       "In College",
@@ -142,19 +176,6 @@ const EditProfileScreen = () => {
     ],
     drinks: ["Yes, I drink", "I rarely drink", "No, I don’t drink"],
     smokes: ["Yes, I smoke", "I rarely smoke", "No, I don’t smoke"],
-    languages: [
-      "English",
-      "Hindi",
-      "Bengali",
-      "Marathi",
-      "Telugu",
-      "Tamil",
-      "Gujarati",
-      "Urdu",
-      "Kannada",
-      "Odia",
-      "Malayalam",
-    ],
   };
 
   const handleEditField = (field) => {
@@ -258,56 +279,6 @@ const EditProfileScreen = () => {
     setShowEditCity(false);
   };
 
-  // useEffect(() => {
-  //   const fetchUserData = async () => {
-  //     setLoading(true);
-  //     try {
-  //       // const storedUserId = userId;
-  //       // setUserId(storedUserId);
-  //       const response = await axios.get(`${API_URL}/user/${userId}`);
-  //       if (response.status === 200) {
-  //         const userData = response.data;
-  //         setUsername(userData.username || "");
-  //         setPhoneNumber(
-  //           userData.phoneNumber ? String(userData.phoneNumber) : ""
-  //         );
-  //         setGender(userData.gender || "");
-  //         setProfileImages(userData.images || []);
-  //         setSelectedPreferences(userData.selectedPreferences || []);
-
-  //         // Set country, state, and city from userData
-  //         setCountryName(userData.countryName || "");
-  //         setStateName(userData.stateName || "");
-  //         setCityName(userData.cityName || "");
-
-  //         const aboutYou = userData.aboutYou || {};
-  //         setUserHeight(aboutYou.height || ""); // Assuming setHeight is defined
-  //         setWork(aboutYou.work || ""); // Assuming setWork is defined
-  //         setEducationLevel(aboutYou.educationLevel || ""); // Assuming setEducationLevel is defined
-  //         setSmokes(aboutYou.smokes || "");
-  //         setDrinks(aboutYou.drinks || "");
-  //         setZodiac(aboutYou.zodiac || "");
-  //         setReligion(aboutYou.religion || "");
-  //         setLanguages(aboutYou.languages || []);
-
-  //       } else {
-  //         Alert.alert(
-  //           "Error",
-  //           "Failed to load profile data. Please try again later."
-  //         );
-  //       }
-  //     } catch (error) {
-  //       Alert.alert(
-  //         "Error",
-  //         "Failed to load profile data. Please try again later."
-  //       );
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchUserData();
-  // }, []);
-
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true);
@@ -317,16 +288,20 @@ const EditProfileScreen = () => {
           const userDataFromDB = response.data;
 
           setUserData({
-            height: userDataFromDB.aboutYou?.height || "Not specified",
-            work: userDataFromDB.aboutYou?.work || "Not specified",
+            lookingFor: userDataFromDB.aboutYou?.lookingFor || "Not specified",
+            jobIndustry:
+              userDataFromDB.aboutYou?.jobIndustry || "Not specified",
+            relationshipStatus:
+              userDataFromDB.aboutYou?.relationshipStatus || "Not specified",
+            exerciseFrequency:
+              userDataFromDB.aboutYou?.exerciseFrequency || "Not specified",
+
             educationLevel:
               userDataFromDB.aboutYou?.educationLevel || "Not specified",
             smokes: userDataFromDB.aboutYou?.smokes || "Not specified",
             drinks: userDataFromDB.aboutYou?.drinks || "Not specified",
             zodiac: userDataFromDB.aboutYou?.zodiac || "Not specified",
             religion: userDataFromDB.aboutYou?.religion || "Not specified",
-            languages:
-              userDataFromDB.aboutYou?.languages?.join(", ") || "Not specified",
           });
 
           setUsername(userDataFromDB.username || "");
@@ -407,9 +382,18 @@ const EditProfileScreen = () => {
       // Sanitize userData
       const sanitizedUserData = {
         ...userData,
-        height:
-          userData.height !== "Not specified" ? Number(userData.height) : null,
-        work: userData.work !== "Not specified" ? userData.work : null,
+
+        lookingFor:
+          userData.lookingFor !== "Not specified" ? userData.lookingFor : null,
+        jobIndustry:
+          userData.jobIndustry !== "Not specified"
+            ? userData.jobIndustry
+            : null,
+        relationshipStatus:
+          userData.relationshipStatus !== "Not specified"
+            ? userData.relationshipStatus
+            : null,
+
         educationLevel:
           userData.educationLevel !== "Not specified"
             ? userData.educationLevel
@@ -419,10 +403,10 @@ const EditProfileScreen = () => {
         zodiac: userData.zodiac !== "Not specified" ? userData.zodiac : null,
         religion:
           userData.religion !== "Not specified" ? userData.religion : null,
-        languages:
-          userData.languages !== "Not specified"
-            ? userData.languages.split(", ")
-            : [],
+        exerciseFrequency:
+          userData.exerciseFrequency !== "Not specified"
+            ? userData.exerciseFrequency
+            : null,
       };
 
       const response = await axios.put(`${API_URL}/user/updateUserProfile`, {
@@ -438,7 +422,7 @@ const EditProfileScreen = () => {
         userData: sanitizedUserData,
       });
 
-      console.log("Update user :", response);
+      // console.log("Update user :", response);
 
       if (response.status === 200) {
         await AsyncStorage.setItem("username", username);
@@ -518,7 +502,7 @@ const EditProfileScreen = () => {
             />
 
             {/* phone code */}
-            <Text style={styles.label}>Phone Number</Text>
+            {/* <Text style={styles.label}>Phone Number</Text> */}
             {/* <CountryCodeDropdownPicker
                 selected={selected}
                 setSelected={setSelected}
@@ -531,14 +515,14 @@ const EditProfileScreen = () => {
                 searchStyles={[styles.search]}
                 dropdownStyles={[styles.dropdown]}
               /> */}
-            <TextInput
+            {/* <TextInput
               style={styles.input}
               value={phoneNumber}
               onChangeText={(text) => setPhoneNumber(text)}
               placeholder="Enter your phone number"
               keyboardType="phone-pad"
               placeholderTextColor="#aaa"
-            />
+            /> */}
 
             <GenderDropdown gender={gender} onSelectGender={setGender} />
             {/* {renderFieldWithOptions("Gender", "gender")} */}
@@ -620,10 +604,15 @@ const EditProfileScreen = () => {
               )}
             </View>
           </View>
-          {renderFieldWithOptions("Preferred Languages", "languages")}
+          {renderFieldWithOptions("Education Level", "educationLevel")}
+          {renderFieldWithOptions("Job Industry", "jobIndustry")}
+          {renderFieldWithOptions("Relationship Status", "relationshipStatus")}
+          {renderFieldWithOptions("Looking For", "lookingFor")}
+          {renderFieldWithOptions("Exercise Frequency", "exerciseFrequency")}
+
           {renderFieldWithOptions("Zodiac Sign", "zodiac")}
           {renderFieldWithOptions("Religion", "religion")}
-          {renderFieldWithOptions("Education Level", "educationLevel")}
+
           {renderFieldWithOptions("Do you drink?", "drinks")}
           {renderFieldWithOptions("Do you smoke?", "smokes")}
           {/* <Button title="Flatlist" onPress={() => pressHandler4()} /> */}

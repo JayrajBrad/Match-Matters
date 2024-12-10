@@ -8,7 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 
 console.log("JWT_SECRET from usercontroller: ", JWT_SECRET);
-console.log("REFRESH_TOKEN_SECRET from usercontroller: ", REFRESH_TOKEN_SECRET);
+// console.log("REFRESH_TOKEN_SECRET from usercontroller: ", REFRESH_TOKEN_SECRET);
 
 exports.getAllUsers = async (req, res) => {
   try {
@@ -38,14 +38,16 @@ exports.updateUserProfile = async (req, res) => {
     console.log("Received user data:", req.body);
 
     const aboutYou = {
-      height: userData.height || null,
-      work: userData.work || "",
+      lookingFor: userData.lookingFor || "",
+      jobIndustry: userData.jobIndustry || "",
       educationLevel: userData.educationLevel || "",
+      relationshipStatus: userData.relationshipStatus || "",
+
       smokes: userData.smokes || "",
       drinks: userData.drinks || "",
       zodiac: userData.zodiac || "",
       religion: userData.religion || "",
-      languages: userData.languages || [],
+      exerciseFrequency: userData.exerciseFrequency || "",
     };
 
     const updatedUser = await User.findByIdAndUpdate(
