@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useContext } from "react";
 import {
   View,
@@ -17,6 +18,8 @@ import { UserContext } from "../navigation/UserProvider";
 import { ScreenHeight } from "react-native-elements/dist/helpers";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+
+
 
 export default function EventParticipantsScreen({ route }) {
   const { eventId } = route.params;
@@ -260,3 +263,5 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
 });
+
+
