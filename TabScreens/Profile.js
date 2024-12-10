@@ -1,168 +1,140 @@
-import React, { useContext, useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
   Image,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { UserContext } from "../navigation/UserProvider"; // Import UserContext
+import { UserContext } from "../navigation/UserProvider";
 
 const ProfileScreen = () => {
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigation = useNavigation();
-  const { user, userId } = useContext(UserContext); // Get user and userId from context
+  const { user, userId, logoutUser } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState("Plans");
 
   const handleEditProfile = () => {
     navigation.navigate("EditProfileScreen");
   };
 
-  const handleVerifyAccount = () => {
-    navigation.navigate("VerifyAccountScreen");
-  };
-
-  const handleUpgradePlan = () => {
-    navigation.navigate("UpgradePlanScreen");
-  };
-
-  const openDrawer = () => {
-    navigation.toggleDrawer();
+  const handleLogout = () => {
+    logoutUser(); // Call logoutUser from context
+    // props.navigation.navigate("Login"); // Navigate to the Login screen
+    navigation.navigate("AuthStack", { screen: "Login" });
   };
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.profileSection}>
-        {user?.images && user.images.length > 0 ? (
-          <Image source={{ uri: user.images[0] }} style={styles.profileImage} />
-        ) : (
-          <Image
-            source={{ uri: "default_fallback_image_url" }} // Fallback image
-            style={styles.profileImage}
-          />
-        )}
-        <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>
-            {user?.username ? `${user.username}, ${user.age}` : "Loading..."}
-          </Text>
-          <View style={styles.editProfile}>
+      <View style={styles.itemContainer}>
+        {/* Membership Section */}
+        <View style={styles.profileSection}>
+          {user?.images && user.images.length > 0 ? (
+            <Image
+              source={{ uri: user.images[0] }}
+              style={styles.profileImage}
+            />
+          ) : (
+            <Image
+              source={{ uri: "default_fallback_image_url" }} // Fallback image
+              style={styles.profileImage}
+            />
+          )}
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName}>
+              {user?.username ? `${user.username}, ${user.age}` : "Loading..."}
+            </Text>
+            <View style={styles.editProfile}>
+              <TouchableOpacity
+                onPress={handleEditProfile}
+                style={styles.editProfileButton}
+              >
+                <Text style={styles.editProfileText}>Enhance your profile</Text>
+                <Icon name="arrow-forward-ios" size={15} color="#000" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <View style={styles.quickActionRow}>
             <TouchableOpacity
-              onPress={handleEditProfile}
-              style={styles.editProfileButton}
+              style={styles.actionButton}
+              onPress={() => navigation.navigate("MyEvents")}
             >
-              <Text style={styles.editProfileText}>Edit your profile</Text>
+              <Icon name="shopping-bag" size={20} color="#fff" />
+              <Text style={styles.actionButtonText}>My Events</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => navigation.navigate("MyBookingsScreen")}
+            >
+              <Icon name="favorite" size={20} color="#fff" />
+              <Text style={styles.actionButtonText}>My Bookings</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </View>
-      <View style={styles.verificationBox}>
-        <Text style={styles.verificationText}>
-          Verification adds an extra layer of authenticity and trust to your
-          profile.
-        </Text>
-        <TouchableOpacity
-          onPress={handleVerifyAccount}
-          style={styles.verifyButton}
-        >
-          <Text style={styles.verifyButtonText}>Verify your account now!</Text>
-        </TouchableOpacity>
-      </View>
 
-      <View style={styles.sectionContainer}>
-        <View style={styles.tabs}>
+        <View style={styles.activitySection}>
+          <Text style={styles.boxTitle}>Activity</Text>
+
           <TouchableOpacity
-            onPress={() => setActiveTab("Plans")}
-            style={[
-              styles.tabButton,
-              activeTab === "Plans" && styles.activeTabButton,
-            ]}
+            style={styles.activityButton}
+            onPress={() => navigation.navigate("AllEvents")}
           >
-            <Text
-              style={[
-                styles.tabButtonText,
-                activeTab === "Plans" && styles.activeTabButtonText,
-              ]}
-            >
-              Plans
-            </Text>
+            <Text style={styles.buttonText}>All Events</Text>
+            <Icon name="arrow-forward-ios" size={15} color="#000" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.activityButton}
+            onPress={() => navigation.navigate("HelpScreen")}
+          >
+            <Text style={styles.buttonText}>Help</Text>
+            <Icon name="arrow-forward-ios" size={15} color="#000" />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => setActiveTab("Safety")}
-            style={[
-              styles.tabButton,
-              activeTab === "Safety" && styles.activeTabButton,
-            ]}
+            style={styles.activityButton}
+            onPress={() => navigation.navigate("PrivacyCenterScreen")}
           >
-            <Text
-              style={[
-                styles.tabButtonText,
-                activeTab === "Safety" && styles.activeTabButtonText,
-              ]}
-            >
-              Safety
-            </Text>
+            <Text style={styles.buttonText}>Privacy</Text>
+            <Icon name="arrow-forward-ios" size={15} color="#000" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.activityButton}
+            onPress={() => navigation.navigate("ContactUsScreen")}
+          >
+            <Text style={styles.buttonText}>Contact Us</Text>
+            <Icon name="arrow-forward-ios" size={15} color="#000" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.activityButton}
+            onPress={() => navigation.navigate("FAQScreen")}
+          >
+            <Text style={styles.buttonText}>FAQ</Text>
+            <Icon name="arrow-forward-ios" size={15} color="#000" />
           </TouchableOpacity>
         </View>
-        {activeTab === "Plans" ? (
-          <View style={styles.planBox}>
-            <Text style={styles.planText}>HeartSync Premium</Text>
-            <Text style={styles.planTextinside}>
-              Unlock exclusive features and enhance your experience of
-              connecting with friends.
-            </Text>
+
+        <View style={styles.ordersSection}>
+          <View style={styles.orderLine}>
+            {/* <Text style={styles.sectionTitle}>Logout</Text> */}
+          </View>
+          <View style={styles.orderBorder}>
+            <Text style={styles.noOrdersText}>Leaving us?</Text>
             <TouchableOpacity
-              onPress={handleUpgradePlan}
-              style={styles.upgradeButton}
+              style={styles.shopNowButton}
+              onPress={handleLogout}
             >
-              <Text style={styles.upgradeButtonText}>Upgrade from just 5$</Text>
+              <Text style={styles.shopButtonText}>Logout</Text>
+              <Icon name="arrow-right" size={20} color="#fff" />
             </TouchableOpacity>
           </View>
-        ) : (
-          <View style={styles.planBox}>
-            <Text style={styles.planText}>
-              Learn more about safety measures and tips.
-            </Text>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.tableContainer}>
-        <View style={styles.tableRow}>
-          <Text style={[styles.tableCell, styles.tableHeader]}>
-            What's Included
-          </Text>
-          <Text style={[styles.tableCell, styles.tableHeader]}>Free</Text>
-          <Text style={[styles.tableCell, styles.tableHeader]}>Premium</Text>
-        </View>
-        <View style={styles.tableRow}>
-          <Text style={styles.tableCell}>Unlimited Likes</Text>
-          <Text style={styles.tableCell}>
-            <Icon name="check" size={24} color="#BF1013" />
-          </Text>
-          <Text style={styles.tableCell}>
-            <Icon name="check" size={24} color="#BF1013" />
-          </Text>
-        </View>
-        <View style={styles.tableRow}>
-          <Text style={styles.tableCell}>Advanced Filters</Text>
-          <Text style={styles.tableCell}>
-            <Icon name="check" size={24} color="#BF1013" />
-          </Text>
-          <Text style={styles.tableCell}>
-            <Icon name="check" size={24} color="#BF1013" />
-          </Text>
-        </View>
-        <View style={styles.tableRow}>
-          <Text style={styles.tableCell}>Remove ads</Text>
-          <Text style={styles.tableCell}>
-            <Icon name="" size={24} color="#BF1013" />
-          </Text>
-          <Text style={styles.tableCell}>
-            <Icon name="check" size={24} color="#BF1013" />
-          </Text>
         </View>
       </View>
     </ScrollView>
@@ -173,127 +145,185 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    padding: 16,
   },
   profileSection: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
   },
+  logoutButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: "#f44336", // Red color for logout button
+    marginTop: "auto", // Push the button to the bottom
+    marginBottom: 20,
+    borderRadius: 8,
+    marginHorizontal: 10,
+  },
+  logoutButtonText: {
+    color: "white",
+    fontSize: 16,
+    textAlign: "center",
+  },
   profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 20,
     marginRight: 20,
+    marginHorizontal: 20,
   },
   profileInfo: {
     flex: 1,
   },
   profileName: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "bold",
   },
+  // editProfile: {
+  //   flexDirection: "row",
+  // },
   editProfileButton: {
     marginTop: 10,
     backgroundColor: "#FEF1F1",
     borderRadius: 5,
-    width: 150,
+    width: 180,
     padding: 10,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
   },
   editProfileText: {
     color: "#BF1013",
   },
-  verificationBox: {
-    padding: 16,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 8,
-    marginBottom: 20,
+  itemContainer: {
+    marginTop: 30,
   },
-  verificationText: {
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 8,
+  membershipSection: {
+    padding: 20,
+    alignItems: "center",
   },
-  verifyButton: {
-    backgroundColor: "#BF1013",
-    paddingVertical: 10,
+  membershipButton: {
+    backgroundColor: "#252355",
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#fff",
     alignItems: "center",
   },
-  verifyButtonText: {
+  buttonText: {
     color: "#fff",
     fontSize: 16,
+    fontFamily: "CenturyGothic",
   },
-  sectionContainer: {
-    marginBottom: 20,
+  quickActions: {
+    flexDirection: "column",
+    justifyContent: "space-around",
+    padding: 20,
   },
-  tabs: {
-    flexDirection: "row",
-    marginBottom: 10,
-  },
-  tabButton: {
-    flex: 1,
-    padding: 10,
-    alignItems: "center",
-  },
-  activeTabButton: {
-    borderBottomWidth: 2,
-    borderBottomColor: "#BF1013",
-  },
-  tabButtonText: {
-    fontSize: 16,
-    color: "#000",
-  },
-  activeTabButtonText: {
-    color: "#BF1013",
-  },
-  planBox: {
-    backgroundColor: "#f9f9f9",
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  planText: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  planTextinside: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 10,
-  },
-  upgradeButton: {
-    backgroundColor: "#BF1013",
-    paddingVertical: 10,
-    borderRadius: 20,
-    alignItems: "center",
-  },
-  upgradeButtonText: {
-    color: "#fff",
-    fontSize: 16,
-  },
-  tableContainer: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  tableRow: {
+  quickActionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    marginBottom: 10,
   },
-  tableCell: {
-    flex: 1,
-    textAlign: "left",
+  actionButton: {
+    backgroundColor: "#252355",
+    padding: 10,
+    borderRadius: 10,
+    width: "48%",
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
   },
-  tableHeader: {
+  actionButtonText: {
+    color: "#fff",
+    marginLeft: 5,
+    fontFamily: "CenturyGothic",
+  },
+  ordersSection: {
+    padding: 20,
+    marginBottom: 100,
+  },
+  orderLine: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 5,
+  },
+  orderBorder: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+    borderColor: "#ddd",
+  },
+  buttonText: {
+    color: "black",
+  },
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: "bold",
+    fontFamily: "CenturyGothic",
+  },
+  seeAllText: {
+    color: "#000",
+    textDecorationLine: "underline",
+    fontFamily: "CenturyGothic",
+  },
+  noOrdersText: {
+    marginBottom: 10,
+    color: "#666",
+    fontSize: 15,
+    fontFamily: "CenturyGothic",
+  },
+  shopNowButton: {
+    backgroundColor: "#252355",
+    padding: 10,
+    margin: 5,
+    borderRadius: 10,
+    alignItems: "center",
+    flexDirection: "row",
+  },
+  shopButtonText: {
+    color: "#fff",
+    marginRight: 5,
+    fontFamily: "CenturyGothic",
+  },
+  accountSection: {
+    padding: 20,
+    borderWidth: 1,
+    borderRadius: 10,
+    margin: 10,
+  },
+  accountButton: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    paddingVertical: 15,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  activitySection: {
+    padding: 20,
+    borderWidth: 1,
+    borderRadius: 10,
+    margin: 10,
+    // marginBottom: 100,
+  },
+  activityButton: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    paddingVertical: 15,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  boxTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 10,
+    fontFamily: "CenturyGothic",
   },
 });
 

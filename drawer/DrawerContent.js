@@ -5,9 +5,9 @@ import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityI
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserContext } from "../navigation/UserProvider";
+import { useNavigation } from "@react-navigation/native";
 const DrawerContent = (props) => {
   const { logoutUser } = useContext(UserContext);
-
   const renderDrawerItem = (label, navigateTo, iconName) => (
     <TouchableOpacity
       key={label}
@@ -30,8 +30,8 @@ const DrawerContent = (props) => {
 
   const handleLogout = () => {
     logoutUser(); // Call logoutUser from context
-    props.navigation.navigate("Login"); // Navigate to the Login screen
-    // props.navigation.navigate("AuthStack", { screen: "EmailLogin" });
+    // props.navigation.navigate("Login"); // Navigate to the Login screen
+    props.navigation.navigate("AuthStack", { screen: "Login" });
   };
   return (
     <DrawerContentScrollView

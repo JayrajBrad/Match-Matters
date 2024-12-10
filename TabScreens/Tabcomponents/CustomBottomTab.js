@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     height: 100, // Height of the tab bar
     position: "absolute", // Sticks to the bottom
     bottom: 0,
-    backgroundColor: "#0067FF", // Tab bar background
+    backgroundColor: "#252355", // Tab bar background
     // backgroundColor: "yellow",
     borderTopWidth: 1, // Optional top border for separation
     borderTopColor: "lightgray",

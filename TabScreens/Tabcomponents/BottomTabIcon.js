@@ -6,7 +6,7 @@ import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityI
 const BottomTabIcon = ({ route, isFocused }) => {
   const renderIcon = (route, isFocused) => {
     const color = isFocused ? "#0067FF" : "#ffffff";
-    const size = 28;
+    const size = 24;
 
     switch (route) {
       case "Home":

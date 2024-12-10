@@ -7,6 +7,7 @@ const cors = require("cors");
 const userRoutes = require("./routes/userRoutes");
 const eventRoutes = require("./routes/eventRoutes");
 const requestRoutes = require("./routes/requestRoutes");
+const forgetPasswordRoutes = require("./routes/forgetPasswordRoutes");
 const authenticateToken = require("./middlewares/authenticateToken");
 const cloudinaryApp = require("./utils/cloudinary");
 const app = express();
@@ -45,6 +46,7 @@ mongoose
 app.use("/api", cloudinaryApp);
 
 app.use("/user", userRoutes);
+app.use("/user", forgetPasswordRoutes);
 app.use("/api", eventRoutes);
 app.use("/api", requestRoutes);
 app.use("/api", messageRoutes);
@@ -112,15 +114,19 @@ io.on("connection", (socket) => {
   });
 });
 
-http.listen(6000, () => {
-  console.log("Socket server running on port 6000");
-});
+// http.listen(6000, () => {
+//   console.log("Socket server running on port 6000");
+// });
 
 // Catch-all route for undefined routes
 app.use((req, res, next) => {
   res.status(404).send({ message: "Route not found" });
 });
 
-app.listen(port, () => {
-  console.log("Server running on port 4000");
+// app.listen(port, () => {
+//   console.log("Server running on port 4000");
+// });
+
+http.listen(port, () => {
+  console.log(`Server (HTTP + WebSocket) running on port ${port}`);
 });
