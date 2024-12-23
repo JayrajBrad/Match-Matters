@@ -4,7 +4,7 @@
 import { View, Text, StyleSheet, Image, Animated, TouchableOpacity } from 'react-native';
 import React, { useState, useEffect, useRef } from 'react';
 import { Video } from 'expo-av';
-import icon from "../assets/Match matters logo.png";
+import icon from "../assets/splashscreen_logo.png";
 
 export default function FeedScreen({ navigation }) {14
   const [showSignInOptions, setShowSignInOptions] = useState(false);

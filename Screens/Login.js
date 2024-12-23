@@ -13,7 +13,7 @@ import Animated, {
   withSpring,
   interpolateColor,
 } from "react-native-reanimated";
-import icon from "../assets/Match matters logo.png";
+import icon from "../assets/splashscreen_logo.png";
 
 export default function Login({ navigation }) {
   // Separate shared values for each button's width

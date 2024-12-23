@@ -8,7 +8,7 @@ export default function TicketSales() {
     { type: 'Standard', price: '₹999', people: 1 },
     { type: 'VIP', price: '₹1,999', people: 1 },
     { type: 'Premium', price: '₹3,999', people: 2 },
-    { type: 'Ultra VIP', price: '₹5,999', people: 2 },
+    { type: 'Ultra VIP', price: '₹5,999', people: 2},
   ];
 
   const eventDetails = {

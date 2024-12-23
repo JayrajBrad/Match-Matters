@@ -19,7 +19,7 @@ export const SocketProvider = ({ children }) => {
   // Set up socket connection when userId is available
   useEffect(() => {
     if (userId) {
-      console.log("User ID being passed to socket:", userId);
+      console.log("User ID being passed to socket :", userId);
 
       const socketInstance = io(`${API_URL}`, {
         query: { userId: userId },

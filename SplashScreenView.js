@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, Image,  Animated } from 'react-native';
-import icon from "./assets/Match matters logo.png";
+import icon from "./assets/splashscreen_logo.png";
 import React, { useState, useEffect, useRef } from 'react';
 
 export default function SplashScreenView() {

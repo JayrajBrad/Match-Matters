@@ -59,7 +59,11 @@ export default function FeedScreen({
   // const [filterVisible, setFilterVisible] = useState(false);
   const [activeIndex, setActiveIndex] = useState(null);
   const [visibleIndex, setVisibleIndex] = useState(0);
-
+  //////
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreEvents, setHasMoreEvents] = useState(true);
+  const eventsPerPage = 2; // Number of events per page
+  ///////
   const screenHeight = Dimensions.get("window").height;
 
   const handleFilterClose = () => {
@@ -247,7 +251,7 @@ export default function FeedScreen({
     }
   };
 
-  const loadEvents = async () => {
+  const loadEvents = async (page =1) => {
     if (!userId) {
       console.log("No user ID found, unable to load events.");
       return;
@@ -311,12 +315,35 @@ export default function FeedScreen({
           ).values(), // Corrected syntax here
         ];
 
-        // Initially set combined events
-        setEvents(combinedEvents);
-        setFilteredEvents(combinedEvents);
-        setNoEventsMessage(
-          combinedEvents.length === 0 ? "No events found." : ""
-        );
+        const startIndex = (page - 1) * eventsPerPage;
+      const paginatedEvents = combinedEvents.slice(
+        startIndex,
+        startIndex + eventsPerPage
+      );
+
+      if (page === 1) {
+        setEvents(paginatedEvents);
+        setFilteredEvents(paginatedEvents);
+      } else {
+        setEvents((prevEvents) => [...prevEvents, ...paginatedEvents]);
+        setFilteredEvents((prevEvents) => [...prevEvents, ...paginatedEvents]);
+      }
+
+      setHasMoreEvents(paginatedEvents.length === eventsPerPage);
+      setNoEventsMessage(
+        combinedEvents.length === 0 ? "No events found.":""
+);
+
+
+
+
+
+        // // Initially set combined events
+        // setEvents(combinedEvents);
+        // setFilteredEvents(combinedEvents);
+        // setNoEventsMessage(
+        //   combinedEvents.length === 0 ? "No events found." : ""
+        // );
 
         // If a date range is selected, filter events
         if (selectedDateRange) {
@@ -351,27 +378,63 @@ export default function FeedScreen({
   //   loadEvents();
   // }, [selectedGenre, userId]);
 
+  // const onRefresh = () => {
+  //   setRefreshing(true);
+  //   loadEvents().then(() => {
+  //     setRefreshing(false);
+  //   });
+  // };
+
+
   const onRefresh = () => {
     setRefreshing(true);
-    loadEvents().then(() => {
+    setCurrentPage(1);
+    loadEvents(1).then(() => {
       setRefreshing(false);
     });
   };
 
-  const toggleVideoPlayback = (index) => {
-    const video = videoRefs.current[index];
-    if (video) {
-      if (activeIndex === index) {
-        // If the video is already playing, pause it
-        video.pauseAsync();
-        setActiveIndex(null); // No active video
-      } else {
-        // Play the selected video and pause others
-        handleVideoPlayback(index);
-        setActiveIndex(index);
-      }
+  const handleLoadMore = () => {
+    if (!loading && hasMoreEvents) {
+      const nextPage = currentPage + 1;
+      setCurrentPage(nextPage);
+      loadEvents(nextPage);
     }
   };
+
+
+  // const toggleVideoPlayback = (index) => {
+  //   const video = videoRefs.current[index];
+  //   if (video) {
+  //     if (activeIndex === index) {
+  //       // If the video is already playing, pause it
+  //       video.pauseAsync();
+  //       setActiveIndex(null); // No active video
+  //     } else {
+  //       // Play the selected video and pause others
+  //       handleVideoPlayback(index);
+  //       setActiveIndex(index);
+  //     }
+  //   }
+  // };
+
+
+  const toggleVideoPlayback = (index) => {
+    const currentVideo = videoRefs.current[activeIndex];
+    const newVideo = videoRefs.current[index];
+
+    if (currentVideo && activeIndex !== index) {
+      currentVideo.stopAsync();
+    }
+
+    if (newVideo) {
+      if (activeIndex === index) {
+        newVideo.stopAsync();
+        setActiveIndex(null);
+      } else {
+        newVideo.playAsync();
+        setActiveIndex(index);
+}}};
 
   const handleVideoPlayback = (index) => {
     // console.log("videoRefs:", videoRefs.current);
@@ -389,31 +452,83 @@ export default function FeedScreen({
     });
   };
 
-  const pauseAllVideos = () => {
-    Object.values(videoRefs.current).forEach((video) => {
-      if (video) {
-        video.pauseAsync();
-      }
-    });
-  };
+  ///////////////////////////////////////////////////////////////
+
+  useEffect(() => {
+    // Cleanup on component unmount
+    return () => {
+      Object.values(videoRefs.current).forEach((video) => {
+        if (video) {
+          video.pauseAsync(); // Pause video playback
+          video.unloadAsync(); // Unload video resource
+        }
+      });
+      videoRefs.current = {}; // Clear all references
+    };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       // Screen is focused, no specific action needed here.
       return () => {
         // Screen loses focus, pause all videos.
-        pauseAllVideos();
+        Object.values(videoRefs.current).forEach((video) => {
+          if (video) {
+            video.pauseAsync();
+          }
+        });
       };
     }, [])
   );
 
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    if (viewableItems.length > 0) {
-      const visibleIndex = viewableItems[0]?.index;
-      setActiveIndex(visibleIndex);
-      handleVideoPlayback(visibleIndex);
+    const visibleIndices = viewableItems.map((item) => item.index);
+
+    Object.keys(videoRefs.current).forEach((key) => {
+      const index = parseInt(key);
+      const video = videoRefs.current[key];
+
+      if (!visibleIndices.includes(index) && video) {
+        video.pauseAsync();
+        video.unloadAsync();
+        delete videoRefs.current[key]; // Clean up non-visible videos
+      }
+    });
+
+    const visibleIndex = viewableItems[0]?.index;
+    setActiveIndex(visibleIndex);
+
+    if (videoRefs.current[visibleIndex]) {
+      videoRefs.current[visibleIndex].playAsync();
     }
   }).current;
+
+  //////////////////////////////////////////////////////////////
+  // const pauseAllVideos = () => {
+  //   Object.values(videoRefs.current).forEach((video) => {
+  //     if (video) {
+  //       video.pauseAsync();
+  //     }
+  //   });
+  // };
+
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     // Screen is focused, no specific action needed here.
+  //     return () => {
+  //       // Screen loses focus, pause all videos.
+  //       pauseAllVideos();
+  //     };
+  //   }, [])
+  // );
+
+  // const onViewableItemsChanged = useRef(({ viewableItems }) => {
+  //   if (viewableItems.length > 0) {
+  //     const visibleIndex = viewableItems[0]?.index;
+  //     setActiveIndex(visibleIndex);
+  //     handleVideoPlayback(visibleIndex);
+  //   }
+  // }).current;
 
   const viewabilityConfig = {
     itemVisiblePercentThreshold: 50, // Video plays if 50% visible
@@ -487,172 +602,30 @@ export default function FeedScreen({
         data={filteredEvents}
         renderItem={renderEventItem}
         keyExtractor={(item, index) => `${item._id}-${index}`}
+        initialNumToRender={eventsPerPage} // Render only the first 3 items initially
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        // maxToRenderPerBatch={3} // Load 3 items per scroll batch
+        // windowSize={5}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        onViewableItemsChanged={onViewableItemsChanged}
+        // onViewableItemsChanged={onViewableItemsChanged}
+        onViewableItemsChanged={({ viewableItems }) => {
+          if (viewableItems.length > 0) {
+            const firstVisibleIndex = viewableItems[0].index;
+            if (activeIndex !== firstVisibleIndex) {
+              toggleVideoPlayback(firstVisibleIndex);
+            }
+          }
+}}
         viewabilityConfig={viewabilityConfig}
       />
     </Animated.View>
   );
 
-  // const handleScroll = (event) => {
-  //   const offsetY = event.nativeEvent.contentOffset.y;
-  //   const newIndex = Math.round(offsetY / screenHeight);
-
-  //   if (newIndex !== visibleIndex) {
-  //     setVisibleIndex(newIndex);
-  //     setIsPlaying((prev) => {
-  //       const updated = {};
-  //       Object.keys(prev).forEach((key) => {
-  //         updated[key] = parseInt(key) === newIndex;
-  //       });
-  //       return updated;
-  //     });
-  //   }
-  // };
-
-  // return (
-  //   <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
-  //     <ScrollView
-  //       style={styles.scrollContainer}
-  //       showsVerticalScrollIndicator={false}
-  //       refreshControl={
-  //         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-  //       }
-  //       onScroll={handleScroll}
-  //       scrollEventThrottle={16}
-  //     >
-  //       {showFilters && (
-  //         <Filter
-  //           setFilteredEvents={setFilteredEvents}
-  //           setGenre={(genre) => console.log("Selected Genre:", genre)}
-  //           loadEvents={loadEvents}
-  //         />
-  //       )}
-
-  //       {filteredEvents.length === 0 ? (
-  //         <View style={styles.noEventsContainer}>
-  //           <Text style={styles.noEventsMessage}>OOPS !! No events found</Text>
-  //         </View>
-  //       ) : (
-  //         filteredEvents.map((event, index) => (
-  //           <View key={event._id} style={styles.videoContainer}>
-  //             <Video
-  //               ref={(ref) => (videoRefs.current[index] = ref)}
-  //               source={{ uri: event.videoUrl }}
-  //               style={styles.video}
-  //               resizeMode="contain"
-  //               shouldPlay={isPlaying[index]}
-  //               isLooping={false}
-  //             />
-  //             <TouchableOpacity
-  //               onPress={() =>
-  //                 setIsPlaying((prev) => ({
-  //                   ...prev,
-  //                   [index]: !prev[index],
-  //                 }))
-  //               }
-  //               style={styles.pauseIcon}
-  //             >
-  //               <MaterialCommunityIcons
-  //                 name={isPlaying[index] ? "pause-circle" : "play-circle"}
-  //                 color={"#fff"}
-  //                 size={40}
-  //               />
-  //             </TouchableOpacity>
-  //             <TouchableOpacity
-  //               style={styles.overlay}
-  //               onPress={() =>
-  //                 navigation.navigate("EventDetailsScreen", {
-  //                   eventId: event._id,
-  //                 })
-  //               }
-  //             >
-  //               <View style={styles.bottomInfo}>
-  //                 <Text style={styles.eventTitle}>{event.title}</Text>
-  //                 <Text style={styles.organizer}>by {event.organizer}</Text>
-  //               </View>
-  //             </TouchableOpacity>
-  //           </View>
-  //         ))
-  //       )}
-  //     </ScrollView>
-  //   </Animated.View>
-  // );
-
-  // return (
-  //   <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
-  //     <ScrollView
-  //       style={styles.scrollContainer}
-  //       showsVerticalScrollIndicator={false}
-  //       refreshControl={
-  //         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-  //       }
-  //     >
-  //       {showFilters && (
-  //         <Filter
-  //           setFilteredEvents={setFilteredEvents}
-  //           setGenre={setSelectedGenre}
-  //           loadEvents={loadEvents}
-  //         />
-  //       )}
-
-  //       {filteredEvents.length === 0 ? (
-  //         <View style={styles.noEventsContainer}>
-  //           <Text style={styles.noEventsMessage}>OOPS !! No events found</Text>
-  //         </View>
-  //       ) : (
-  //         filteredEvents.map((event, index) => (
-  //           <View
-  //             key={`${event._id}-${index}`}
-  //             // {event._id}
-  //             style={styles.videoContainer}
-  //           >
-  //             <Video
-  //               ref={(ref) => (videoRefs.current[index] = ref)}
-  //               source={{ uri: event.videoUrl }}
-  //               style={styles.video}
-  //               resizeMode="contain"
-  //               shouldPlay={isPlaying[index]}
-  //               isLooping={false}
-  //               onPlaybackStatusUpdate={(status) => {
-  //                 if (!isPlaying[index] && status.isPlaying) {
-  //                   videoRefs.current[index].pauseAsync(); // Prevent auto play when other video starts
-  //                 }
-  //               }}
-  //             />
-  //             <TouchableOpacity
-  //               onPress={() => handleVideoPlayback(index)}
-  //               style={styles.pauseIcon}
-  //             >
-  //               <MaterialCommunityIcons
-  //                 name={isPlaying[index] ? "pause-circle" : "play-circle"}
-  //                 color={"#fff"}
-  //                 size={40}
-  //               />
-  //             </TouchableOpacity>
-
-  //             <TouchableOpacity
-  //               style={styles.overlay}
-  //               onPress={() =>
-  //                 navigation.navigate("EventDetailsScreen", {
-  //                   eventId: event._id,
-  //                 })
-  //               }
-  //             >
-  //               <View style={styles.bottomInfo}>
-  //                 <Text style={styles.eventTitle}>{event.title}</Text>
-  //                 <Text style={styles.organizer}>by {event.organizer}</Text>
-  //               </View>
-  //             </TouchableOpacity>
-  //           </View>
-  //         ))
-  //       )}
-  //     </ScrollView>
-  //   </Animated.View>
-  // );
+ 
 }
 
 const styles = StyleSheet.create({

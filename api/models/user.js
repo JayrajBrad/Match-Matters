@@ -153,6 +153,10 @@ const userSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  pushToken: {
+    type: String,
+    default: null, // Ensures the field exists even if no value is set
+  }
 });
 
 const User = mongoose.model("User", userSchema);

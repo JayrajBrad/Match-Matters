@@ -665,6 +665,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     // backgroundColor: "#f4f4f4",
+    marginBottom:100
   },
   keycontainer: { marginBottom: 120 },
   scrollContainer: {
@@ -675,7 +676,7 @@ const styles = StyleSheet.create({
     // backgroundColor: "#fff",
     borderRadius: 10,
     padding: 20,
-    elevation: 5, // for shadow effect
+    // elevation: 5, // for shadow effect
     // marginBottom: 100,
   },
   fieldContainer: {
@@ -851,10 +852,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+    // shadowOffset: { width: 0, height: 4 },
+    // shadowOpacity: 0.2,
+    // shadowRadius: 4,
+    // elevation: 5,
   },
   button: {
     backgroundColor: "grey",

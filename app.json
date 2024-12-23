@@ -1,6 +1,5 @@
 {
   "expo": {
-    "sdkVersion": "52.0.0",
     "name": "match-matters",
     "slug": "match-matters",
     "version": "1.0.0",
@@ -13,6 +12,11 @@
       "android",
       "web"
     ],
+    "splash": {
+      "image": "./assets/splashscreen_logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1e1e1e"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.atharvbrad.matchmatters"
@@ -25,14 +29,21 @@
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.atharvbrad.matchmatters"
+      "package": "com.atharvbrad.matchmatters",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-asset",
-      "expo-image-picker"
+      "expo-image-picker",
+      [
+        "expo-font",
+        {
+          "fonts": [ "./assets/fonts/CenturyGothic.ttf", "./assets/fonts/GOTHICB0.ttf"]
+}
+]
     ],
     "assetBundlePatterns": [
       "assets/*"

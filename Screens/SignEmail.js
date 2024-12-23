@@ -13,8 +13,22 @@ import {
   getRegistrationProgress,
   saveRegistrationProgress,
 } from "../backend/registrationUtils";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFonts } from "expo-font";
+import AppLoading from "expo-app-loading";
 
 export default function SignEmail({ navigation }) {
+  const insets = useSafeAreaInsets();
+
+  if (insets.top === 0) {
+    return null; // Optionally render a loading state or placeholder here
+  }
+
+  const [fontsLoaded] = useFonts({
+    CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
+    CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
+  });
+
   const emailInput = useRef(null);
   const passwordInput = useRef(null);
   const rePasswordInput = useRef(null);
@@ -110,9 +124,13 @@ export default function SignEmail({ navigation }) {
     }
   };
 
+  if (!fontsLoaded) {
+    return <AppLoading />;
+  }
+
   return (
     <SafeAreaView style={styles.area}>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
         <KeyboardAvoidingView
           keyboardVerticalOffset={50}
           behavior={"padding"}
@@ -238,10 +256,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   container: {
-    flex: 1,
+    flex: 1, // Ensure the container takes full height
     paddingHorizontal: 20,
-    paddingVertical: 50,
   },
+  // container: {
+  //   flex: 1,
+  //   paddingHorizontal: 20,
+  //   paddingVertical: 50,
+  // },
   containerAvoidingView: {
     flex: 1,
   },
@@ -249,18 +271,20 @@ const styles = StyleSheet.create({
     color: "#0F3460",
     fontSize: 16,
     marginBottom: 20,
-    fontWeight: "bold",
+    fontFamily: "CenturyGothicBold",
   },
   headTitle: {
     fontSize: 32,
-    fontWeight: "800",
+    // fontWeight: "800",
     color: "#333",
     marginBottom: 10,
+    fontFamily: "CenturyGothicBold",
   },
   headTag: {
     fontSize: 14,
     color: "#666",
     marginBottom: 30,
+    fontFamily: "CenturyGothic",
   },
   inputContainer: {
     borderBottomWidth: 1,
@@ -269,6 +293,7 @@ const styles = StyleSheet.create({
   inputStyle: {
     fontSize: 16,
     paddingVertical: 10,
+    fontFamily: "CenturyGothic",
   },
   errorText: {
     color: "red",
@@ -289,6 +314,6 @@ const styles = StyleSheet.create({
   textContinue: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "CenturyGothicBold",
   },
 });

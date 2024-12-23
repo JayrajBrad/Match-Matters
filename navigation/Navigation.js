@@ -39,15 +39,14 @@ import ChatScreen from "../TabScreens/ChatScreen";
 import Chat from "../components/Chat";
 import MostHappening from "../HomeScreens/MostHappening";
 import ForYou from "../HomeScreens/ForYou";
-import LastScreen from "../Screens/LastScreen";
-import StartScreen from "../Screens/StartScreen";
+
 import OnboardingScreen from "../Onboarding-Screen-2/OnboardingScreen";
-import DrawerContent from "../drawer/DrawerContent";
+
 import TicketSales from "../HomeScreens/TicketSales";
 import EditProfileScreen from "../HomeScreens/EditProfileScreen";
 import VerifyAccountScreen from "../HomeScreens/VerifyAccountScreen";
 import MyEventsScreen from "../drawer/MyEventsScreen";
-import NotificationsScreen from "../HomeScreens/NotificationsScreen";
+
 import AllEvents from "../drawer/AllEvents";
 import MyBookingsScreen from "../drawer/MyBookingsScreen";
 import HelpScreen from "../policy/HelpScreen";
@@ -55,7 +54,7 @@ import PrivacyCenterScreen from "../policy/PrivacyCenterScreen";
 import ContactUsScreen from "../policy/ContactUsScreen";
 import FAQScreen from "../policy/FAQScreen";
 import CreateEventScreen from "../TabScreens/CreateEventScreen";
-import CityEventsScreen from "../HomeScreens/CityEventsScreen";
+
 import EventDetailsScreen from "../HomeScreens/EventDetailsScreen";
 import SignPassword from "../Screens/SignPassword";
 import ChatRoom from "../TabScreens/ChatRoom";
@@ -107,6 +106,115 @@ const CustomBottomTabs = (props) => {
   return <CustomBottomTab {...props} />;
 };
 
+// const BottomTabs = () => {
+//   const navigation = useNavigation();
+//   const [showFilters, setShowFilters] = useState(false);
+//   const [searchText, setSearchText] = useState("");
+//   const [filterVisible, setFilterVisible] = useState(false);
+//   const toggleFilterModal = () => setFilterVisible(!filterVisible);
+
+//   return (
+//     <Tab.Navigator
+//       // initialRouteName="FeedScreen"
+//       tabBar={(props) => <CustomBottomTabs {...props} />}
+//       // screenOptions={{ headerShown: false }}
+//       screenOptions={({ route }) => ({
+//         tabBarShowLabel: true,
+//         tabBarStyle: { height: 100, position: "absolute", elevation: 0 },
+//         tabBarLabelStyle: { fontSize: 12, marginBottom: 10, color: "#000" },
+//         tabBarIconStyle: { marginTop: 10 },
+//       })}
+//     >
+//       <Tab.Screen
+//         name="Home"
+//         options={{
+//           title: "FeedScreen",
+//           headerStyle: {
+//             // backgroundColor: "#0067FF", // Header background color
+//             height: 120, // Increase the header height
+//           },
+//           headerTitle: () => (
+//             <View style={styles.headerContainer}>
+//               <View style={styles.logoContainer}>
+//                 <Image
+//                   source={require("../assets/Match matters logo (1).png")}
+//                   style={styles.logo}
+//                 />
+//               </View>
+
+//               {/* Search Bar */}
+//               <TextInput
+//                 style={styles.searchInput}
+//                 placeholder="Search Events"
+//                 value={searchText}
+//                 onChangeText={(text) => setSearchText(text)}
+//                 // Add an onChangeText handler here if needed
+//               />
+
+//               {/* Filter Icon */}
+//               <TouchableOpacity
+//                 onPress={toggleFilterModal}
+//                 style={styles.filterIcon}
+//               >
+//                 <MaterialCommunityIcons
+//                   name={
+//                     filterVisible
+//                       ? "calendar-check-outline"
+//                       : "calendar-blank-outline"
+//                   }
+//                   color={filterVisible ? "#252355" : "#000"}
+//                   size={30}
+//                 />
+//               </TouchableOpacity>
+//             </View>
+//           ),
+//         }}
+//       >
+//         {() => (
+//           <FeedScreen
+//             // showFilters={showFilters}
+//             // setShowFilters={setShowFilters}
+//             filterVisible={filterVisible}
+//             toggleFilterModal={toggleFilterModal}
+//             // setFilteredEvents={setFilteredEvents}
+//             // loadEvents={loadEvents}
+//           />
+//         )}
+//       </Tab.Screen>
+
+//       <Tab.Screen
+//         name="Vibed"
+//         component={LikedYou}
+//         options={{
+//           title: "Liked You",
+//         }}
+//       />
+//       <Tab.Screen
+//         name="Event"
+//         component={CreateEventScreen}
+//         options={{
+//           title: "Create Event",
+//         }}
+//       />
+//       <Tab.Screen
+//         name="Chat"
+//         component={ChatScreen}
+//         options={{
+//           title: "Chat",
+//         }}
+//       />
+//       <Tab.Screen
+//         name="Profile"
+//         component={Profile}
+//         options={{
+//           title: "Profile",
+//         }}
+//       />
+//     </Tab.Navigator>
+//   );
+// };
+
+
 const BottomTabs = () => {
   const navigation = useNavigation();
   const [showFilters, setShowFilters] = useState(false);
@@ -117,40 +225,53 @@ const BottomTabs = () => {
   return (
     <Tab.Navigator
       // initialRouteName="FeedScreen"
-      tabBar={(props) => <CustomBottomTabs {...props} />}
+      // tabBar={(props) => <CustomBottomTabs {...props} />}
       // screenOptions={{ headerShown: false }}
       screenOptions={({ route }) => ({
         tabBarShowLabel: true,
-        tabBarStyle: { height: 100, position: "absolute", elevation: 0 },
-        tabBarLabelStyle: { fontSize: 12, marginBottom: 10, color: "#000" },
+        tabBarStyle: {
+          height: 80,
+          position: "absolute",
+          elevation: 0,
+          backgroundColor: "#290F4C",
+        },
+        tabBarLabelStyle: { fontSize: 12, marginBottom: 10, color: "#fff" },
         tabBarIconStyle: { marginTop: 10 },
       })}
     >
       <Tab.Screen
         name="Home"
         options={{
-          title: "FeedScreen",
+          title: "Home",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="home-outline"
+              color={color}
+              size={size}
+            />
+          ),
+
           headerStyle: {
-            // backgroundColor: "#0067FF", // Header background color
-            height: 120, // Increase the header height
+            backgroundColor: "#290F4C", // Header background color
+            height: 100, // Increase the header height
           },
           headerTitle: () => (
             <View style={styles.headerContainer}>
               <View style={styles.logoContainer}>
                 <Image
-                  source={require("../assets/Match matters logo (1).png")}
+                  source={require("../assets/MM - PNG.png")}
                   style={styles.logo}
                 />
               </View>
 
               {/* Search Bar */}
-              <TextInput
+              {/* <TextInput
                 style={styles.searchInput}
                 placeholder="Search Events"
                 value={searchText}
                 onChangeText={(text) => setSearchText(text)}
                 // Add an onChangeText handler here if needed
-              />
+              /> */}
 
               {/* Filter Icon */}
               <TouchableOpacity
@@ -163,7 +284,7 @@ const BottomTabs = () => {
                       ? "calendar-check-outline"
                       : "calendar-blank-outline"
                   }
-                  color={filterVisible ? "#252355" : "#000"}
+                  color={filterVisible ? "#252355" : "#fff"}
                   size={30}
                 />
               </TouchableOpacity>
@@ -187,14 +308,28 @@ const BottomTabs = () => {
         name="Vibed"
         component={LikedYou}
         options={{
-          title: "Liked You",
+          title: "Vibed",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="heart-outline"
+              color={color}
+              size={size}
+            />
+          ),
         }}
       />
       <Tab.Screen
         name="Event"
         component={CreateEventScreen}
         options={{
-          title: "Create Event",
+          title: "Event",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="plus-circle-outline"
+              color={color}
+              size={size}
+            />
+          ),
         }}
       />
       <Tab.Screen
@@ -202,6 +337,13 @@ const BottomTabs = () => {
         component={ChatScreen}
         options={{
           title: "Chat",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="chat-outline"
+              color={color}
+              size={size}
+            />
+          ),
         }}
       />
       <Tab.Screen
@@ -209,11 +351,21 @@ const BottomTabs = () => {
         component={Profile}
         options={{
           title: "Profile",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="account-outline"
+              color={color}
+              size={size}
+            />
+          ),
         }}
       />
     </Tab.Navigator>
   );
 };
+
+
+
 
 const AuthStack = () => {
   const [isShowSplash, setIsShowSplash] = useState(true);
@@ -539,14 +691,49 @@ const Navigation = () => (
 export default Navigation;
 
 // Styles for the header components
+// const styles = StyleSheet.create({
+//   headerContainer: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     justifyContent: "space-between", // Ensure space between elements
+//     // paddingHorizontal: 15, // Adjusted padding
+//     // backgroundColor: "#0067FF",
+//     height: 60, // Height of the header
+//     width: "100%",
+//   },
+//   logoContainer: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//   },
+//   logo: {
+//     height: 60,
+//     width: 120,
+//   },
+//   searchInput: {
+//     height: 40,
+//     flex: 1, // Makes the search bar take the remaining space
+//     borderRadius: 10,
+//     backgroundColor: "#f0f0f0",
+//     paddingHorizontal: 10,
+//     marginHorizontal: 20,
+//     // marginLeft: 10, // Margin to separate from logo
+//   },
+//   filterIcon: {
+//     marginRight: 10,
+//   },
+// });
+
+
+
 const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between", // Ensure space between elements
-    // paddingHorizontal: 15, // Adjusted padding
-    // backgroundColor: "#0067FF",
-    height: 60, // Height of the header
+    paddingHorizontal: 5, // Adjusted padding
+    // backgroundColor: "#290F4C",
+
+    // height: 60, // Height of the header
     width: "100%",
   },
   logoContainer: {
@@ -554,8 +741,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logo: {
-    height: 60,
+    height: 40,
     width: 120,
+    color: "#fff",
   },
   searchInput: {
     height: 40,

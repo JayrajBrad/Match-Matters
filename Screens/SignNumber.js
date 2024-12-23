@@ -1,223 +1,3 @@
-// import {
-//   View,
-//   Text,
-//   StyleSheet,
-//   TouchableOpacity,
-//   SafeAreaView,
-//   KeyboardAvoidingView,
-//   TextInput,
-// } from "react-native";
-// import React, { useEffect, useRef, useState } from "react";
-// import CountryCodeDropdownPicker from "react-native-dropdown-country-picker";
-// import {
-//   getRegistrationProgress,
-//   saveRegistrationProgress,
-// } from "../backend/registrationUtils";
-
-// export default function SignNumber({ navigation }) {
-//   let textInput = useRef(null);
-
-//   const [phoneNumber, setPhoneNumber] = useState("");
-//   const [focusInput, setFocusInput] = useState(true);
-//   const [selected, setSelected] = useState("+91");
-//   const [country, setCountry] = useState("");
-//   const [isValidPhoneNumber, setIsValidPhoneNumber] = useState(true);
-
-//   const onChangePhone = (number) => {
-//     setPhoneNumber(number);
-//     setIsValidPhoneNumber(true);
-//   };
-
-//   useEffect(() => {
-//     getRegistrationProgress("PhoneNum").then((progressData) => {
-//       if (progressData) {
-//         // Set only the phone number (last 10 digits) in the input field
-//         // setPhoneNumber(progressData.phoneNumber.slice(-10));
-//         setPhoneNumber(progressData.phoneNumber);
-//       }
-//     });
-//   }, []);
-
-//   const onPressContinue = async () => {
-//     const fullPhoneNumber = `${selected}${phoneNumber}`;
-
-//     if (validatePhoneNumber(phoneNumber)) {
-//       if (phoneNumber.trim() !== "" && phoneNumber.length === 10) {
-//         try {
-//           // Save the full phone number with country code in AsyncStorage
-//           await saveRegistrationProgress("PhoneNum", {
-//             phoneNumber: phoneNumber,
-//           });
-//           await saveRegistrationProgress("CountryCode", {
-//             countryCode: selected, // Save the country code separately
-//           });
-//           navigation.navigate("SignEmail");
-//         } catch (error) {
-//           console.error("Error saving registration progress: ", error);
-//         }
-//       }
-//     } else {
-//       setIsValidPhoneNumber(false);
-//     }
-//   };
-
-//   const validatePhoneNumber = (phone) => {
-//     const phoneRegex = /^[0-9]{10}$/;
-//     return phoneRegex.test(phone);
-//   };
-
-//   const onChangeFocus = () => {
-//     setFocusInput(true);
-//   };
-
-//   const onChangeBlur = () => {
-//     setFocusInput(false);
-//   };
-
-//   return (
-//     <SafeAreaView style={styles.area}>
-//       <View style={styles.container}>
-//         <KeyboardAvoidingView
-//           keyboardVerticalOffset={50}
-//           behavior={"padding"}
-//           style={styles.containerAvoidingView}
-//         >
-//           <TouchableOpacity>
-//             <Text
-//               onPress={() => {
-//                 navigation.goBack();
-//               }}
-//             >
-//               Back
-//             </Text>
-//           </TouchableOpacity>
-
-//           <Text style={styles.headTitle}>Can we get your number?</Text>
-//           <Text style={styles.headTag}>
-//             We only use phone number to make sure everyone on Match Matters is
-//             real.
-//           </Text>
-
-//           <View
-//             style={[styles.inputContainer, { borderBottomColor: "#244DB7" }]}
-//           >
-//             <CountryCodeDropdownPicker
-//               selected={selected}
-//               setSelected={setSelected}
-//               setCountryDetails={setCountry}
-//               phone={phoneNumber}
-//               setPhone={onChangePhone}
-//               countryCodeTextStyles={{ fontSize: 13 }}
-//               countryCodeContainerStyles={[styles.countryCode]}
-//               style={styles.countryPickerStyle}
-//               searchStyles={[styles.search]}
-//               dropdownStyles={[styles.dropdown]}
-//             />
-//           </View>
-
-//           {!isValidPhoneNumber && (
-//             <Text style={styles.errorText}>
-//               Please enter a valid 10-digit phone number.
-//             </Text>
-//           )}
-
-//           <View style={styles.viewBottom}>
-//             <TouchableOpacity onPress={onPressContinue}>
-//               <View style={styles.btnContinue}>
-//                 <Text style={styles.textContinue}>Continue</Text>
-//               </View>
-//             </TouchableOpacity>
-//           </View>
-//         </KeyboardAvoidingView>
-//       </View>
-//     </SafeAreaView>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   area: {
-//     flex: 1,
-//     backgroundColor: "#fff",
-//   },
-//   container: {
-//     flex: 1,
-//     backgroundColor: "#fff",
-//     marginTop: 100,
-//     alignItems: "center",
-//   },
-//   containerAvoidingView: {
-//     marginLeft: 30,
-//   },
-//   headTitle: {
-//     fontSize: 40,
-//     fontWeight: "800",
-//     marginRight: 100,
-//   },
-//   headTag: {
-//     fontSize: 16,
-//     marginTop: 5,
-//     marginRight: 30,
-//   },
-//   inputContainer: {
-//     flexDirection: "row",
-//     marginRight: 30,
-//     padding: 5,
-//     borderRadius: 10,
-//     backgroundColor: "#fff",
-//     borderBottomWidth: 1.5,
-//     borderColor: "#C0C0C0",
-//     borderWidth: 1,
-//     marginTop: 20,
-//     alignItems: "center",
-//   },
-//   countryPickerStyle: {
-//     flex: 1,
-//   },
-//   countryCode: {
-//     height: 40,
-//   },
-//   search: {
-//     height: 40,
-//   },
-//   dropdown: {
-//     height: 178,
-//   },
-//   phoneInputStyle: {
-//     flex: 1,
-//     height: 50,
-//   },
-//   viewBottom: {
-//     flex: 1,
-//     justifyContent: "flex-end",
-//     marginBottom: 115,
-//     alignItems: "center",
-//   },
-//   btnContinue: {
-//     width: 250,
-//     height: 50,
-//     borderRadius: 35,
-//     alignItems: "center",
-//     justifyContent: "center",
-//     backgroundColor: "#BF1013",
-//   },
-//   textContinue: {
-//     fontSize: 22,
-//     fontWeight: "bold",
-//     color: "#ffffff",
-//     alignItems: "center",
-//   },
-//   errorText: {
-//     color: "red",
-//     marginTop: 10,
-//   },
-//   button: {
-//     marginTop: 100,
-//     marginHorizontal: 10,
-//   },
-//   text: {
-//     fontSize: 16,
-//   },
-// });
 
 import React, { useEffect, useState } from "react";
 import {
@@ -227,6 +7,8 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   StyleSheet,
+  StatusBar,
+  TextInput,
 } from "react-native";
 import CountryCodeDropdownPicker from "react-native-dropdown-country-picker";
 import {
@@ -234,8 +16,22 @@ import {
   getRegistrationProgress,
 } from "../backend/registrationUtils";
 import { isValidPhoneNumber } from "libphonenumber-js"; // Import from libphonenumber-js
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFonts } from "expo-font";
+import AppLoading from "expo-app-loading";
 
 export default function SignNumber({ navigation }) {
+  const insets = useSafeAreaInsets();
+
+  if (insets.top === 0) {
+    return null; // Optionally render a loading state or placeholder here
+  }
+
+  const [fontsLoaded] = useFonts({
+    CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
+    CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
+  });
+
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selected, setSelected] = useState("+91"); // Default to India (+91)
   const [isValidPhone, setIsValidPhone] = useState(true);
@@ -275,16 +71,36 @@ export default function SignNumber({ navigation }) {
     }
   };
 
-  // Function to validate phone number based on the country code
   const validatePhoneNumber = (fullPhoneNumber) => {
     const countryCode = selected.replace("+", ""); // Remove '+' from the country code for validation
     // Use libphonenumber-js to validate the phone number
     return isValidPhoneNumber(fullPhoneNumber, countryCode);
   };
 
+  // const validatePhoneNumber = (fullPhoneNumber) => {
+  //   try {
+  //     const phoneNumber = parsePhoneNumberFromString(fullPhoneNumber); // Parse the phone number
+  //     if (!phoneNumber) {
+  //       return false; // Invalid phone number format
+  //     }
+
+  //     const isValidLength = phoneNumber.isPossible(); // Check if the length is valid
+  //     const isValidFormat = phoneNumber.isValid(); // Check if the number is valid for the selected country
+
+  //     return isValidLength && isValidFormat; // Ensure both conditions are met
+  //   } catch (error) {
+  //     console.error("Error validating phone number:", error);
+  //     return false; // Return false in case of error
+  //   }
+  // };
+
+  if (!fontsLoaded) {
+    return <AppLoading />;
+  }
+
   return (
     <SafeAreaView style={styles.area}>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
         <KeyboardAvoidingView
           keyboardVerticalOffset={50}
           behavior={"padding"}
@@ -292,6 +108,7 @@ export default function SignNumber({ navigation }) {
         >
           <TouchableOpacity>
             <Text
+              style={styles.backText}
               onPress={() => {
                 navigation.goBack();
               }}
@@ -300,25 +117,28 @@ export default function SignNumber({ navigation }) {
             </Text>
           </TouchableOpacity>
 
-          <Text style={styles.headTitle}>Can we get your number?</Text>
+          <Text style={styles.headTitle}>Can we get your number ?</Text>
           <Text style={styles.headTag}>
-            We only use phone number to make sure everyone on Match Matters is
-            real.
+            We only use your phone number to make sure everyone on Match Matters
+            is real.
           </Text>
 
-          <View
-            style={[styles.inputContainer, { borderBottomColor: "#244DB7" }]}
-          >
+          <View style={styles.inputContainer}>
             <CountryCodeDropdownPicker
               selected={selected}
               setSelected={setSelected}
               phone={phoneNumber}
               setPhone={onChangePhone}
-              countryCodeTextStyles={{ fontSize: 13 }}
-              countryCodeContainerStyles={[styles.countryCode]}
+              countryCodeTextStyles={{
+                fontSize: 16,
+                color: "#333",
+                fontFamily: "CenturyGothic",
+              }}
+              countryCodeContainerStyles={styles.countryCode}
               style={styles.countryPickerStyle}
-              searchStyles={[styles.search]}
-              dropdownStyles={[styles.dropdown]}
+              searchStyles={styles.search}
+              phoneStyles={styles.phoneStyles}
+              dropdownStyles={styles.dropdown}
             />
           </View>
 
@@ -347,52 +167,74 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   container: {
+    flex: 1, // Ensure the container takes full height
+    paddingHorizontal: 20,
+  },
+  containerAvoidingView: {
     flex: 1,
-    justifyContent: "center",
-    padding: 20,
+  },
+  backText: {
+    color: "#0F3460",
+    fontSize: 16,
+    marginBottom: 20,
+    // fontWeight: "bold",
+    fontFamily: "CenturyGothicBold",
   },
   headTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    textAlign: "center",
+    fontSize: 32,
+    // fontWeight: "800",
+    color: "#333",
+    marginBottom: 10,
+    fontFamily: "CenturyGothicBold",
   },
   headTag: {
     fontSize: 14,
-    textAlign: "center",
-    marginBottom: 20,
-    color: "#888",
+    color: "#666",
+    fontFamily: "CenturyGothic",
+    marginBottom: 30,
   },
   inputContainer: {
-    marginBottom: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: 1,
+    // borderBottomWidth: 1,
+    marginBottom: 15,
+    // height: 50,
+  },
+  dropdown: {
+    // height: 40,
   },
   countryCode: {
     marginRight: 10,
+    height: 50,
   },
   countryPickerStyle: {
     width: "50%",
   },
+  search: {
+    height: 50,
+  },
   errorText: {
     color: "red",
-    fontSize: 14,
-    textAlign: "center",
-    marginTop: 10,
+    fontSize: 12,
+    marginTop: -15,
+    marginBottom: 15,
+  },
+  viewBottom: {
+    marginTop: 30,
+    alignItems: "center",
+  },
+  phoneStyles: {
+    height: 50,
+    fontFamily: "CenturyGothic",
   },
   btnContinue: {
-    backgroundColor: "#244DB7",
-    padding: 15,
-    borderRadius: 5,
-    marginTop: 20,
+    backgroundColor: "#0F3460",
+    paddingVertical: 15,
+    paddingHorizontal: 80,
+    borderRadius: 25,
   },
   textContinue: {
     color: "#fff",
-    textAlign: "center",
     fontSize: 16,
-  },
-  viewBottom: {
-    justifyContent: "center",
-    alignItems: "center",
+    // fontWeight: "bold",
+    fontFamily: "CenturyGothic",
   },
 });
