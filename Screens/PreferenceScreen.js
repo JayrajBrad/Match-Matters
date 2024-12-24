@@ -534,7 +534,8 @@ import LottieView from "lottie-react-native";
 import { UserContext } from "../navigation/UserProvider";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
-import AppLoading from "expo-app-loading";
+// import AppLoading from "expo-app-loading";
+import * as SplashScreen from 'expo-splash-screen';
 
 const preferences = [
   "Clubbing",
@@ -774,8 +775,16 @@ export default function PreferenceScreen({ navigation }) {
     }
   };
 
+  useEffect(() => {
+    if (!fontsLoaded) {
+      SplashScreen.preventAutoHideAsync(); // Prevent the splash screen from hiding automatically
+    } else {
+      SplashScreen.hideAsync(); // Hide the splash screen when fonts are loaded
+    }
+  }, [fontsLoaded]);
+
   if (!fontsLoaded) {
-    return <AppLoading />;
+    return null; // Render nothing while the splash screen is shown
   }
 
   return (

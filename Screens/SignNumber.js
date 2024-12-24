@@ -18,7 +18,8 @@ import {
 import { isValidPhoneNumber } from "libphonenumber-js"; // Import from libphonenumber-js
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
-import AppLoading from "expo-app-loading";
+// import AppLoading from "expo-app-loading";
+import * as SplashScreen from 'expo-splash-screen';
 
 export default function SignNumber({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -94,8 +95,16 @@ export default function SignNumber({ navigation }) {
   //   }
   // };
 
+  useEffect(() => {
+    if (!fontsLoaded) {
+      SplashScreen.preventAutoHideAsync(); // Prevent the splash screen from hiding automatically
+    } else {
+      SplashScreen.hideAsync(); // Hide the splash screen when fonts are loaded
+    }
+  }, [fontsLoaded]);
+
   if (!fontsLoaded) {
-    return <AppLoading />;
+    return null; // Render nothing while the splash screen is shown
   }
 
   return (

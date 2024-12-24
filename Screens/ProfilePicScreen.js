@@ -287,7 +287,8 @@ import {
 } from "../backend/registrationUtils";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
-import AppLoading from "expo-app-loading";
+// import AppLoading from "expo-app-loading";
+import * as SplashScreen from 'expo-splash-screen';
 
 export default function ProfilePicScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -386,10 +387,17 @@ export default function ProfilePicScreen({ navigation }) {
     navigation.navigate("PreferenceScreen");
   };
 
-  if (!fontsLoaded) {
-    return <AppLoading />;
-  }
+  useEffect(() => {
+    if (!fontsLoaded) {
+      SplashScreen.preventAutoHideAsync(); // Prevent the splash screen from hiding automatically
+    } else {
+      SplashScreen.hideAsync(); // Hide the splash screen when fonts are loaded
+    }
+  }, [fontsLoaded]);
 
+  if (!fontsLoaded) {
+    return null; // Render nothing while the splash screen is shown
+  }
   return (
     <SafeAreaView style={styles.area}>
       <View style={[styles.container, { paddingTop: insets.top + 20 }]}>

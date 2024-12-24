@@ -41,9 +41,13 @@
       [
         "expo-font",
         {
-          "fonts": [ "./assets/fonts/CenturyGothic.ttf", "./assets/fonts/GOTHICB0.ttf"]
-}
-]
+          "fonts": [
+            "./assets/fonts/CenturyGothic.ttf",
+            "./assets/fonts/GOTHICB0.ttf"
+          ]
+        }
+      ],
+      "expo-video"
     ],
     "assetBundlePatterns": [
       "assets/*"

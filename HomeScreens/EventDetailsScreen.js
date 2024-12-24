@@ -336,14 +336,12 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { MaterialCommunityIcons } from "react-native-vector-icons"; // If you are using expo
-// import MapView, { Marker } from "react-native-maps";
 
-// import MapboxGL from '@react-native-mapbox-gl/maps';
 import axios from "axios";
 import { API_URL, OLA_MAPS_API_KEY,  } from "@env";
 import { UserContext } from "../navigation/UserProvider"; // Import the UserContext
 import { SharedElement } from "react-navigation-shared-element";
-// MapboxGL.setAccessToken('YOUR_MAPBOX_ACCESS_TOKEN');
+
 const EventDetailsScreen = ({ route, navigation }) => {
   const { eventId } = route.params;
   const [event, setEvent] = useState(null);
@@ -587,30 +585,6 @@ const EventDetailsScreen = ({ route, navigation }) => {
 
       
      
-{/* <MapboxGL.MapView style={styles.map}>
-       
-        <MapboxGL.VectorSource
-          id="ola-tiles"
-          tileUrlTemplates={[
-            `https://tiles.olakrutrim.com/2d/{z}/{x}/{y}.pbf?api_key=${OLA_MAPS_API_KEY}`,
-          ]}
-          maxZoomLevel={22}>
-         
-          <MapboxGL.VectorLayer
-            id="vector-layer"
-            sourceID="ola-tiles"
-            style={{ lineWidth: 1, lineColor: '#FF0000' }}
-          />
-        </MapboxGL.VectorSource>
-
-        <MapboxGL.Camera
-          zoomLevel={12}
-          centerCoordinate={[locationCoords.longitude, locationCoords.latitude]}
-          animationMode="flyTo"
-          animationDuration={1000}
-        />
-      </MapboxGL.MapView> */}
-
 
 
 
