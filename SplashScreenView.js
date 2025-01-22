@@ -1,9 +1,8 @@
-import { View, Text, StyleSheet, Image,  Animated } from 'react-native';
+import { View, Text, StyleSheet, Image, Animated } from "react-native";
 import icon from "./assets/splashscreen_logo.png";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 
 export default function SplashScreenView() {
-
   const fadeAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -14,26 +13,25 @@ export default function SplashScreenView() {
     }).start();
   }, [fadeAnimation]);
 
-
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
       <View>
-        <Image source={icon} style = {styles.image}/>
+        <Image source={icon} style={styles.image} />
       </View>
-      </Animated.View>
-  )
+    </Animated.View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container:{
-        flex:1,
-        justifyContent:"center",
-        alignItems:"center",
-        backgroundColor:'#1e1e1e',
-    },
-    image:{
-        width: 355,
-        height:155,
-        resizeMode:"cover"
-    }
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#290F4C",
+  },
+  image: {
+    width: 355,
+    height: 155,
+    resizeMode: "cover",
+  },
 });

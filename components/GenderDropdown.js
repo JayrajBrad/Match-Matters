@@ -181,10 +181,11 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderWidth: 1,
     borderRadius: 4,
-    backgroundColor: "#fff",
+    backgroundColor: "#814C68",
   },
   selectedText: {
-    color: "#000",
+    color: "#fff",
+    fontFamily: "CenturyGothic",
   },
   modalBackdrop: {
     flex: 1,
@@ -214,6 +215,7 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 16,
     color: "#000",
+    fontFamily: "CenturyGothic",
   },
 });
 

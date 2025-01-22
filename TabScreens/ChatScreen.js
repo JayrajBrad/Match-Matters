@@ -21,14 +21,38 @@ import { API_URL } from "@env";
 import axios from "axios";
 import Chat from "../components/Chat";
 import { UserContext } from "../navigation/UserProvider";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as SplashScreen from "expo-splash-screen";
+import * as Font from "expo-font";
 
 const ChatScreen = () => {
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
+          CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
+        });
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error("Error loading fonts:", error);
+      } finally {
+        SplashScreen.hideAsync();
+      }
+    }
+    loadFonts();
+  }, []);
+
   const [options, setOptions] = useState(["Chats"]);
   const [chats, setChats] = useState([]);
   const [requests, setRequests] = useState([]);
   // const [userId, setUserId] = useState(null);
   const [refreshing, setRefreshing] = useState(false); // State to handle the refreshing state
   const [requestCount, setRequestCount] = useState(0);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
   const navigation = useNavigation();
 
   const { userId } = useContext(UserContext);
@@ -120,7 +144,7 @@ const ChatScreen = () => {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { paddingTop: insets.top }]}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
@@ -131,9 +155,11 @@ const ChatScreen = () => {
       >
         {/* <StatusBar backgroundColor="transparent" translucent={true} /> */}
         <View style={styles.header}>
-          <TextInput placeholder="Search message..." style={styles.searchBar} />
+          {/* <TextInput placeholder="Search message..." style={styles.searchBar} /> */}
+          <Text style={styles.ChatsText}>Your matches</Text>
+
           <Pressable onPress={() => navigation.navigate("RequestScreen")}>
-            <AntDesign name="hearto" size={24} color="red" />
+            <AntDesign name="hearto" size={30} color="#290F4C" />
             {requestCount > 0 && (
               <View style={styles.requestBadge}>
                 <Text style={styles.requestBadgeText}>{requestCount}</Text>
@@ -143,7 +169,7 @@ const ChatScreen = () => {
         </View>
 
         <View style={{ padding: 10 }}>
-          <Pressable
+          {/* <Pressable
             onPress={() => chooseOption("Chats")}
             style={{
               flexDirection: "row",
@@ -151,11 +177,11 @@ const ChatScreen = () => {
               justifyContent: "space-between",
             }}
           >
-            <View style={styles.header}>
-              <Text style={styles.noChatsText}>Chats</Text>
-            </View>
-            <Entypo name="chevron-down" size={24} color="black" />
-          </Pressable>
+            <View style={styles.subheader}>
+              {/* <Text style={styles.noChatsText}>Matches</Text> */}
+          {/* </View>
+            <Entypo name="chevron-down" size={26} color="black" />
+          </Pressable>  */}
 
           <View>
             {options?.includes("Chats") &&
@@ -180,7 +206,7 @@ const ChatScreen = () => {
                       loop
                       style={styles.lottie}
                     />
-                    <Text style={styles.noChatsText}>No Chats</Text>
+                    <Text style={styles.noChatsText}>Keep connecting</Text>
                     <Text style={styles.getStartedText}>
                       Get Started by messaging a friend
                     </Text>
@@ -218,11 +244,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 15, // Remove or reduce this value
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    paddingHorizontal: 15, // Remove or reduce this value
+    paddingVertical: 15,
+    // borderBottomWidth: 1,
+    // borderBottomColor: "#f0f0f0",
     // borderWidth: 2, // Debug border
     // borderColor: "red",
+    marginTop: 0,
+  },
+  subheader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBottom: 15,
+
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
     marginTop: 0,
   },
   searchBar: {
@@ -248,7 +285,7 @@ const styles = StyleSheet.create({
   requestBadgeText: {
     color: "white",
     fontSize: 12,
-    fontWeight: "bold",
+    fontFamily: "CenturyGothicBold",
   },
   noChats: {
     height: 300,
@@ -258,10 +295,18 @@ const styles = StyleSheet.create({
   noChatsText: {
     textAlign: "center",
     color: "gray",
+    fontFamily: "CenturyGothicBold",
+  },
+  ChatsText: {
+    textAlign: "center",
+    color: "#814C68",
+    fontSize: 26,
+    fontFamily: "CenturyGothicBold",
   },
   getStartedText: {
     marginTop: 4,
     color: "gray",
+    fontFamily: "CenturyGothic",
   },
   chatList: {
     flex: 1,

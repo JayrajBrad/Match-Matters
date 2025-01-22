@@ -6,6 +6,7 @@ import {
   View,
   Image,
   StyleSheet,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
@@ -14,9 +15,35 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { getUserId } from "../backend/registrationUtils";
 import { UserContext } from "../navigation/UserProvider";
 import LottieView from "lottie-react-native";
+import { MaterialCommunityIcons } from "react-native-vector-icons"; // If you are using expo
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const RequestScreen = () => {
+import * as SplashScreen from "expo-splash-screen";
+import * as Font from "expo-font";
+
+const RequestScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
+          CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
+        });
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error("Error loading fonts:", error);
+      } finally {
+        SplashScreen.hideAsync();
+      }
+    }
+    loadFonts();
+  }, []);
+
   const [requests, setRequests] = useState([]);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
   const { userId } = useContext(UserContext);
 
   useEffect(() => {
@@ -55,40 +82,14 @@ const RequestScreen = () => {
     new Set(requests.map((item) => item.from._id))
   ).map((id) => requests.find((item) => item.from._id === id));
 
-  // return (
-  //   <SafeAreaView style={styles.container}>
-  //     <ScrollView contentContainerStyle={styles.scrollView}>
-  //       {uniqueRequests.map((item, index) => (
-  //         <View key={item?.from?._id || index} style={styles.requestItem}>
-  //           <Image
-  //             source={{ uri: item?.from?.images[0] }}
-  //             style={styles.profileImage}
-  //           />
-  //           <View style={styles.infoContainer}>
-  //             <Text style={styles.nameText}>{item?.from?.username}</Text>
-  //             {/* <Text style={styles.interestsText}>🏀 Sports 🍿 Movies</Text> */}
-  //           </View>
-  //           <Pressable
-  //             onPress={() => acceptRequest(item?.from?._id)}
-  //             style={styles.addButton}
-  //           >
-  //             <Text style={styles.addButtonText}>Add</Text>
-  //           </Pressable>
-  //           <Pressable
-  //             onPress={() => {
-  //               /* Delete action here */
-  //             }}
-  //           >
-  //             <AntDesign name="delete" size={24} color="#FF3B30" />
-  //           </Pressable>
-  //         </View>
-  //       ))}
-  //     </ScrollView>
-  //   </SafeAreaView>
-  // );
-
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+      {/* <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <MaterialCommunityIcons name="arrow-left" size={24} color="#FFF" />
+      </TouchableOpacity> */}
       {uniqueRequests.length === 0 ? (
         <View style={styles.animationContainer}>
           <LottieView
@@ -141,6 +142,17 @@ const styles = StyleSheet.create({
   scrollView: {
     padding: 10,
   },
+  backButton: {
+    position: "absolute",
+    left: 10,
+    top: 10,
+    zIndex: 1,
+    backgroundColor: "#0F3460",
+    padding: 10,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   animationContainer: {
     flex: 1,
     justifyContent: "center",
@@ -153,8 +165,9 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: "#666",
+    color: "#290F4C",
     marginTop: 10,
+    fontFamily: "CenturyGothic",
   },
   requestItem: {
     flexDirection: "row",

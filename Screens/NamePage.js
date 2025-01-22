@@ -261,6 +261,7 @@
 //     fontWeight: "bold",
 //   },
 // });
+
 import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
@@ -283,19 +284,30 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 // import AppLoading from "expo-app-loading";
-import * as SplashScreen from 'expo-splash-screen';
+import * as SplashScreen from "expo-splash-screen";
+import * as Font from "expo-font";
+
+SplashScreen.preventAutoHideAsync();
 
 export default function LocationPage({ navigation }) {
   const insets = useSafeAreaInsets();
 
-  if (insets.top === 0) {
-    return null; // Optionally render a loading state or placeholder here
-  }
-
-  const [fontsLoaded] = useFonts({
-    CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
-    CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
-  });
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
+          CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
+        });
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error("Error loading fonts:", error);
+      } finally {
+        SplashScreen.hideAsync();
+      }
+    }
+    loadFonts();
+  }, []);
 
   const [countryData, setCountryData] = useState([]);
   const [stateData, setStateData] = useState([]);
@@ -307,6 +319,7 @@ export default function LocationPage({ navigation }) {
   const [stateName, setStateName] = useState(null);
   const [cityName, setCityName] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -370,14 +383,6 @@ export default function LocationPage({ navigation }) {
       Alert.alert("Please complete all fields.");
     }
   };
-
-  useEffect(() => {
-    if (!fontsLoaded) {
-      SplashScreen.preventAutoHideAsync(); // Prevent the splash screen from hiding automatically
-    } else {
-      SplashScreen.hideAsync(); // Hide the splash screen when fonts are loaded
-    }
-  }, [fontsLoaded]);
 
   if (!fontsLoaded) {
     return null; // Render nothing while the splash screen is shown
@@ -487,7 +492,7 @@ export default function LocationPage({ navigation }) {
 const styles = StyleSheet.create({
   area: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#290F4C",
   },
   scrollContainer: {
     flexGrow: 1,
@@ -503,7 +508,7 @@ const styles = StyleSheet.create({
   //   paddingHorizontal: 20,
   // },
   backText: {
-    color: "#0F3460",
+    color: "#FFF",
     fontSize: 16,
     marginBottom: 20,
     fontFamily: "CenturyGothicBold",
@@ -511,7 +516,7 @@ const styles = StyleSheet.create({
   headTitle: {
     fontSize: 32,
     // fontWeight: "800",
-    color: "#333",
+    color: "#FFF",
     marginBottom: 20,
     fontFamily: "CenturyGothicBold",
     // textAlign: "center",
@@ -528,6 +533,7 @@ const styles = StyleSheet.create({
   placeholderStyle: {
     fontSize: 16,
     color: "#666",
+    fontFamily: "CenturyGothic",
   },
   selectedTextStyle: {
     fontSize: 16,
@@ -548,14 +554,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   btnContinue: {
-    backgroundColor: "#0F3460",
+    backgroundColor: "#814C68",
     paddingVertical: 15,
     paddingHorizontal: 80,
     borderRadius: 25,
   },
   headTag: {
     fontSize: 14,
-    color: "#666",
+    color: "#FFF",
     marginBottom: 30,
     fontFamily: "CenturyGothic",
   },

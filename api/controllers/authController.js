@@ -59,7 +59,7 @@ exports.registerUser = async (req, res) => {
       { userId: newUser._id, isAdmin: newUser.isAdmin },
       JWT_SECRET,
       {
-        expiresIn: "1h", // Token expiration time
+        expiresIn: "1d", // Token expires in 1 hour
       }
     );
 
@@ -119,7 +119,7 @@ exports.loginUser = async (req, res) => {
       { userId: user._id, isAdmin: user.isAdmin },
       JWT_SECRET,
       {
-        expiresIn: "1h", // Shorter expiration for access token
+        expiresIn: "1d", // Token expires in 1 hour
       }
     );
 

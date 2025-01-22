@@ -79,43 +79,17 @@ const eventSchema = new mongoose.Schema(
       },
     ],
 
-    // Interaction fields
-    likes: [
+    eventStatus: {
+      type: String,
+      enum: ["active", "canceled", "completed"],
+      default: "active",
+    },
+    vibes: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-      },
-    ], // Users who liked the event/video
-
-    shares: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ], // Users who shared the video
-
-    comments: [
-      {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-          required: true,
-        },
-        text: {
-          type: String,
-          required: true,
-        },
-        createdAt: {
-          type: Date,
-          default: Date.now,
-        },
       },
     ],
-
-    views: {
-      type: Number,
-      default: 0,
-    }, // Count of how many users have viewed the video/event
   },
   {
     timestamps: true,

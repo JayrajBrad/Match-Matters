@@ -5,15 +5,42 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
+  RefreshControl,
   ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { UserContext } from "../navigation/UserProvider";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFonts } from "expo-font";
+// import AppLoading from "expo-app-loading";
+import * as SplashScreen from "expo-splash-screen";
+import * as Font from "expo-font";
 
 const ProfileScreen = () => {
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
+          CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
+        });
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error("Error loading fonts:", error);
+      } finally {
+        SplashScreen.hideAsync();
+      }
+    }
+    loadFonts();
+  }, []);
+
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [refreshing, setRefreshing] = useState(false); // State to manage the refreshing status
+
   const navigation = useNavigation();
   const { user, userId, logoutUser } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState("Plans");
@@ -28,14 +55,28 @@ const ProfileScreen = () => {
     navigation.navigate("AuthStack", { screen: "Login" });
   };
 
+  // Function to handle pull-to-refresh
+  const onRefresh = async () => {
+    setRefreshing(true); // Set refreshing to true
+    await fetchBookedEvents(); // Fetch events again
+    setRefreshing(false); // Set refreshing to false after fetching
+  };
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={[styles.container, { paddingTop: insets.top }]}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> // Add RefreshControl
+      }
+    >
       <View style={styles.itemContainer}>
         {/* Membership Section */}
         <View style={styles.profileSection}>
           {user?.images && user.images.length > 0 ? (
             <Image
-              source={{ uri: user.images[0] }}
+              source={{
+                uri: `${user.images[0]}?timestamp=${new Date().getTime()}`, // Add a unique timestamp
+              }}
               style={styles.profileImage}
             />
           ) : (
@@ -83,11 +124,18 @@ const ProfileScreen = () => {
         <View style={styles.activitySection}>
           <Text style={styles.boxTitle}>Activity</Text>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.activityButton}
             onPress={() => navigation.navigate("AllEvents")}
           >
             <Text style={styles.buttonText}>All Events</Text>
+            <Icon name="arrow-forward-ios" size={15} color="#000" />
+          </TouchableOpacity> */}
+          <TouchableOpacity
+            style={styles.activityButton}
+            onPress={() => navigation.navigate("CouponScreen")}
+          >
+            <Text style={styles.buttonText}>My Coupons</Text>
             <Icon name="arrow-forward-ios" size={15} color="#000" />
           </TouchableOpacity>
 
@@ -164,20 +212,24 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     textAlign: "center",
+    fontFamily: "CenturyGothic",
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 20,
+    width: 100, // Adjust as needed
+    height: 100, // Adjust as needed
+    borderRadius: 15, // For circular images
+    resizeMode: "cover", // Ensures the image is scaled to fill
+    backgroundColor: "#f0f0f0",
     marginRight: 20,
-    marginHorizontal: 20,
+    marginHorizontal: 40,
   },
   profileInfo: {
     flex: 1,
   },
   profileName: {
     fontSize: 22,
-    fontWeight: "bold",
+    fontFamily: "CenturyGothicBold",
+    color: "#290F4C",
   },
   // editProfile: {
   //   flexDirection: "row",
@@ -194,7 +246,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   editProfileText: {
-    color: "#BF1013",
+    color: "#290F4C",
+    fontFamily: "CenturyGothic",
   },
   itemContainer: {
     marginTop: 30,
@@ -204,7 +257,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   membershipButton: {
-    backgroundColor: "#252355",
+    backgroundColor: "#814C68",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -213,7 +266,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonText: {
-    color: "#fff",
+    color: "#814C68",
     fontSize: 16,
     fontFamily: "CenturyGothic",
   },
@@ -228,7 +281,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   actionButton: {
-    backgroundColor: "#252355",
+    backgroundColor: "#814C68",
     padding: 10,
     borderRadius: 10,
     width: "48%",
@@ -243,7 +296,7 @@ const styles = StyleSheet.create({
   },
   ordersSection: {
     padding: 20,
-    marginBottom: 100,
+    marginBottom: 60,
   },
   orderLine: {
     flexDirection: "row",
@@ -251,15 +304,14 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   orderBorder: {
+    backgroundColor: "#fff",
     borderWidth: 1,
     borderRadius: 10,
     padding: 20,
     alignItems: "center",
     borderColor: "#ddd",
   },
-  buttonText: {
-    color: "black",
-  },
+
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -272,12 +324,12 @@ const styles = StyleSheet.create({
   },
   noOrdersText: {
     marginBottom: 10,
-    color: "#666",
-    fontSize: 15,
+    color: "#814C68",
+    fontSize: 18,
     fontFamily: "CenturyGothic",
   },
   shopNowButton: {
-    backgroundColor: "#252355",
+    backgroundColor: "#814C68",
     padding: 10,
     margin: 5,
     borderRadius: 10,
@@ -292,12 +344,13 @@ const styles = StyleSheet.create({
   accountSection: {
     padding: 20,
     borderWidth: 1,
+    borderColor: "#814C68",
     borderRadius: 10,
     margin: 10,
   },
   accountButton: {
     borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    borderBottomColor: "#290F4C",
     paddingVertical: 15,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -305,6 +358,8 @@ const styles = StyleSheet.create({
   },
   activitySection: {
     padding: 20,
+    backgroundColor: "#fff",
+
     borderWidth: 1,
     borderRadius: 10,
     margin: 10,
@@ -312,7 +367,7 @@ const styles = StyleSheet.create({
   },
   activityButton: {
     borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    borderBottomColor: "#290F4C",
     paddingVertical: 15,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -320,10 +375,10 @@ const styles = StyleSheet.create({
   },
   boxTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: "CenturyGothicBold",
+    color: "#814C68",
     textAlign: "center",
     marginBottom: 10,
-    fontFamily: "CenturyGothic",
   },
 });
 

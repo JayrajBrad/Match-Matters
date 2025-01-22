@@ -245,6 +245,7 @@
 //     zIndex: 1,
 //   },
 // });
+
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -265,25 +266,37 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 // import AppLoading from "expo-app-loading";
-import * as SplashScreen from 'expo-splash-screen';
+import * as SplashScreen from "expo-splash-screen";
+import * as Font from "expo-font";
+
+SplashScreen.preventAutoHideAsync();
 
 export default function AgeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
 
-  if (insets.top === 0) {
-    return null; // Optionally render a loading state or placeholder here
-  }
-
-  const [fontsLoaded] = useFonts({
-    CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
-    CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
-  });
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
+          CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
+        });
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error("Error loading fonts:", error);
+      } finally {
+        SplashScreen.hideAsync();
+      }
+    }
+    loadFonts();
+  }, []);
 
   const [birthdate, setBirthdate] = useState(new Date());
   const [gender, setGender] = useState("");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [age, setAge] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   useEffect(() => {
     getRegistrationProgress("Age").then((progressData) => {
@@ -339,14 +352,6 @@ export default function AgeScreen({ navigation }) {
 
   const today = new Date();
 
-  useEffect(() => {
-    if (!fontsLoaded) {
-      SplashScreen.preventAutoHideAsync(); // Prevent the splash screen from hiding automatically
-    } else {
-      SplashScreen.hideAsync(); // Hide the splash screen when fonts are loaded
-    }
-  }, [fontsLoaded]);
-
   if (!fontsLoaded) {
     return null; // Render nothing while the splash screen is shown
   }
@@ -361,7 +366,7 @@ export default function AgeScreen({ navigation }) {
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
 
-        <Text style={styles.headTitle}>When's your birthday?</Text>
+        <Text style={styles.headTitle}>When's your birthday ?</Text>
         <Text style={styles.headTag}>
           Building your profile will increase visibility and recommendations.
         </Text>
@@ -372,6 +377,8 @@ export default function AgeScreen({ navigation }) {
             <Text style={styles.dateText}>{birthdate.toDateString()}</Text>
           </TouchableOpacity>
         </View>
+
+        <Text style={styles.headTitle}>What's your gender ?</Text>
 
         <DateTimePickerModal
           isVisible={isDatePickerVisible}
@@ -392,6 +399,7 @@ export default function AgeScreen({ navigation }) {
             selectedValue={gender}
             style={styles.pickerStyle}
             onValueChange={(itemValue) => setGender(itemValue)}
+            itemStyle={styles.pickerItemStyle}
           >
             <Picker.Item label="Select Gender" value="" />
             <Picker.Item label="Male" value="male" />
@@ -422,7 +430,7 @@ export default function AgeScreen({ navigation }) {
 const styles = StyleSheet.create({
   area: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#290F4C",
   },
   container: {
     flex: 1, // Ensure the container takes full height
@@ -434,20 +442,20 @@ const styles = StyleSheet.create({
   //   paddingVertical: 50,
   // },
   backText: {
-    color: "#0F3460",
+    color: "#FFF",
     fontSize: 16,
     marginBottom: 20,
     fontFamily: "CenturyGothicBold",
   },
   headTitle: {
     fontSize: 32,
-    color: "#0F3460",
+    color: "#FFF",
     marginBottom: 10,
     fontFamily: "CenturyGothicBold",
   },
   headTag: {
     fontSize: 14,
-    color: "#666",
+    color: "#FFF",
     marginBottom: 30,
     fontFamily: "CenturyGothic",
   },
@@ -456,8 +464,8 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 20,
-    fontWeight: "600",
-    color: "#0F3460",
+    // fontWeight: "600",
+    color: "#FFF",
     marginBottom: 5,
     fontFamily: "CenturyGothicBold",
   },
@@ -468,14 +476,19 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 16,
-    color: "#000",
+    color: "#FFF",
     fontFamily: "CenturyGothic",
   },
   pickerStyle: {
     height: 50,
     borderBottomWidth: 1,
     borderBottomColor: "#244DB7",
-    color: "#333",
+    color: "#fff",
+    fontFamily: "CenturyGothic",
+  },
+  pickerItemStyle: {
+    fontFamily: "CenturyGothic",
+    color: "#FFF",
   },
   errorText: {
     color: "red",
@@ -489,7 +502,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   btnContinue: {
-    backgroundColor: "#0F3460",
+    backgroundColor: "#814C68",
     paddingVertical: 15,
     paddingHorizontal: 80,
     borderRadius: 25,
@@ -497,12 +510,10 @@ const styles = StyleSheet.create({
   textContinue: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "bold",
+    // fontWeight: "bold",
     fontFamily: "CenturyGothic",
   },
   btnDisabled: {
     backgroundColor: "#cccccc",
   },
 });
-
-

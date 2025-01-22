@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   line: {
     width: 50,
     height: 4,
-    backgroundColor: "black",
+    backgroundColor: "white",
     borderRadius: 20,
   },
   backDrop: {

@@ -4,20 +4,20 @@ import React from "react";
 import Navigation from "./navigation/Navigation"; // Import the Navigation component
 import { SocketContextProvider } from "./SocketContext";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-
 import { UserProvider } from "./navigation/UserProvider";
+// import NetworkStatus from "./components/NetworkStatus";
 
 const App = () => {
   return (
     <SafeAreaProvider>
-    <UserProvider>
-      <SocketContextProvider>
-        <GestureHandlerRootView style={styles.container}>
-          <Navigation></Navigation>
-        </GestureHandlerRootView>
-      </SocketContextProvider>
-    </UserProvider>
-</SafeAreaProvider>
+      <UserProvider>
+        <SocketContextProvider>
+          <GestureHandlerRootView style={styles.container}>
+            <Navigation />
+          </GestureHandlerRootView>
+        </SocketContextProvider>
+      </UserProvider>
+    </SafeAreaProvider>
   );
 };
 
@@ -28,4 +28,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-

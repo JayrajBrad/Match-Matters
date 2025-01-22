@@ -4,6 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const cronJobs = require("./utils/cronJobs");
 const userRoutes = require("./routes/userRoutes");
 const eventRoutes = require("./routes/eventRoutes");
 const requestRoutes = require("./routes/requestRoutes");
@@ -38,6 +39,8 @@ mongoose
   )
   .then(() => {
     console.log("Connected To MongoDB");
+
+    cronJobs();
   })
   .catch((error) => {
     console.log("Error connecting to MongoDB", error);
@@ -117,9 +120,6 @@ io.on("connection", (socket) => {
 // http.listen(6000, () => {
 //   console.log("Socket server running on port 6000");
 // });
-
-
-
 
 // Catch-all route for undefined routes
 app.use((req, res, next) => {

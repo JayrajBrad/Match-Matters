@@ -40,6 +40,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import BottomSheet, {
   BottomSheetMethods,
 } from "../components/EditProfile/BottomSheet";
+import { MaterialCommunityIcons } from "react-native-vector-icons"; // If you are using expo
 
 const preferences = [
   "Clubbing",
@@ -64,6 +65,7 @@ const EditProfileScreen = () => {
   // const [userId, setUserId] = useState("");
   const [selectedPreferences, setSelectedPreferences] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [showDeleteIcon, setShowDeleteIcon] = useState(null);
 
   const [showEditCountry, setShowEditCountry] = useState(false);
@@ -330,10 +332,20 @@ const EditProfileScreen = () => {
         );
       } finally {
         setLoading(false);
+        setDataLoaded(true);
       }
     };
     fetchUserData();
   }, [userId]);
+
+  if (!dataLoaded) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#814C68" />
+        <Text style={styles.loadingText}>Loading your profile...</Text>
+      </View>
+    );
+  }
 
   const changeProfileImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -461,6 +473,28 @@ const EditProfileScreen = () => {
     <GestureHandlerRootView style={styles.container}>
       {/* <KeyboardAvoidingView style={styles.keycontainer} behavior="padding"> */}
       <ScrollView style={styles.scrollContainer}>
+        {/* <View
+          style={{
+            // padding: 10,
+            // backgroundColor: "#0F3460",
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={{
+              backgroundColor: "#0F3460",
+              padding: 10,
+              borderRadius: 20,
+              alignItems: "center",
+              justifyContent: "center",
+              marginRight: 10,
+            }}
+          >
+            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View> */}
         <View style={styles.card}>
           <View style={styles.imageSection}>
             {profileImages.map((uri, index) => (
@@ -498,7 +532,7 @@ const EditProfileScreen = () => {
               value={username}
               onChangeText={(text) => setUsername(text)}
               placeholder="Enter your username"
-              placeholderTextColor="#aaa"
+              placeholderTextColor="#000"
             />
 
             {/* phone code */}
@@ -524,17 +558,25 @@ const EditProfileScreen = () => {
               placeholderTextColor="#aaa"
             /> */}
 
-            <GenderDropdown gender={gender} onSelectGender={setGender} />
-            {/* {renderFieldWithOptions("Gender", "gender")} */}
+            <View>
+              <Text style={styles.label}>Gender</Text>
 
-            <PreferencesDropdown
-              preferences={preferences}
-              selectedPreferences={selectedPreferences}
-              onSelect={setSelectedPreferences}
-            />
+              <GenderDropdown gender={gender} onSelectGender={setGender} />
+              {/* {renderFieldWithOptions("Gender", "gender")} */}
+            </View>
+
+            <View>
+              <Text style={styles.label}>Preferences</Text>
+
+              <PreferencesDropdown
+                preferences={preferences}
+                selectedPreferences={selectedPreferences}
+                onSelect={setSelectedPreferences}
+              />
+            </View>
 
             {/* Country */}
-            <View style={styles.locContainer}>
+            <View style={styles.LocContainer}>
               <Text style={styles.label}>Country</Text>
               <View style={styles.row}>
                 <Text style={styles.infoText}>{countryName}</Text>
@@ -551,9 +593,13 @@ const EditProfileScreen = () => {
                   valueField="value"
                   labelField="label"
                   placeholder="Select Country"
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  inputSearchStyle={styles.inputSearchStyle}
+                  iconStyle={styles.iconStyle}
                   search
                   onChange={handleCountryChange}
-                  containerStyle={styles.dropdown}
+                  containerStyle={[styles.dropdown, styles.dropdownBackground]}
                 />
               )}
 
@@ -574,6 +620,10 @@ const EditProfileScreen = () => {
                   valueField="value"
                   labelField="label"
                   placeholder="Select State"
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  inputSearchStyle={styles.inputSearchStyle}
+                  iconStyle={styles.iconStyle}
                   search
                   onChange={handleStateChange}
                   containerStyle={styles.dropdown}
@@ -597,6 +647,10 @@ const EditProfileScreen = () => {
                   valueField="value"
                   labelField="label"
                   placeholder="Select City"
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  inputSearchStyle={styles.inputSearchStyle}
+                  iconStyle={styles.iconStyle}
                   search
                   onChange={handleCityChange}
                   containerStyle={styles.dropdown}
@@ -604,6 +658,8 @@ const EditProfileScreen = () => {
               )}
             </View>
           </View>
+
+          <Text style={styles.aboutYoulabel}>About you</Text>
           {renderFieldWithOptions("Education Level", "educationLevel")}
           {renderFieldWithOptions("Job Industry", "jobIndustry")}
           {renderFieldWithOptions("Relationship Status", "relationshipStatus")}
@@ -633,8 +689,8 @@ const EditProfileScreen = () => {
 
       <BottomSheet
         ref={bottomSheetRef}
-        activeHeight={height * 0.6}
-        backgroundColor="white"
+        activeHeight={height * 0.8}
+        backgroundColor="#814C68"
         backDropColor="black"
       >
         <View style={styles.bottomSheetContainer}>
@@ -664,12 +720,24 @@ const EditProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: "#f4f4f4",
-    marginBottom:100
+    backgroundColor: "#fff",
+    // marginBottom: 100,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#290F4C",
+    fontFamily: "CenturyGothic",
   },
   keycontainer: { marginBottom: 120 },
   scrollContainer: {
-    paddingHorizontal: 20,
+    // paddingHorizontal: 20,
     paddingTop: 10,
   },
   card: {
@@ -689,12 +757,15 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
+    fontFamily: "CenturyGothicBold",
+
+    color: "#814C68",
   },
   fieldValue: {
     fontSize: 14,
-    color: "#666",
+    color: "#814C68",
+    fontFamily: "CenturyGothic",
+
     marginTop: 5,
   },
   listContainer: {
@@ -705,7 +776,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 15,
-    backgroundColor: "#fff",
+    backgroundColor: "#814C68",
     borderRadius: 8,
     marginBottom: 10,
     elevation: 1,
@@ -716,7 +787,8 @@ const styles = StyleSheet.create({
   },
   editText: {
     fontSize: 16,
-    color: "#007BFF",
+    color: "#814C68",
+    fontFamily: "CenturyGothic",
   },
   bottomSheetContent: {
     flex: 1,
@@ -747,8 +819,9 @@ const styles = StyleSheet.create({
     borderColor: "#007BFF",
   },
   toggleButtonText: {
-    color: "#fff",
+    color: "#814C68",
     fontSize: 16,
+    fontFamily: "CenturyGothic",
   },
   saveButton: {
     backgroundColor: "#007BFF",
@@ -766,12 +839,17 @@ const styles = StyleSheet.create({
     margin: 10,
     borderRadius: 10,
     overflow: "hidden",
-    elevation: 3,
+    // elevation: 3,
   },
   profileImage: {
-    width: 80,
-    height: 80,
+    width: 120,
+    height: 120,
     borderRadius: 10,
+  },
+  placeholderStyle: {
+    color: "#814C68",
+    fontSize: 14,
+    fontFamily: "CenturyGothic",
   },
   deleteIconWrapper: {
     position: "absolute",
@@ -783,8 +861,8 @@ const styles = StyleSheet.create({
   },
 
   addImageButtonWrapper: {
-    width: 80,
-    height: 80,
+    width: 120,
+    height: 120,
     backgroundColor: "grey",
     borderRadius: 10,
     justifyContent: "center",
@@ -793,21 +871,36 @@ const styles = StyleSheet.create({
   },
   inputSection: {
     marginTop: 20,
+    color: "#814C68",
   },
   label: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
+    fontFamily: "CenturyGothicBold",
+
+    color: "#814C68",
     marginBottom: 8,
+  },
+  aboutYoulabel: {
+    fontSize: 24,
+    fontFamily: "CenturyGothicBold",
+
+    color: "#814C68",
+    marginBottom: 4,
   },
   input: {
     height: 50,
-    borderColor: "#ccc",
+    borderColor: "#fff",
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 15,
     fontSize: 16,
+    fontFamily: "CenturyGothic",
+    color: "#fff",
+    backgroundColor: "#814C68",
     marginBottom: 15,
+  },
+  dropdownBackground: {
+    backgroundColor: "#fff", // Add white background to dropdown
   },
   row: {
     flexDirection: "row",
@@ -825,14 +918,34 @@ const styles = StyleSheet.create({
     height: 50,
     paddingVertical: 15,
     paddingHorizontal: 15,
-    borderColor: "#ccc",
+    borderColor: "#fff",
     borderWidth: 1,
     borderRadius: 5,
     fontSize: 16,
-    color: "#333",
-    backgroundColor: "#f9f9f9",
+    color: "#fff",
+    backgroundColor: "#814C68",
     flex: 1,
     marginRight: 10,
+    fontFamily: "CenturyGothic",
+  },
+  inputSearchStyle: {
+    fontSize: 16,
+    color: "#814C68",
+    fontFamily: "CenturyGothic",
+  },
+  dropdownContainerStyle: {
+    borderRadius: 8,
+    padding: 5,
+  },
+  iconStyle: {
+    width: 20,
+    height: 20,
+  },
+
+  selectedTextStyle: {
+    color: "#814C68",
+    fontSize: 14,
+    fontFamily: "CenturyGothic",
   },
 
   editIconWrapper: {
@@ -846,33 +959,36 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: "#fff",
     fontSize: 16,
+    fontFamily: "CenturyGothic",
   },
   dropdown: {
-    backgroundColor: "#fff",
+    backgroundColor: "#814C68",
     borderRadius: 10,
     padding: 10,
     shadowColor: "#000",
+    fontFamily: "CenturyGothic",
+
     // shadowOffset: { width: 0, height: 4 },
     // shadowOpacity: 0.2,
     // shadowRadius: 4,
     // elevation: 5,
   },
   button: {
-    backgroundColor: "grey",
+    backgroundColor: "#290F4C",
     paddingVertical: 15,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 30,
+    // marginVertical: 20,
     // marginBottom: "auto",
   },
   buttonDisabled: {
-    backgroundColor: "#BDC3C7",
+    backgroundColor: "#0F3460",
   },
   buttonText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "500",
+    fontFamily: "CenturyGothicBold",
   },
   dropdownContainer: {
     // flex: 1,
@@ -887,8 +1003,9 @@ const styles = StyleSheet.create({
   },
   bottomSheetTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 20,
+    fontFamily: "CenturyGothicBold",
+    color: "#fff",
+    marginBottom: 25,
   },
   Bottominput: {
     width: "100%",
@@ -897,11 +1014,12 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     fontSize: 16,
+    // color: "#fff",
     marginBottom: 20,
   },
   optionsContainer: { marginTop: 16, marginBottom: 20 },
   optionItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: "#ccc" },
-  optionText: { fontSize: 16 },
+  optionText: { fontSize: 16, fontFamily: "CenturyGothic", color: "#fff" },
   optionButton: {
     paddingVertical: 15,
     borderBottomWidth: 1,

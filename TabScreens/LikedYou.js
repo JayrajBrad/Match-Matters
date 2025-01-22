@@ -11,15 +11,44 @@ import {
 import React, { useEffect, useRef, useState, useContext } from "react";
 import axios from "axios";
 import { API_URL } from "@env";
-import { getUserId } from "../backend/registrationUtils";
 import { UserContext } from "../navigation/UserProvider";
 import LottieView from "lottie-react-native";
+import { MaterialCommunityIcons } from "react-native-vector-icons"; // If you are using expo
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as SplashScreen from "expo-splash-screen";
+import * as Font from "expo-font";
+
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function Profile({ navigation }) {
   const fadeAnimation = useRef(new Animated.Value(0)).current;
+
+  const insets = useSafeAreaInsets();
+
+  const animationRef = useRef(null);
+
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
+          CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
+        });
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error("Error loading fonts:", error);
+      } finally {
+        SplashScreen.hideAsync();
+      }
+    }
+    loadFonts();
+  }, []);
+
   const [events, setEvents] = useState([]);
   const [refreshing, setRefreshing] = useState(false); // State to manage the refreshing status
   const { userId } = useContext(UserContext);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
   useEffect(() => {
     Animated.timing(fadeAnimation, {
       toValue: 1,
@@ -33,6 +62,16 @@ export default function Profile({ navigation }) {
       fetchBookedEvents();
     }
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // If the animation exists, reset it & play
+      if (animationRef.current) {
+        animationRef.current.reset();
+        animationRef.current.play();
+      }
+    }, [])
+  );
 
   // Function to fetch booked events for the user
   const fetchBookedEvents = async () => {
@@ -59,7 +98,13 @@ export default function Profile({ navigation }) {
   };
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
+    <Animated.View
+      style={[
+        styles.container,
+        { paddingTop: insets.top },
+        { opacity: fadeAnimation },
+      ]}
+    >
       <FlatList
         data={events}
         renderItem={({ item }) => (
@@ -71,17 +116,39 @@ export default function Profile({ navigation }) {
               source={{ uri: item.images[0]?.url }} // Assuming images is an array and we get the first image
               style={styles.eventImage}
             />
-            <View style={styles.eventInfo}>
+            <View style={styles.eventDetailsContainer}>
               <Text style={styles.eventTitle}>{item.title}</Text>
-              <Text style={styles.eventDate}>
-                {new Date(item.date).toLocaleDateString()}
+              <View style={styles.dateTimeContainer}>
+                <MaterialCommunityIcons
+                  name="calendar"
+                  size={20}
+                  color="#fff"
+                />
+                <Text style={styles.dateText}>
+                  {new Date(item.date)
+                    .toLocaleString("en-US", { month: "short" })
+                    .toUpperCase()}{" "}
+                  |
+                </Text>
+                <Text style={styles.dateText}>
+                  {new Date(item.date).getDate()}
+                </Text>
+                <Text style={styles.dateText}>
+                  {new Date(item.date).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              </View>
+              <Text style={styles.eventOrganizer}>
+                <MaterialCommunityIcons name="account" size={20} color="#fff" />{" "}
+                {item.organizer}
               </Text>
-              <Text style={styles.eventOrganizer}>{item.organizer}</Text>
-              {/* <Text style={styles.eventDetails}>{item.eventDetails}</Text> */}
             </View>
           </TouchableOpacity>
         )}
         keyExtractor={(item) => item._id}
+        contentContainerStyle={{ paddingBottom: 60 }}
         style={styles.eventsList}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> // Add RefreshControl
@@ -89,6 +156,7 @@ export default function Profile({ navigation }) {
         ListEmptyComponent={() => (
           <View style={styles.animationContainer}>
             <LottieView
+              ref={animationRef}
               source={require("../Onboarding-Screen-2/src/assets/animations/no_event.json")} // Replace with your animation file path
               autoPlay
               loop
@@ -108,9 +176,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   eventsList: {
-    marginTop: 20,
+    // marginTop: 20,
     width: "100%",
     paddingHorizontal: 10,
+    // elevation: 8,
+
+    // // iOS shadow
+    // shadowColor: "#000",
+    // shadowOffset: { width: 0, height: 4 },
+    // shadowOpacity: 0.7,
+    // shadowRadius: 4,
   },
   animationContainer: {
     height: 400,
@@ -124,20 +199,56 @@ const styles = StyleSheet.create({
   eventItem: {
     marginVertical: 15,
     marginHorizontal: 10,
-    borderRadius: 15,
-    overflow: "hidden",
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    backgroundColor: "#000", // Background for fallback
+    borderRadius: 16,
+    // overflow: "hidden",
+    backgroundColor: "#fff", // Background color for the container
+    // borderWidth: 1,
+    // elevation: 8,
+
+    // // iOS shadow
+    // shadowColor: "#000",
+    // shadowOffset: { width: 0, height: 4 },
+    // shadowOpacity: 0.7,
+    // shadowRadius: 4,
+  },
+  eventDetailsContainer: {
+    padding: 15,
+    backgroundColor: "#814C68",
+    borderBottomLeftRadius: 16, // Ensure the bottom corners match the eventItem
+    borderBottomRightRadius: 16,
+  },
+  dateTimeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  dateText: {
+    fontSize: 12,
+    color: "#fff",
+    marginLeft: 5,
+    fontFamily: "CenturyGothicBold",
+  },
+  eventTitle: {
+    fontSize: 24,
+    fontFamily: "CenturyGothicBold",
+
+    color: "#fff",
+    marginBottom: 5,
+  },
+  eventOrganizer: {
+    fontSize: 12,
+    color: "#fff",
+    marginTop: 5,
+    fontFamily: "CenturyGothicBold",
   },
   eventImage: {
     width: "100%",
-    height: 250,
+    height: 240,
     resizeMode: "cover",
+    borderTopLeftRadius: 16, // Ensure the top corners match the eventItem
+    borderTopRightRadius: 16,
   },
+
   eventInfo: {
     position: "absolute",
     bottom: 0,
@@ -146,24 +257,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent overlay
     padding: 15,
   },
-  eventTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 5,
-    fontFamily: "Chalkboard SE",
-  },
-  eventDate: {
-    fontSize: 14,
-    color: "#f0f0f0",
-    marginBottom: 5,
-    fontFamily: "Chalkboard SE",
-  },
-  eventOrganizer: {
-    fontSize: 14,
-    color: "#d0d0d0",
-    fontFamily: "Chalkboard SE",
-  },
+
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
@@ -191,98 +285,3 @@ const styles = StyleSheet.create({
     fontFamily: "Chalkboard SE",
   },
 });
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: "#fff",
-//   },
-//   eventsList: {
-//     marginTop: 20,
-//     width: "100%",
-//     paddingHorizontal: 10,
-//   },
-//   eventItem: {
-//     marginTop: 15,
-//     marginBottom: 10,
-//     flexDirection: "row",
-//     backgroundColor: "#fff",
-//     borderRadius: 10,
-//     shadowColor: "#000",
-//     shadowOffset: { width: 0, height: 2 },
-//     shadowOpacity: 0.3,
-//     shadowRadius: 3,
-//     elevation: 5,
-//     paddingHorizontal: 10,
-//     paddingVertical: 10,
-//   },
-//   eventImage: {
-//     width: 80,
-//     height: 80,
-//     borderRadius: 8,
-//   },
-//   eventInfo: {
-//     marginLeft: 10,
-//     justifyContent: "center",
-//   },
-//   eventTitle: {
-//     fontSize: 18,
-//     fontWeight: "bold",
-//   },
-//   eventDate: {
-//     fontSize: 14,
-//     color: "#555",
-//   },
-//   eventOrganizer: {
-//     fontSize: 14,
-//     color: "#888",
-//   },
-//   eventDetails: {
-//     fontSize: 12,
-//     color: "#aaa",
-//   },
-//   emptyContainer: {
-//     flex: 1,
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-//   emptyText: {
-//     fontSize: 18,
-//     color: "#888",
-//   },
-//   premium: {
-//     marginTop: 40,
-//     padding: 25,
-//     left: 40,
-//     paddingHorizontal: 20,
-//     backgroundColor: "#ffb3ba",
-//     borderRadius: 30,
-//     flexDirection: "row",
-//     justifyContent: "center",
-//     alignItems: "center",
-//     width: "80%",
-//     height: "10%",
-//   },
-//   premiumText: {
-//     fontSize: 20,
-//     fontWeight: "bold",
-//   },
-//   premium1: {
-//     marginTop: 40,
-//     marginBottom: 20,
-//     padding: 25,
-//     left: 40,
-//     paddingHorizontal: 20,
-//     backgroundColor: "#bae1ff",
-//     borderRadius: 30,
-//     flexDirection: "row",
-//     alignItems: "center",
-//     justifyContent: "center",
-//     width: "80%",
-//     height: "10%",
-//   },
-//   premiumText1: {
-//     fontSize: 20,
-//     fontWeight: "bold",
-//   },
-// });
