@@ -148,6 +148,8 @@ import {
   StyleSheet,
   Animated,
   SafeAreaView,
+  TouchableWithoutFeedback,
+  Keyboard,
   KeyboardAvoidingView,
 } from "react-native";
 import axios from "axios";
@@ -155,24 +157,36 @@ import { UserContext } from "../../navigation/UserProvider"; // Adjust the impor
 import { API_URL } from "@env";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
-// import AppLoading from "expo-app-loading";
-import * as SplashScreen from 'expo-splash-screen';
+import * as Font from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
+
+SplashScreen.preventAutoHideAsync();
 
 export default function EmailLogin({ navigation }) {
   const insets = useSafeAreaInsets();
 
-  if (insets.top === 0) {
-    return null; // Optionally render a loading state or placeholder here
-  }
-
-  const [fontsLoaded] = useFonts({
-    CenturyGothic: require("../../assets/fonts/CenturyGothic.ttf"),
-    CenturyGothicBold: require("../../assets/fonts/GOTHICB0.ttf"),
-  });
-
   const { loginUser } = useContext(UserContext); // Get loginUser from context
   const [emailId, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          CenturyGothic: require("../../assets/fonts/CenturyGothic.ttf"),
+          CenturyGothicBold: require("../../assets/fonts/GOTHICB0.ttf"),
+        });
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error("Error loading fonts:", error);
+      } finally {
+        SplashScreen.hideAsync();
+      }
+    }
+    loadFonts();
+  }, []);
+
   const fadeAnimation = useRef(new Animated.Value(0)).current;
 
   const handleLogin = async () => {
@@ -223,63 +237,81 @@ export default function EmailLogin({ navigation }) {
     }).start();
   }, [fadeAnimation]);
 
-  useEffect(() => {
-    if (!fontsLoaded) {
-      SplashScreen.preventAutoHideAsync(); // Prevent the splash screen from hiding automatically
-    } else {
-      SplashScreen.hideAsync(); // Hide the splash screen when fonts are loaded
-    }
-  }, [fontsLoaded]);
-
   if (!fontsLoaded) {
-    return null; // Render nothing while the splash screen is shown
+    return null; // Optionally, show a loading indicator here
   }
 
   return (
     <SafeAreaView style={styles.area}>
-      <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
-        <KeyboardAvoidingView
-          keyboardVerticalOffset={50}
-          behavior={"padding"}
-          style={styles.containerAvoidingView}
-        >
-          <Animated.View
-            style={[styles.innerContainer, { opacity: fadeAnimation }]}
-          >
-            <Text style={styles.headTitle}>Login</Text>
-            <Text style={styles.headTag}>
-              Please enter your email and password to access your account.
-            </Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Email ID"
-              value={emailId}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={true}
-            />
-
-            <TouchableOpacity onPress={handleLogin} style={styles.btnContinue}>
-              <Text style={styles.textContinue}>Login</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate("ForgotPasswordScreen")}
-              style={styles.forgotPasswordText}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
+          <TouchableOpacity>
+            <Text
+              style={styles.backTextButton}
+              onPress={() => {
+                navigation.goBack();
+              }}
             >
-              <Text style={{ color: "#BF1013" }}>Forgot Password?</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </KeyboardAvoidingView>
-      </View>
+              Back
+            </Text>
+          </TouchableOpacity>
+          <KeyboardAvoidingView
+            keyboardVerticalOffset={50}
+            behavior={"padding"}
+            style={styles.containerAvoidingView}
+          >
+            <Animated.View
+              style={[styles.innerContainer, { opacity: fadeAnimation }]}
+            >
+              <Text style={styles.headTitle}>Login</Text>
+              <Text style={styles.headTag}>
+                Please enter your email and password to access your account.
+              </Text>
+
+              <TextInput
+                style={styles.input}
+                placeholder="Email ID"
+                placeholderTextColor="#fff"
+                value={emailId}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor="#fff"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={true}
+                autoCapitalize="none"
+              />
+
+              <TouchableOpacity
+                onPress={handleLogin}
+                style={styles.btnContinue}
+              >
+                <Text style={styles.textContinue}>Login</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => navigation.navigate("ForgotPasswordScreen")}
+                style={styles.forgotPasswordText}
+              >
+                <Text
+                  style={{
+                    color: "#BF1013",
+                    fontFamily: "CenturyGothic",
+                    textDecorationLine: "underline",
+                  }}
+                >
+                  Forgot Password?
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </KeyboardAvoidingView>
+        </View>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 }
@@ -287,7 +319,7 @@ export default function EmailLogin({ navigation }) {
 const styles = StyleSheet.create({
   area: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#290F4C",
   },
   container: {
     flex: 1,
@@ -295,6 +327,12 @@ const styles = StyleSheet.create({
   },
   containerAvoidingView: {
     flex: 1,
+  },
+  backTextButton: {
+    color: "#fff",
+    fontSize: 16,
+    marginBottom: 20,
+    fontFamily: "CenturyGothic",
   },
   innerContainer: {
     flex: 1,
@@ -304,12 +342,12 @@ const styles = StyleSheet.create({
   headTitle: {
     fontSize: 32,
     fontFamily: "CenturyGothicBold",
-    color: "#333",
+    color: "#fff",
     marginBottom: 10,
   },
   headTag: {
     fontSize: 14,
-    color: "#666",
+    color: "#fff",
     marginBottom: 30,
     fontFamily: "CenturyGothic",
     textAlign: "center",
@@ -320,21 +358,22 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderWidth: 1,
     borderRadius: 8,
+    color: "#fff",
     fontFamily: "CenturyGothic",
     paddingHorizontal: 10,
     marginBottom: 20,
   },
   backText: {
-    color: "#0F3460",
+    color: "#fff",
     fontSize: 16,
     fontFamily: "CenturyGothicBold",
     marginBottom: 20,
     fontWeight: "bold",
   },
   btnContinue: {
-    width: "80%",
+    width: "50%",
     height: 50,
-    backgroundColor: "#0F3460",
+    backgroundColor: "#814C68",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 25,
@@ -344,7 +383,7 @@ const styles = StyleSheet.create({
   textContinue: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "bold",
+    // fontWeight: "bold",
     fontFamily: "CenturyGothic",
   },
   forgotPasswordText: {

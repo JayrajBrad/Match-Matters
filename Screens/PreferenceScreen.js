@@ -509,7 +509,6 @@
 //   skipText: { fontSize: 20, color: "#fff", fontWeight: "bold" },
 // });
 
-
 import {
   View,
   Text,
@@ -535,7 +534,8 @@ import { UserContext } from "../navigation/UserProvider";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 // import AppLoading from "expo-app-loading";
-import * as SplashScreen from 'expo-splash-screen';
+import * as SplashScreen from "expo-splash-screen";
+import * as Font from "expo-font";
 
 const preferences = [
   "Clubbing",
@@ -550,21 +550,32 @@ const preferences = [
   "Photography",
 ];
 
+SplashScreen.preventAutoHideAsync();
+
 export default function PreferenceScreen({ navigation }) {
   const insets = useSafeAreaInsets();
 
-  if (insets.top === 0) {
-    return null; // Optionally render a loading state or placeholder here
-  }
-
-  const [fontsLoaded] = useFonts({
-    CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
-    CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
-  });
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
+          CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
+        });
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error("Error loading fonts:", error);
+      } finally {
+        SplashScreen.hideAsync();
+      }
+    }
+    loadFonts();
+  }, []);
 
   const [selectedPreferences, setSelectedPreferences] = useState([]);
   const [userData, setUserData] = useState({});
   const [loading, setLoading] = useState(false);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   const { loginUser } = useContext(UserContext);
 
@@ -748,7 +759,7 @@ export default function PreferenceScreen({ navigation }) {
 
     try {
       const response = await axios.post(
-       `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -774,14 +785,6 @@ export default function PreferenceScreen({ navigation }) {
       throw error; // Rethrow error to handle it in registerUser
     }
   };
-
-  useEffect(() => {
-    if (!fontsLoaded) {
-      SplashScreen.preventAutoHideAsync(); // Prevent the splash screen from hiding automatically
-    } else {
-      SplashScreen.hideAsync(); // Hide the splash screen when fonts are loaded
-    }
-  }, [fontsLoaded]);
 
   if (!fontsLoaded) {
     return null; // Render nothing while the splash screen is shown
@@ -819,7 +822,6 @@ export default function PreferenceScreen({ navigation }) {
           </View>
 
           <TouchableOpacity onPress={registerUser}>
-            \
             <View style={styles.skipButton}>
               {loading ? (
                 <LottieView
@@ -840,9 +842,9 @@ export default function PreferenceScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  area: { flex: 1, backgroundColor: "#fff" },
+  area: { flex: 1, backgroundColor: "#290F4C" },
   Back: {
-    color: "#0F3460",
+    color: "#fff",
     fontSize: 16,
     marginBottom: 20,
     fontFamily: "CenturyGothicBold",
@@ -871,13 +873,13 @@ const styles = StyleSheet.create({
     fontFamily: "CenturyGothicBold",
     paddingHorizontal: 20,
 
-    color: "#0F3460",
+    color: "#FFF",
   },
   headTag: {
     fontSize: 16,
     marginBottom: 20,
     paddingHorizontal: 20,
-    color: "#333",
+    color: "#FFF",
     fontFamily: "CenturyGothic",
   },
   gridContainer: {
@@ -894,15 +896,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#E0E0E0",
   },
-  selectedItem: { backgroundColor: "#0F3460" },
-  preferenceText: { fontSize: 14, color: "#fff", fontFamily: "CenturyGothic" },
+  selectedItem: { backgroundColor: "#814C68" },
+  preferenceText: { fontSize: 14, color: "#000", fontFamily: "CenturyGothic" },
   skipButton: {
-    width: 150,
+    width: 180,
     height: 50,
     borderRadius: 25,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#0F3460",
+    backgroundColor: "#814C68",
     marginVertical: 20,
 
     alignSelf: "center",
@@ -910,6 +912,6 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 20,
     color: "#fff",
-    fontFamily: "CenturyGothicBold",
+    fontFamily: "CenturyGothic",
   },
 });

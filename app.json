@@ -38,18 +38,11 @@
     "plugins": [
       "expo-asset",
       "expo-image-picker",
-      [
-        "expo-font",
-        {
-          "fonts": [
-            "./assets/fonts/CenturyGothic.ttf",
-            "./assets/fonts/GOTHICB0.ttf"
-          ]
-        }
-      ],
+      "expo-font",
       "expo-video"
     ],
     "assetBundlePatterns": [
+      "assets/fonts/*",
       "assets/*"
     ],
     "extra": {

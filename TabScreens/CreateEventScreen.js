@@ -31,6 +31,7 @@ import { getUserId } from "../backend/registrationUtils";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { v4 as uuidv4 } from "uuid";
 import { UserContext } from "../navigation/UserProvider";
+import { MaterialCommunityIcons } from "react-native-vector-icons"; // If you are using expo
 
 const CreateEventScreen = ({ navigation }) => {
   const { userId, token } = useContext(UserContext);
@@ -137,27 +138,50 @@ const CreateEventScreen = ({ navigation }) => {
     setShowGenreDropdown((prev) => !prev);
   };
 
-  const pickMedia = async (index, setImageArray, imageArray, type) => {
+  // const pickMedia = async (index, setImageArray, imageArray, type) => {
+  //   let options = {
+  //     mediaTypes: type,
+  //     allowsEditing: true,
+  //     quality: 1,
+  //   };
+  //   let result = await ImagePicker.launchImageLibraryAsync(options);
+  //   if (!result.canceled) {
+  //     const uri = result.assets[0]?.uri;
+  //     if (typeof uri === "string") {
+  //       const newImages = [...imageArray];
+  //       newImages[index] = uri;
+  //       setImageArray(newImages);
+  //     } else {
+  //       console.error("Invalid URI:", uri);
+  //     }
+  //   }
+  // };
+
+  const pickMedia = async (index, imageArray, type) => {
     let options = {
       mediaTypes: type,
       allowsEditing: true,
       quality: 1,
     };
-    let result = await ImagePicker.launchImageLibraryAsync(options);
+    const result = await ImagePicker.launchImageLibraryAsync(options);
     if (!result.canceled) {
       const uri = result.assets[0]?.uri;
       if (typeof uri === "string") {
+        // Update images array
         const newImages = [...imageArray];
         newImages[index] = uri;
-        setImageArray(newImages);
+        setImages(newImages);
       } else {
         console.error("Invalid URI:", uri);
       }
     }
   };
 
+  // const pickImage = (index) =>
+  //   pickMedia(index, setImages, images, ImagePicker.MediaType.Images);
+
   const pickImage = (index) =>
-    pickMedia(index, setImages, images, ImagePicker.MediaType.Images);
+    pickMedia(index, images, ImagePicker.MediaType.Images);
 
   const pickVideo = async () => {
     let options = {
@@ -178,6 +202,13 @@ const CreateEventScreen = ({ navigation }) => {
         console.error("Invalid video URL:", uri);
       }
     }
+  };
+
+  const handleDeleteImage = (index) => {
+    const updatedImages = [...images];
+    updatedImages[index] = null; // Remove the image at that index
+    setImages(updatedImages);
+    setShowDeleteIcon(null);
   };
 
   // Show/hide functions
@@ -223,31 +254,18 @@ const CreateEventScreen = ({ navigation }) => {
     }
   };
 
-  const handleDeleteImage = (index) => {
-    // Create a copy of the current images array
-    const updatedImages = [...images];
+  // const handleDeleteImage = (index) => {
+  //   // Create a copy of the current images array
+  //   const updatedImages = [...images];
 
-    // Remove the image at the specified index
-    updatedImages.splice(index, 1);
+  //   // Remove the image at the specified index
+  //   updatedImages.splice(index, 1);
 
-    // Update the state with the new images array
-    setImages(updatedImages);
+  //   // Update the state with the new images array
+  //   setImages(updatedImages);
 
-    // Optionally, you can also hide the delete icon after deleting
-    setShowDeleteIcon(null);
-  };
-
-  // const refreshAuthToken = async (refreshToken) => {
-  //   console.log("Attempting to refresh with token:", refreshToken);
-  //   try {
-  //     const response = await axios.post(`${API_URL}/user/refresh-token`, {
-  //       token: refreshToken,
-  //     });
-  //     return response.data.token; // Return the new token
-  //   } catch (error) {
-  //     console.error("Error refreshing token:", error);
-  //     throw error; // Rethrow error to handle it in the calling function
-  //   }
+  //   // Optionally, you can also hide the delete icon after deleting
+  //   setShowDeleteIcon(null);
   // };
 
   const fetchLocationCoordinates = async (
@@ -396,10 +414,23 @@ const CreateEventScreen = ({ navigation }) => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.subHeader}>Add Photos</Text>
+        {/* <Text style={styles.subHeader}>Add Photos</Text> */}
 
         {/* Scrollable Container for Images */}
-        <ScrollView
+
+        {/* Rest of your form code goes here */}
+        <View />
+
+        <Text style={styles.label}>Title</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Event title"
+          value={title}
+          onChangeText={setTitle}
+          placeholderTextColor="white"
+        />
+
+        {/* <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.photosScrollContainer}
@@ -455,18 +486,40 @@ const CreateEventScreen = ({ navigation }) => {
               </TouchableOpacity>
             ))}
           </View>
+        </ScrollView> */}
+
+        {/* Images (all the same size) */}
+        <Text style={styles.label}>Event Photos</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.photosScrollContainer}
+        >
+          {images.map((image, index) => (
+            <TouchableOpacity
+              key={`img-${index}`}
+              style={styles.imageItem}
+              onPress={() => pickImage(index)}
+              onLongPress={() => setShowDeleteIcon(index)}
+            >
+              {image ? (
+                <>
+                  <Image source={{ uri: image }} style={styles.image} />
+                  {showDeleteIcon === index && (
+                    <TouchableOpacity
+                      style={styles.deleteIconWrapper}
+                      onPress={() => handleDeleteImage(index)}
+                    >
+                      <Ionicons name="trash" size={24} color="red" />
+                    </TouchableOpacity>
+                  )}
+                </>
+              ) : (
+                <Ionicons name="cloud-upload-outline" size={26} color="#fff" />
+              )}
+            </TouchableOpacity>
+          ))}
         </ScrollView>
-
-        {/* Rest of your form code goes here */}
-        <View style={{ marginVertical: 20 }} />
-
-        <Text style={styles.label}>Title</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Event title"
-          value={title}
-          onChangeText={setTitle}
-        />
 
         <Text style={styles.label}>Base Address</Text>
         <TextInput
@@ -474,9 +527,10 @@ const CreateEventScreen = ({ navigation }) => {
           value={baseAddress}
           onChangeText={setBaseAddress}
           placeholder="Enter event address"
+          placeholderTextColor="white"
         />
 
-        <View style={styles.container}>
+        <View style={styles.loccontainer}>
           {/* Country Dropdown */}
           <View style={styles.dropdownContainer}>
             <Text style={styles.label}>Country</Text>
@@ -510,24 +564,7 @@ const CreateEventScreen = ({ navigation }) => {
             {/* State Dropdown */}
             <View style={styles.dropdownContainer}>
               <Text style={styles.label}>State</Text>
-              {/* <Dropdown
-                style={styles.dropdown}
-                data={stateData}
-                labelField="label"
-                valueField="value"
-                placeholder="Select state"
-                value={state}
-                onChange={(item) => {
-                  setSelectedState(item.value);
-                  handleCity(country, item.value); // Fetch cities when state is selected
-                }}
-                search // Enables search
-                searchPlaceholder="Search state"
-                containerStyle={styles.dropdownContainerStyle}
-                iconStyle={styles.iconStyle}
-                placeholderStyle={styles.placeholderStyle}
-                selectedTextStyle={styles.selectedTextStyle}
-              /> */}
+
               <Dropdown
                 style={styles.dropdown}
                 placeholderStyle={styles.placeholderStyle}
@@ -557,21 +594,7 @@ const CreateEventScreen = ({ navigation }) => {
               style={[styles.dropdownContainer, styles.dropdownContainerLast]}
             >
               <Text style={styles.label}>City</Text>
-              {/* <Dropdown
-                style={styles.dropdown}
-                data={cityData}
-                labelField="label"
-                valueField="value"
-                placeholder="Select city"
-                value={selectedCity}
-                onChange={(item) => setSelectedCity(item.value)}
-                search // Enables search
-                searchPlaceholder="Search city"
-                containerStyle={styles.dropdownContainerStyle}
-                iconStyle={styles.iconStyle}
-                placeholderStyle={styles.placeholderStyle}
-                selectedTextStyle={styles.selectedTextStyle}
-              /> */}
+
               <Dropdown
                 style={styles.dropdown}
                 placeholderStyle={styles.placeholderStyle}
@@ -606,6 +629,12 @@ const CreateEventScreen = ({ navigation }) => {
             >
               <Text style={styles.dateTimeButtonText}>
                 {startDate ? startDate.toLocaleDateString() : "Select Date"}
+                <MaterialCommunityIcons
+                  name="calendar"
+                  size={20}
+                  color="#fff"
+                  style={{ marginLeft: 5 }}
+                />
               </Text>
             </TouchableOpacity>
           </View>
@@ -623,6 +652,12 @@ const CreateEventScreen = ({ navigation }) => {
                       minute: "2-digit",
                     })
                   : "Select Time"}
+                <MaterialCommunityIcons
+                  name="clock-outline"
+                  size={20}
+                  color="#fff"
+                  style={{ marginLeft: 5 }}
+                />
               </Text>
             </TouchableOpacity>
           </View>
@@ -653,13 +688,15 @@ const CreateEventScreen = ({ navigation }) => {
           placeholder="Organizer name"
           value={organizerName}
           onChangeText={setOrganizerName}
+          placeholderTextColor="white"
         />
 
-        <Text style={styles.label}>Event Description</Text>
+        <Text style={styles.label}>Short Description</Text>
         <TextInput
           style={styles.textArea}
           placeholder="Enter event details"
           value={description}
+          placeholderTextColor="white"
           onChangeText={setDescription}
           multiline
         />
@@ -694,9 +731,10 @@ const CreateEventScreen = ({ navigation }) => {
           placeholder="Enter artist name"
           value={artistName}
           onChangeText={setArtistName}
+          placeholderTextColor="white"
         />
 
-        <Text style={styles.label}>Video URL</Text>
+        <Text style={styles.label}>Video</Text>
         <View style={styles.videoContainer}>
           <TouchableOpacity onPress={pickVideo} style={styles.videoUpload}>
             {videoUrl ? (
@@ -714,7 +752,7 @@ const CreateEventScreen = ({ navigation }) => {
             ) : (
               <>
                 <Ionicons name="videocam-outline" size={36} color="black" />
-                <Text style={styles.videoText}>Upload Video</Text>
+                {/* <Text style={styles.videoText}>Upload Video</Text> */}
               </>
             )}
           </TouchableOpacity>
@@ -727,6 +765,7 @@ const CreateEventScreen = ({ navigation }) => {
           keyboardType="numeric"
           value={ticketPrice}
           onChangeText={setTicketPrice}
+          placeholderTextColor="white"
         />
 
         <TouchableOpacity style={styles.publishButton} onPress={handlePublish}>
@@ -741,7 +780,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    // backgroundColor: "#f9f9f9", // Light background for a professional look
+    // backgroundColor: "#290F4C", // Light background for a professional look
+    backgroundColor: "#fff", // Light background for a professional look
   },
   dropdownContainer: {
     flex: 1, // Each dropdown takes equal space
@@ -750,10 +790,10 @@ const styles = StyleSheet.create({
 
   label: {
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: "CenturyGothicBold",
     // marginBottom: 8,
     marginVertical: 8,
-    color: "#333",
+    color: "#814C68",
   },
   dropdownlocationRowContainer: {
     flexDirection: "row",
@@ -765,19 +805,20 @@ const styles = StyleSheet.create({
     marginRight: 0, // Remove margin from the last dropdown
   },
   dropdown: {
+    backgroundColor: "#814C68",
     height: 50,
     borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 10,
-    backgroundColor: "#fff",
+
     elevation: 1,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 5,
   },
   dropdownButton: {
-    backgroundColor: "#f8f9fa", // Light background color
+    backgroundColor: "#814C68", // Light background color
     borderColor: "#ced4da", // Light border color
     borderWidth: 1,
     borderRadius: 5,
@@ -792,10 +833,11 @@ const styles = StyleSheet.create({
   },
   dropdownButtonText: {
     fontSize: 16,
-    color: "#212529", // Dark text color
+    color: "#fff", // Dark text color
+    fontFamily: "CenturyGothic",
   },
   dropdowngenreContainer: {
-    backgroundColor: "#ffffff", // White background for dropdown items
+    backgroundColor: "#814C68", // White background for dropdown items
     borderColor: "#ced4da",
     borderWidth: 1,
     borderRadius: 5,
@@ -812,10 +854,19 @@ const styles = StyleSheet.create({
     padding: 10,
     borderBottomColor: "#ced4da",
     borderBottomWidth: 1,
+    backgroundColor: "#814C68",
   },
   dropdownItemText: {
     fontSize: 16,
-    color: "#212529",
+    color: "#fff",
+    backgroundColor: "#814C68",
+    fontFamily: "CenturyGothic",
+  },
+  inputSearchStyle: {
+    fontSize: 16,
+    color: "#fff",
+    backgroundColor: "#814C68",
+    fontFamily: "CenturyGothic",
   },
   dropdownContainerStyle: {
     borderRadius: 8,
@@ -826,17 +877,20 @@ const styles = StyleSheet.create({
     height: 20,
   },
   placeholderStyle: {
-    color: "#999",
+    color: "#fff",
     fontSize: 14,
+    fontFamily: "CenturyGothic",
   },
   selectedTextStyle: {
-    color: "#333",
-    fontSize: 16,
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "CenturyGothic",
   },
   scrollContainer: {
     // flexGrow: 1,
-    // justifyContent: "flex-start",
-    padding: 20,
+    // backgroundColor: "#290F4C",
+    backgroundColor: "#fff",
+    paddingHorizontal: 20,
   },
   subHeader: {
     fontSize: 20,
@@ -844,71 +898,63 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     color: "#444", // Darker color for contrast
   },
+
   photosScrollContainer: {
-    paddingVertical: 10, // Adds vertical padding
-    marginBottom: 16, // Adds space below the image scroll view
-    padding: 10,
-  },
-
-  photosContainer: {
-    flexDirection: "row",
     marginBottom: 16,
-    justifyContent: "space-between", // Ensures even spacing
+    marginTop: 10,
   },
-  largeImageUpload: {
-    width: 150,
-    height: 150,
-    borderRadius: 10,
+  imageItem: {
+    width: 120,
+    height: 120,
     borderWidth: 1,
     borderColor: "#ccc",
-    justifyContent: "center",
-
-    alignItems: "center",
-    backgroundColor: "#fff", // White background for better contrast
-    elevation: 2, // Adds shadow for depth
-  },
-  smallImagesContainer: {
-    flex: 1,
-    flexDirection: "row", // Align small images in a row
-    justifyContent: "space-between",
-  },
-  smallImageUpload: {
-    width: 150, // Match large image container size
-    height: 150, // Match large image container size
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
+    backgroundColor: "#814C68",
+    elevation: 2,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff", // White background for better contrast
-    elevation: 2, // Adds shadow for depth
+    marginRight: 10, // spacing between images
   },
   image: {
     width: "100%",
     height: "100%",
     borderRadius: 10,
   },
+  deleteIconWrapper: {
+    position: "absolute",
+    top: 5,
+    right: 5,
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: 15,
+    padding: 3,
+  },
   input: {
     height: 45, // Increased height for better touch response
     borderColor: "#ccc",
+    fontFamily: "CenturyGothic",
     borderWidth: 1,
-    borderRadius: 8,
-    // color: "#fff",
+    borderRadius: 15,
+    color: "#fff",
     paddingHorizontal: 10,
     marginBottom: 16,
-    backgroundColor: "#fff", // White background for better contrast
+    backgroundColor: "#814C68", // White background for better contrast
     elevation: 1, // Adds slight shadow for depth
   },
   textArea: {
     height: 100,
+    fontFamily: "CenturyGothic",
+
     borderColor: "#ddd",
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 15,
     paddingHorizontal: 10,
     marginBottom: 16,
-    textAlignVertical: "top",
-    backgroundColor: "#fff", // White background for better contrast
+    // textAlignVertical: "top",
+    backgroundColor: "#814C68", // White background for better contrast
     elevation: 1, // Adds slight shadow for depth
+  },
+  videoText: {
+    fontFamily: "CenturyGothic",
   },
   dateTimeContainer: {
     flexDirection: "row",
@@ -919,35 +965,33 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
+
   dateTimeButton: {
-    backgroundColor: "#f8f9fa",
-    borderRadius: 5,
-    padding: 12,
+    backgroundColor: "#814C68",
+    borderRadius: 15,
+    padding: 15,
     borderWidth: 1,
+    justifyContent: "space-evenly",
     borderColor: "#ced4da",
     alignItems: "center",
-    justifyContent: "center",
   },
   dateTimeButtonText: {
     fontSize: 16,
-    color: "#212529",
+    color: "#fff",
+
+    fontFamily: "CenturyGothic",
   },
   publishButton: {
-    backgroundColor: "#007bff", // Primary color for the button
+    backgroundColor: "#814C68", // Primary color for the button
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 15,
     alignItems: "center",
-    marginBottom: 100,
+    marginBottom: 80,
   },
   publishButtonText: {
     color: "#fff",
     fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: "CenturyGothicBold",
   },
 });
 

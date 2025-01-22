@@ -17,12 +17,13 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  TouchableOpacity,
   SafeAreaView,
 } from "react-native";
 import axios from "axios";
 import { API_URL } from "@env";
-import { getUserId } from "../backend/registrationUtils";
 import { UserContext } from "../navigation/UserProvider";
+import { MaterialCommunityIcons } from "react-native-vector-icons"; // If you are using expo
 
 const ChatRoom = () => {
   const [message, setMessage] = useState("");
@@ -187,9 +188,43 @@ const ChatRoom = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
+      <View
+        style={{
+          padding: 10,
+          backgroundColor: "#290F4C",
+          flexDirection: "row",
+          alignItems: "center",
+        }}
+      >
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={{
+            // backgroundColor: "#FFF",
+            padding: 10,
+            borderRadius: 20,
+            alignItems: "center",
+            justifyContent: "center",
+            // marginRight: 5,
+            // marginLeft: "10",
+          }}
+        >
+          <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text
+          style={{
+            color: "#fff",
+            fontSize: 24,
+            fontFamily: "CenturyGothicBold",
+            marginLeft: "10",
+          }}
+        >
+          {receiverName}
+        </Text>
+      </View>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"} // Adjust behavior for iOS and Android
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0} // Adjust offset for iOS
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView
@@ -203,23 +238,35 @@ const ChatRoom = () => {
                 style={{
                   alignSelf:
                     msg.senderId === userId ? "flex-end" : "flex-start",
-                  backgroundColor: msg.senderId === userId ? "#DCF8C6" : "#FFF",
+                  backgroundColor: msg.senderId === userId ? "#814C68" : "#fff",
                   padding: 10,
                   marginVertical: 5,
                   borderRadius: 10,
                   maxWidth: "70%",
                 }}
               >
-                <Text>{msg.message}</Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: msg.senderId === userId ? "white" : "black",
+                    fontFamily: "CenturyGothic",
+                  }}
+                >
+                  {msg.message}
+                </Text>
                 <Text
                   style={{
                     fontSize: 10,
-                    color: "gray",
+                    color: msg.senderId === userId ? "white" : "gray",
                     textAlign: "right",
                     marginTop: 5,
+                    fontFamily: "CenturyGothic",
                   }}
                 >
-                  {new Date(msg.timeStamp).toLocaleTimeString()}
+                  {new Date(msg.timeStamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </Text>
               </View>
             ))}
@@ -229,22 +276,23 @@ const ChatRoom = () => {
         <View
           style={{
             flexDirection: "row",
+            alignItems: "center",
             padding: 10,
             borderTopWidth: 1,
             borderColor: "#ddd",
-            marginBottom: "auto",
-            position: "absolute",
-            bottom: 100,
-            width: "100%",
+            backgroundColor: "#FFF",
           }}
         >
           <TextInput
             style={{
               flex: 1,
-              borderColor: "#ddd",
               borderWidth: 1,
+              borderColor: "#ddd",
               borderRadius: 20,
-              paddingHorizontal: 10,
+              paddingHorizontal: 15,
+              paddingVertical: 10,
+              fontSize: 16,
+              fontFamily: "CenturyGothic",
             }}
             placeholder="Type a message..."
             value={message}
@@ -253,13 +301,23 @@ const ChatRoom = () => {
           <Pressable
             onPress={sendMessage}
             style={{
-              backgroundColor: "#0066b2",
+              backgroundColor: "#814C68",
               padding: 10,
               borderRadius: 20,
-              marginLeft: 8,
+              marginLeft: 10,
+              width: "20%",
+              justifyContent: "center",
             }}
           >
-            <Text style={{ color: "white" }}>Send</Text>
+            <Text
+              style={{
+                color: "white",
+                fontFamily: "CenturyGothicBold",
+                textAlign: "center",
+              }}
+            >
+              Send
+            </Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>

@@ -359,12 +359,12 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderWidth: 1,
     borderRadius: 8,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "#814C68",
     elevation: 5,
   },
   selectedText: {
-    color: "#333",
-    fontWeight: "500",
+    color: "#fff",
+    fontFamily: "CenturyGothic",
   },
   modalBackdrop: {
     flex: 1,
@@ -407,17 +407,19 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 16,
+    fontFamily: "CenturyGothic",
   },
   saveButton: {
     marginTop: 15,
     padding: 12,
-    backgroundColor: "#BF1013",
+    backgroundColor: "#0F3460",
     borderRadius: 8,
     alignItems: "center",
   },
   saveButtonText: {
     color: "#fff",
-    fontWeight: "bold",
+    fontFamily: "CenturyGothicBold",
+
     fontSize: 16,
   },
 });

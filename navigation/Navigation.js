@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   Easing,
+  Text,
   searchText,
 } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
@@ -62,45 +63,20 @@ import Filter from "../components/FilterComponent";
 import EventParticipantsScreen from "../TabScreens/EventParticipants";
 import EmailLogin from "../Screens/LoginScreens/EmailLogin";
 import RequestScreen from "../TabScreens/RequestScreen";
+import CheckoutPage from "../HomeScreens/CheckoutPage";
+import EditEventScreen from "../drawer/EditEventScreen";
+import CouponScreen from "../TabScreens/Tabcomponents/CouponScreen";
+
 import { UserContext } from "./UserProvider";
 import CustomBottomTab from "../TabScreens/Tabcomponents/CustomBottomTab";
 import ForgotPasswordScreen from "../Screens/LoginScreens/ForgotPasswordScreen";
 import ResetPasswordScreen from "../Screens/LoginScreens/ResetPasswordScreen";
 // import * as Linking from "expo-linking";
 import { navigationRef } from "./NavigationService";
+import { color } from "react-native-elements/dist/helpers";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
-
-// const linking = {
-//   prefixes: ["matchmatters://", "exp://192.168.1.38:8081"], // Add your Expo URL here
-//   config: {
-//     screens: {
-//       ResetPasswordScreen: "reset-password/:resetToken", // Define the deep link path
-//     },
-//   },
-// };
-
-// useEffect(() => {
-//   const handleDeepLink = (event) => {
-//     const { path, queryParams } = Linking.parse(event.url);
-//     console.log('Deep link path:', path);
-//     console.log('Query parameters:', queryParams);
-
-//     if (path === 'reset-password') {
-//       // Handle navigation to the ResetPasswordScreen with the token
-//       navigationRef.current?.navigate('ResetPassword', { token: queryParams.token });
-//     }
-//   };
-
-//   // Add the event listener
-//   Linking.addEventListener('url', handleDeepLink);
-
-//   // Clean up the listener on unmount
-//   return () => {
-//     Linking.removeEventListener('url', handleDeepLink);
-//   };
-// }, []);
 
 const CustomBottomTabs = (props) => {
   return <CustomBottomTab {...props} />;
@@ -214,7 +190,6 @@ const CustomBottomTabs = (props) => {
 //   );
 // };
 
-
 const BottomTabs = () => {
   const navigation = useNavigation();
   const [showFilters, setShowFilters] = useState(false);
@@ -224,25 +199,24 @@ const BottomTabs = () => {
 
   return (
     <Tab.Navigator
-      // initialRouteName="FeedScreen"
-      // tabBar={(props) => <CustomBottomTabs {...props} />}
-      // screenOptions={{ headerShown: false }}
       screenOptions={({ route }) => ({
-        tabBarShowLabel: true,
+        tabBarShowLabel: false,
         tabBarStyle: {
-          height: 80,
+          height: 60,
           position: "absolute",
           elevation: 0,
           backgroundColor: "#290F4C",
         },
         tabBarLabelStyle: { fontSize: 12, marginBottom: 10, color: "#fff" },
-        tabBarIconStyle: { marginTop: 10 },
+        tabBarIconStyle: { marginTop: 0 },
+        tabBarHideOnKeyboard: true,
       })}
     >
       <Tab.Screen
         name="Home"
         options={{
           title: "Home",
+          // headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="home-outline"
@@ -251,29 +225,23 @@ const BottomTabs = () => {
             />
           ),
 
-          headerStyle: {
-            backgroundColor: "#290F4C", // Header background color
-            height: 100, // Increase the header height
-          },
           headerTitle: () => (
-            <View style={styles.headerContainer}>
-              <View style={styles.logoContainer}>
-                <Image
-                  source={require("../assets/MM - PNG.png")}
-                  style={styles.logo}
+            <View style={styles.logoContainer}>
+              <Image
+                source={require("../assets/MM - PNG.png")}
+                style={styles.logo}
+              />
+
+              <TouchableOpacity
+                onPress={() => navigation.navigate("MostHappening")}
+                style={styles.filterIcon}
+              >
+                <MaterialCommunityIcons
+                  name="fire" // Choose an appropriate icon
+                  color="#fff"
+                  size={24}
                 />
-              </View>
-
-              {/* Search Bar */}
-              {/* <TextInput
-                style={styles.searchInput}
-                placeholder="Search Events"
-                value={searchText}
-                onChangeText={(text) => setSearchText(text)}
-                // Add an onChangeText handler here if needed
-              /> */}
-
-              {/* Filter Icon */}
+              </TouchableOpacity>
               <TouchableOpacity
                 onPress={toggleFilterModal}
                 style={styles.filterIcon}
@@ -284,12 +252,17 @@ const BottomTabs = () => {
                       ? "calendar-check-outline"
                       : "calendar-blank-outline"
                   }
-                  color={filterVisible ? "#252355" : "#fff"}
-                  size={30}
+                  color={filterVisible ? "#fff" : "#fff"}
+                  size={24}
                 />
               </TouchableOpacity>
             </View>
           ),
+          headerStyle: {
+            height: 60, // Adjust header height
+            backgroundColor: "#290F4C",
+          },
+          headerTintColor: "#290F4C",
         }}
       >
         {() => (
@@ -308,13 +281,26 @@ const BottomTabs = () => {
         name="Vibed"
         component={LikedYou}
         options={{
-          title: "Vibed",
+          headerTitle: () => (
+            <Text
+              style={{
+                fontSize: 28,
+                fontFamily: "CenturyGothicBold",
+                color: "#fff", // Text color
+                textAlign: "flex-start", // Center-align the text
+                // width: "100%", // Ensure the text takes full width to align centrally
+              }}
+            >
+              Vibed
+            </Text>
+          ),
+          headerStyle: {
+            height: 60, // Adjust header height
+            backgroundColor: "#290F4C",
+          },
+          headerTintColor: "#290F4C",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="heart-outline"
-              color={color}
-              size={size}
-            />
+            <MaterialCommunityIcons name="heart" color={color} size={size} />
           ),
         }}
       />
@@ -322,7 +308,25 @@ const BottomTabs = () => {
         name="Event"
         component={CreateEventScreen}
         options={{
-          title: "Event",
+          headerShown: true,
+          headerTitle: () => (
+            <Text
+              style={{
+                fontSize: 28,
+                fontFamily: "CenturyGothicBold",
+                color: "#fff", // Text color
+                textAlign: "flex-start", // Center-align the text
+                // width: "100%", // Ensure the text takes full width to align centrally
+              }}
+            >
+              Create event
+            </Text>
+          ),
+          headerStyle: {
+            height: 60, // Adjust header height
+            backgroundColor: "#290F4C",
+          },
+          headerTintColor: "#fff",
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="plus-circle-outline"
@@ -336,13 +340,27 @@ const BottomTabs = () => {
         name="Chat"
         component={ChatScreen}
         options={{
-          title: "Chat",
+          headerShown: true,
+          headerTitle: () => (
+            <Text
+              style={{
+                fontSize: 28,
+                fontFamily: "CenturyGothicBold",
+                color: "#fff", // Text color
+                textAlign: "flex-start", // Center-align the text
+                // width: "100%", // Ensure the text takes full width to align centrally
+              }}
+            >
+              Chats
+            </Text>
+          ),
+          headerStyle: {
+            height: 60, // Adjust header height
+            backgroundColor: "#290F4C",
+          },
+          headerTintColor: "#fff",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="chat-outline"
-              color={color}
-              size={size}
-            />
+            <MaterialCommunityIcons name="chat" color={color} size={size} />
           ),
         }}
       />
@@ -351,6 +369,30 @@ const BottomTabs = () => {
         component={Profile}
         options={{
           title: "Profile",
+          headerShown: true,
+          headerTitle: () => (
+            <Text
+              style={{
+                position: "absolute",
+                top: 10, // Adjust top alignment
+                left: 5, // Adjust left alignment
+                fontSize: 28,
+                fontFamily: "CenturyGothicBold",
+                color: "#fff",
+              }}
+            >
+              Profile
+            </Text>
+          ),
+          headerStyle: {
+            backgroundColor: "#290F4C", // Set background color of the header
+            height: 60, // Adjust header height
+          },
+          // headerTitleStyle: {
+          //   fontSize: 28,
+          //   fontFamily: "CenturyGothicBold",
+          //   color: "#333", // Text color
+          // },
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="account-outline"
@@ -363,9 +405,6 @@ const BottomTabs = () => {
     </Tab.Navigator>
   );
 };
-
-
-
 
 const AuthStack = () => {
   const [isShowSplash, setIsShowSplash] = useState(true);
@@ -396,11 +435,11 @@ const AuthStack = () => {
             component={StartScreen}
             options={{ headerShown: false }}
           /> */}
-          <Stack.Screen
+          {/* <Stack.Screen
             name="OnboardingScreen"
             component={OnboardingScreen}
             options={{ headerShown: false }}
-          />
+          /> */}
 
           <Stack.Screen
             name="Login"
@@ -415,11 +454,11 @@ const AuthStack = () => {
           <Stack.Screen
             name="EmailLogin"
             component={EmailLogin}
-            options={{
-              title: "EmailLogin",
-              headerShown: true,
-              headerTitleAlign: "center",
-            }}
+            // options={{
+            //   title: "EmailLogin",
+            //   headerShown: true,
+            //   headerTitleAlign: "center",
+            // }}
           />
           <Stack.Screen
             name="ForgotPasswordScreen"
@@ -507,22 +546,28 @@ const AppStack = () => {
         name="MostHappening"
         component={MostHappening}
         options={{
-          title: "MostHappening",
           headerShown: true,
-          headerTitleAlign: "center",
-          headerBackTitleVisible: false,
+          headerTitle: () => (
+            <Text
+              style={{
+                fontSize: 24,
+                fontFamily: "CenturyGothicBold",
+                color: "#fff", // Text color
+                textAlign: "flex-start", // Center-align the text
+                // width: "100%", // Ensure the text takes full width to align centrally
+              }}
+            >
+              Most Happening
+            </Text>
+          ),
+          headerStyle: {
+            height: 60, // Adjust header height
+            backgroundColor: "#290F4C",
+          },
+          headerTintColor: "#fff",
         }}
       />
-      <Stack.Screen
-        name="ForYou"
-        component={ForYou}
-        options={{
-          title: "For You",
-          headerShown: true,
-          headerTitleAlign: "center",
-          headerBackTitleVisible: false,
-        }}
-      />
+      <Stack.Screen name="ForYou" component={ForYou} />
       <Stack.Screen
         name="TicketSales"
         component={TicketSales}
@@ -532,12 +577,28 @@ const AppStack = () => {
         name="EditProfileScreen"
         component={EditProfileScreen}
         options={{
-          title: "Edit Profile",
           headerShown: true,
-          headerTitleAlign: "center",
-          headerBackTitleVisible: false,
+          headerTitle: () => (
+            <Text
+              style={{
+                fontSize: 24,
+                fontFamily: "CenturyGothicBold",
+                color: "#fff", // Text color
+                textAlign: "flex-start", // Center-align the text
+                // width: "100%", // Ensure the text takes full width to align centrally
+              }}
+            >
+              Edit Profile
+            </Text>
+          ),
+          headerStyle: {
+            height: 60, // Adjust header height
+            backgroundColor: "#290F4C",
+          },
+          headerTintColor: "#fff",
         }}
       />
+
       <Stack.Screen
         name="VerifyAccountScreen"
         component={VerifyAccountScreen}
@@ -547,38 +608,143 @@ const AppStack = () => {
         name="MyEvents"
         component={MyEventsScreen}
         options={{
-          title: "Create Event",
           headerShown: true,
-          headerTitleAlign: "center",
-          headerBackTitleVisible: false,
+          headerTitle: () => (
+            <Text
+              style={{
+                fontSize: 24,
+                fontFamily: "CenturyGothicBold",
+                color: "#fff", // Text color
+                textAlign: "flex-start", // Center-align the text
+                // width: "100%", // Ensure the text takes full width to align centrally
+              }}
+            >
+              My events
+            </Text>
+          ),
+          headerStyle: {
+            height: 60, // Adjust header height
+            backgroundColor: "#290F4C",
+          },
+          headerTintColor: "#fff",
         }}
       />
       <Stack.Screen
-        name="AllEvents"
-        component={AllEvents}
+        name="EditEventScreen"
+        component={EditEventScreen}
         options={{
-          title: "AllEvents",
           headerShown: true,
-          headerTitleAlign: "center",
-          headerBackTitleVisible: false,
+          headerTitle: () => (
+            <Text
+              style={{
+                fontSize: 24,
+                fontFamily: "CenturyGothicBold",
+                color: "#fff", // Text color
+                textAlign: "flex-start", // Center-align the text
+                // width: "100%", // Ensure the text takes full width to align centrally
+              }}
+            >
+              Event Details
+            </Text>
+          ),
+          headerStyle: {
+            height: 60, // Adjust header height
+            backgroundColor: "#290F4C",
+          },
+          headerTintColor: "#fff",
         }}
       />
+      {/* <Stack.Screen
+        name="AllEvents"
+        component={AllEvents}
+        options={{ headerShown: false }}
+      /> */}
+      <Stack.Screen
+        name="CouponScreen"
+        component={CouponScreen}
+        options={{
+          headerShown: true,
+          headerTitle: () => (
+            <Text
+              style={{
+                fontSize: 24,
+                fontFamily: "CenturyGothicBold",
+                color: "#fff", // Text color
+                textAlign: "flex-start", // Center-align the text
+                // width: "100%", // Ensure the text takes full width to align centrally
+              }}
+            >
+              Your Coupons
+            </Text>
+          ),
+          headerStyle: {
+            height: 60, // Adjust header height
+            backgroundColor: "#290F4C",
+          },
+          headerTintColor: "#fff",
+        }}
+      />
+
       <Stack.Screen
         name="EventDetailsScreen"
         component={EventDetailsScreen}
         options={{
-          title: "Event Details",
           headerShown: true,
-          headerTitleAlign: "center",
+          headerTitle: () => (
+            <Text
+              style={{
+                fontSize: 24,
+                fontFamily: "CenturyGothicBold",
+                color: "#fff", // Text color
+                textAlign: "flex-start", // Center-align the text
+                // width: "100%", // Ensure the text takes full width to align centrally
+              }}
+            >
+              See the details
+            </Text>
+          ),
+          headerStyle: {
+            height: 60, // Adjust header height
+            backgroundColor: "#290F4C",
+          },
+          headerTintColor: "#fff",
         }}
+      />
+      <Stack.Screen
+        name="CheckoutPage"
+        component={CheckoutPage}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="MyBookingsScreen"
         component={MyBookingsScreen}
         options={{
-          title: "Event Details",
           headerShown: true,
-          headerTitleAlign: "center",
+          headerTitle: () => (
+            <Text
+              style={{
+                fontSize: 24,
+                fontFamily: "CenturyGothicBold",
+                color: "#fff", // Text color
+                textAlign: "flex-start", // Center-align the text
+                // width: "100%", // Ensure the text takes full width to align centrally
+              }}
+            >
+              Booked Events
+            </Text>
+          ),
+          headerStyle: {
+            height: 60, // Adjust header height
+            backgroundColor: "#290F4C",
+          },
+          headerTintColor: "#fff",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="plus-circle-outline"
+              color={color}
+              size={size}
+            />
+          ),
         }}
       />
       <Stack.Screen
@@ -626,9 +792,28 @@ const AppStack = () => {
         name="EventParticipantsScreen"
         component={EventParticipantsScreen}
         options={{
-          title: "Event Participants",
           headerShown: true,
-          headerTitleAlign: "center",
+          headerTitle: () => (
+            <Text
+              style={{
+                fontSize: 24,
+                fontFamily: "CenturyGothicBold",
+                color: "#fff", // Text color
+                textAlign: "flex-start", // Center-align the text
+                // width: "100%", // Ensure the text takes full width to align centrally
+              }}
+            >
+              Participants
+            </Text>
+          ),
+          headerStyle: {
+            height: 60, // Adjust header height
+            backgroundColor: "#290F4C", // Header background color
+            elevation: 0, // Remove shadow for Android
+            shadowOpacity: 0, // Remove shadow for iOS
+            borderBottomWidth: 0, // Remove border for all platforms
+          },
+          headerTintColor: "#fff",
         }}
       />
       <Stack.Screen
@@ -636,7 +821,7 @@ const AppStack = () => {
         component={ChatRoom}
         options={{
           title: "ChatRoom",
-          headerShown: true,
+          headerShown: false,
           headerTitleAlign: "center",
         }}
       />
@@ -644,9 +829,25 @@ const AppStack = () => {
         name="RequestScreen"
         component={RequestScreen}
         options={{
-          title: "Requests",
           headerShown: true,
-          headerTitleAlign: "center",
+          headerTitle: () => (
+            <Text
+              style={{
+                fontSize: 24,
+                fontFamily: "CenturyGothicBold",
+                color: "#fff", // Text color
+                textAlign: "flex-start", // Center-align the text
+                // width: "100%", // Ensure the text takes full width to align centrally
+              }}
+            >
+              Requests
+            </Text>
+          ),
+          headerStyle: {
+            height: 60, // Adjust header height
+            backgroundColor: "#290F4C",
+          },
+          headerTintColor: "#fff",
         }}
       />
     </Stack.Navigator>
@@ -672,17 +873,6 @@ const Navigation = () => (
     onReady={() => {
       console.log("Navigator is ready!");
     }}
-    // linking={linking}
-    // ref={navigationRef}
-    // linking={{
-    //   prefixes: ["matchmatters://"],
-    //   config: {
-    //     screens: {
-    //       Home: "",
-    //       ResetPassword: "reset-password",
-    //     },
-    //   },
-    // }}
   >
     <RootStack />
   </NavigationContainer>
@@ -690,48 +880,13 @@ const Navigation = () => (
 
 export default Navigation;
 
-// Styles for the header components
-// const styles = StyleSheet.create({
-//   headerContainer: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     justifyContent: "space-between", // Ensure space between elements
-//     // paddingHorizontal: 15, // Adjusted padding
-//     // backgroundColor: "#0067FF",
-//     height: 60, // Height of the header
-//     width: "100%",
-//   },
-//   logoContainer: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//   },
-//   logo: {
-//     height: 60,
-//     width: 120,
-//   },
-//   searchInput: {
-//     height: 40,
-//     flex: 1, // Makes the search bar take the remaining space
-//     borderRadius: 10,
-//     backgroundColor: "#f0f0f0",
-//     paddingHorizontal: 10,
-//     marginHorizontal: 20,
-//     // marginLeft: 10, // Margin to separate from logo
-//   },
-//   filterIcon: {
-//     marginRight: 10,
-//   },
-// });
-
-
-
 const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between", // Ensure space between elements
-    paddingHorizontal: 5, // Adjusted padding
-    // backgroundColor: "#290F4C",
+    // paddingHorizontal: 5, // Adjusted padding
+    backgroundColor: "#290F4C",
 
     // height: 60, // Height of the header
     width: "100%",
@@ -739,21 +894,16 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    height: 60,
+    width: "100%",
   },
   logo: {
-    height: 40,
-    width: 120,
+    height: 30,
+    width: 100,
     color: "#fff",
   },
-  searchInput: {
-    height: 40,
-    flex: 1, // Makes the search bar take the remaining space
-    borderRadius: 10,
-    backgroundColor: "#f0f0f0",
-    paddingHorizontal: 10,
-    marginHorizontal: 20,
-    // marginLeft: 10, // Margin to separate from logo
-  },
+
   filterIcon: {
     marginRight: 10,
   },

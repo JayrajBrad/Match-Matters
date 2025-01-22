@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -19,23 +18,35 @@ import { isValidPhoneNumber } from "libphonenumber-js"; // Import from libphonen
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 // import AppLoading from "expo-app-loading";
-import * as SplashScreen from 'expo-splash-screen';
+import * as SplashScreen from "expo-splash-screen";
+import * as Font from "expo-font";
+
+SplashScreen.preventAutoHideAsync();
 
 export default function SignNumber({ navigation }) {
   const insets = useSafeAreaInsets();
 
-  if (insets.top === 0) {
-    return null; // Optionally render a loading state or placeholder here
-  }
-
-  const [fontsLoaded] = useFonts({
-    CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
-    CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
-  });
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
+          CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
+        });
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error("Error loading fonts:", error);
+      } finally {
+        SplashScreen.hideAsync();
+      }
+    }
+    loadFonts();
+  }, []);
 
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selected, setSelected] = useState("+91"); // Default to India (+91)
   const [isValidPhone, setIsValidPhone] = useState(true);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   const onChangePhone = (number) => {
     setPhoneNumber(number);
@@ -94,14 +105,6 @@ export default function SignNumber({ navigation }) {
   //     return false; // Return false in case of error
   //   }
   // };
-
-  useEffect(() => {
-    if (!fontsLoaded) {
-      SplashScreen.preventAutoHideAsync(); // Prevent the splash screen from hiding automatically
-    } else {
-      SplashScreen.hideAsync(); // Hide the splash screen when fonts are loaded
-    }
-  }, [fontsLoaded]);
 
   if (!fontsLoaded) {
     return null; // Render nothing while the splash screen is shown
@@ -173,7 +176,7 @@ export default function SignNumber({ navigation }) {
 const styles = StyleSheet.create({
   area: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#290F4C",
   },
   container: {
     flex: 1, // Ensure the container takes full height
@@ -183,7 +186,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backText: {
-    color: "#0F3460",
+    color: "#fff",
     fontSize: 16,
     marginBottom: 20,
     // fontWeight: "bold",
@@ -192,19 +195,20 @@ const styles = StyleSheet.create({
   headTitle: {
     fontSize: 32,
     // fontWeight: "800",
-    color: "#333",
+    color: "#fff",
     marginBottom: 10,
     fontFamily: "CenturyGothicBold",
   },
   headTag: {
     fontSize: 14,
-    color: "#666",
+    color: "#fff",
     fontFamily: "CenturyGothic",
     marginBottom: 30,
   },
   inputContainer: {
     // borderBottomWidth: 1,
     marginBottom: 15,
+
     // height: 50,
   },
   dropdown: {
@@ -233,9 +237,10 @@ const styles = StyleSheet.create({
   phoneStyles: {
     height: 50,
     fontFamily: "CenturyGothic",
+    backgroundColor: "#fff",
   },
   btnContinue: {
-    backgroundColor: "#0F3460",
+    backgroundColor: "#814C68",
     paddingVertical: 15,
     paddingHorizontal: 80,
     borderRadius: 25,

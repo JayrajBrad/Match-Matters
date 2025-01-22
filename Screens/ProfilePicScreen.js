@@ -288,23 +288,35 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 // import AppLoading from "expo-app-loading";
-import * as SplashScreen from 'expo-splash-screen';
+import * as SplashScreen from "expo-splash-screen";
+import * as Font from "expo-font";
+
+SplashScreen.preventAutoHideAsync();
 
 export default function ProfilePicScreen({ navigation }) {
   const insets = useSafeAreaInsets();
 
-  if (insets.top === 0) {
-    return null; // Optionally render a loading state or placeholder here
-  }
-
-  const [fontsLoaded] = useFonts({
-    CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
-    CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
-  });
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          CenturyGothic: require("../assets/fonts/CenturyGothic.ttf"),
+          CenturyGothicBold: require("../assets/fonts/GOTHICB0.ttf"),
+        });
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error("Error loading fonts:", error);
+      } finally {
+        SplashScreen.hideAsync();
+      }
+    }
+    loadFonts();
+  }, []);
 
   const [hasGalleryPermission, setHasGalleryPermission] = useState(null);
   const [hasCameraPermission, setHasCameraPermission] = useState(null);
   const [images, setImages] = useState([null, null, null, null]);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -386,14 +398,6 @@ export default function ProfilePicScreen({ navigation }) {
     saveRegistrationProgress("Photos", { images });
     navigation.navigate("PreferenceScreen");
   };
-
-  useEffect(() => {
-    if (!fontsLoaded) {
-      SplashScreen.preventAutoHideAsync(); // Prevent the splash screen from hiding automatically
-    } else {
-      SplashScreen.hideAsync(); // Hide the splash screen when fonts are loaded
-    }
-  }, [fontsLoaded]);
 
   if (!fontsLoaded) {
     return null; // Render nothing while the splash screen is shown
@@ -512,7 +516,7 @@ export default function ProfilePicScreen({ navigation }) {
 const styles = StyleSheet.create({
   area: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#290F4C",
   },
   container: {
     flex: 1, // Ensure the container takes full height
@@ -537,7 +541,7 @@ const styles = StyleSheet.create({
   //   padding: 10,
   // },
   backText: {
-    color: "#0F3460",
+    color: "#FFF",
     fontSize: 16,
     marginBottom: 20,
     fontFamily: "CenturyGothicBold",
@@ -546,13 +550,13 @@ const styles = StyleSheet.create({
     fontSize: 28,
     textAlign: "center",
     marginBottom: 10,
-    color: "#0F3460",
+    color: "#FFF",
     fontFamily: "CenturyGothicBold",
   },
   subTitle: {
     fontSize: 16,
     textAlign: "center",
-    color: "#6b6b6b",
+    color: "#FFF",
     marginBottom: 20,
     fontFamily: "CenturyGothic",
   },
@@ -617,7 +621,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#0F3460",
+    backgroundColor: "#814C68",
   },
   buttonText: {
     color: "#fff",

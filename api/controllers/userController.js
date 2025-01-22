@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const asyncHandler = require("express-async-handler");
 const Event = require("../models/event");
 const bcrypt = require("bcrypt"); // For password hashing
 const jwt = require("jsonwebtoken");
@@ -96,6 +97,23 @@ exports.getUserData = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.getUserById = asyncHandler(async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    const user = await User.findById(userId).select("-password"); // Exclude sensitive data like password
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500);
+    throw new Error("Error fetching user details");
+  }
+});
 
 exports.updateProfileImage = async (req, res) => {
   try {
