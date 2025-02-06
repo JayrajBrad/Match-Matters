@@ -332,19 +332,19 @@ const EventItem = React.memo(function EventItem({ item, index, shouldPlay }) {
     }
   };
 
-  useFocusEffect(
-    React.useCallback(() => {
-      // When the screen is focused, do nothing
-      return () => {
-        // When the screen is unfocused, pause the video
-        if (videoRef.current && isPlaying) {
-          videoRef.current
-            .pauseAsync()
-            .catch((err) => console.warn("Error pausing video on blur:", err));
-        }
-      };
-    }, [videoRef, isPlaying])
-  );
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     // When the screen is focused, do nothing
+  //     return () => {
+  //       // When the screen is unfocused, pause the video
+  //       if (videoRef.current && isPlaying) {
+  //         videoRef.current
+  //           .pauseAsync()
+  //           .catch((err) => console.warn("Error pausing video on blur:", err));
+  //       }
+  //     };
+  //   }, [videoRef, isPlaying])
+  // );
 
   // You can optionally unmount the <Video> if `shouldPlay` is false:
   //   {shouldPlay && (<Video>...</Video>)}
