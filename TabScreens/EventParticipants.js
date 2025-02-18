@@ -25,7 +25,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const EventParticipantsScreen = ({ route }) => {
   const { eventId } = route.params;
   const [participants, setParticipants] = useState([]);
-  const { userId } = useContext(UserContext);
+  const { user, userId } = useContext(UserContext);
   const [scrollX] = useState(new Animated.Value(0));
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -50,23 +50,32 @@ const EventParticipantsScreen = ({ route }) => {
   }, []);
 
   // useEffect(() => {
+  //   let isMounted = true;
+
   //   const fetchParticipants = async () => {
   //     try {
   //       const response = await axios.get(
   //         `${API_URL}/api/events/${eventId}/participants`
   //       );
-  //       const filteredParticipants = response.data.filter(
-  //         (participant) => participant._id !== userId
-  //       );
-  //       setParticipants(filteredParticipants);
+  //       if (isMounted) {
+  //         const filteredParticipants = response.data.filter(
+  //           (participant) => participant._id !== userId
+  //         );
+  //         setParticipants(filteredParticipants);
+  //       }
   //     } catch (error) {
   //       console.error("Error fetching participants:", error);
   //     }
   //   };
 
   //   fetchParticipants();
-  // }, [eventId]);
 
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, [eventId, userId]);
+
+  // Assume user contains an array of friend IDs: user.friends
   useEffect(() => {
     let isMounted = true;
 
@@ -75,10 +84,16 @@ const EventParticipantsScreen = ({ route }) => {
         const response = await axios.get(
           `${API_URL}/api/events/${eventId}/participants`
         );
-        if (isMounted) {
-          const filteredParticipants = response.data.filter(
-            (participant) => participant._id !== userId
-          );
+        if (isMounted && response.data) {
+          const filteredParticipants = response.data
+            .filter((p) => p._id !== userId)
+            .map((p) => ({
+              ...p,
+              // Already friend?
+              isFriend: user?.friends?.includes(p._id),
+              // Assume not yet sent, until proven otherwise
+              isRequestSent: false,
+            }));
           setParticipants(filteredParticipants);
         }
       } catch (error) {
@@ -87,38 +102,106 @@ const EventParticipantsScreen = ({ route }) => {
     };
 
     fetchParticipants();
-
     return () => {
       isMounted = false;
     };
-  }, [eventId, userId]);
+  }, [eventId, userId, user]);
+
+  // const sendRequest = async (receiverId) => {
+  //   try {
+  //     if (!userId) {
+  //       Alert.alert("User ID not found. Please try again.");
+  //       return;
+  //     }
+
+  //     const userData = {
+  //       senderId: userId,
+  //       receiverId,
+  //     };
+
+  //     const response = await axios.post(`${API_URL}/api/sendrequest`, userData);
+
+  //     if (response.status === 200) {
+  //       Alert.alert(
+  //         "Your request has been shared. Wait for the user to accept your request."
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.log("Error:", error);
+  //   }
+  // };
 
   const sendRequest = async (receiverId) => {
     try {
-      if (!userId) {
-        Alert.alert("User ID not found. Please try again.");
+      const response = await axios.post(`${API_URL}/api/sendrequest`, {
+        senderId: userId,
+        receiverId,
+      });
+
+      const { message } = response.data;
+
+      if (message === "already_friends") {
+        Alert.alert("You are already friends with this user.");
+        // Update this participant's state to reflect isFriend = true
+        setParticipants((prev) =>
+          prev.map((p) => (p._id === receiverId ? { ...p, isFriend: true } : p))
+        );
         return;
       }
 
-      const userData = {
-        senderId: userId,
-        receiverId,
-      };
+      if (message === "request_already_sent") {
+        Alert.alert("You've already sent a request to this user.");
+        // Mark that participant as request-sent
+        setParticipants((prev) =>
+          prev.map((p) =>
+            p._id === receiverId ? { ...p, isRequestSent: true } : p
+          )
+        );
+        return;
+      }
 
-      const response = await axios.post(`${API_URL}/api/sendrequest`, userData);
-
-      if (response.status === 200) {
+      if (message === "request_sent_successfully") {
         Alert.alert(
           "Your request has been shared. Wait for the user to accept your request."
         );
+        // Mark that participant as request-sent
+        setParticipants((prev) =>
+          prev.map((p) =>
+            p._id === receiverId ? { ...p, isRequestSent: true } : p
+          )
+        );
       }
     } catch (error) {
-      console.log("Error:", error);
+      console.log("Error sending request:", error);
+      Alert.alert("Oops", "Something went wrong while sending the request.");
     }
   };
 
   const renderItem = React.useCallback(
     ({ item, index }) => {
+      const handlePress = () => {
+        // If already friends, show alert
+        if (item.isFriend) {
+          Alert.alert("You are already friends with this user.");
+          return;
+        }
+        // If request already sent, show alert
+        if (item.isRequestSent) {
+          Alert.alert("Your request is already pending.");
+          return;
+        }
+        // Otherwise, attempt to send request
+        sendRequest(item._id);
+      };
+
+      // Dynamic button text
+      let buttonText = "Send Request";
+      if (item.isFriend) {
+        buttonText = "Already Friend";
+      } else if (item.isRequestSent) {
+        buttonText = "Sent";
+      }
+
       const inputRange = [
         (index - 1) * screenWidth,
         index * screenWidth,
@@ -364,7 +447,7 @@ const EventParticipantsScreen = ({ route }) => {
                 </View>
               )}
 
-              <Pressable
+              {/* <Pressable
                 onPress={() => sendRequest(item._id)}
                 style={styles.sendButton}
               >
@@ -372,6 +455,14 @@ const EventParticipantsScreen = ({ route }) => {
                   style={{ color: "white", fontFamily: "CenturyGothicBold" }}
                 >
                   Send Request
+                </Text>
+              </Pressable> */}
+
+              <Pressable onPress={handlePress} style={styles.sendButton}>
+                <Text
+                  style={{ color: "white", fontFamily: "CenturyGothicBold" }}
+                >
+                  {buttonText}
                 </Text>
               </Pressable>
             </ScrollView>

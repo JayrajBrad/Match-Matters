@@ -227,6 +227,275 @@
 //   },
 // });
 
+//////////////////////////////////////////////////////////////////////////
+
+// import React, { useContext, useEffect, useState, useRef } from "react";
+// import {
+//   View,
+//   Text,
+//   TouchableOpacity,
+//   StyleSheet,
+//   Dimensions,
+// } from "react-native";
+// import { Video, ResizeMode } from "expo-av";
+// import { useNavigation, useFocusEffect } from "@react-navigation/native";
+// import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+// import { useSafeAreaInsets } from "react-native-safe-area-context";
+// import { UserContext } from "../../navigation/UserProvider";
+// import axios from "axios";
+// import { API_URL } from "@env";
+
+// const { width, height } = Dimensions.get("window");
+
+// // Adjust if needed:
+// const HEADER_HEIGHT = 60;
+// const TAB_BAR_HEIGHT = 60;
+// const containerHeight = height - HEADER_HEIGHT - TAB_BAR_HEIGHT;
+
+// const EventItem = React.memo(function EventItem({ item, index, shouldPlay }) {
+//   const navigation = useNavigation();
+//   const insets = useSafeAreaInsets();
+
+//   // Calculate available height dynamically
+//   const dynamicHeight =
+//     height - insets.top - insets.bottom - HEADER_HEIGHT - TAB_BAR_HEIGHT;
+
+//   const [isPlayerReady, setIsPlayerReady] = useState(false);
+//   const [isPlaying, setIsPlaying] = useState(false);
+
+//   // Create a ref to the <Video> component
+//   const videoRef = useRef(null);
+
+//   // Access the user context for vibes, etc.
+//   const { userId } = useContext(UserContext);
+
+//   // State for vibes
+//   const [vibesCount, setVibesCount] = useState(item.vibes?.length || 0);
+//   const [hasVibed, setHasVibed] = useState(
+//     item.vibes?.includes(userId) || false
+//   );
+
+//   // Keep hasVibed in sync with item.vibes
+//   useEffect(() => {
+//     if (item.vibes?.includes(userId)) {
+//       setHasVibed(true);
+//     } else {
+//       setHasVibed(false);
+//     }
+//   }, [item.vibes, userId]);
+
+//   // On mount, set up playback status updates
+//   useEffect(() => {
+//     if (!videoRef.current) return;
+
+//     // Listen for playback status changes
+//     videoRef.current.setOnPlaybackStatusUpdate((status) => {
+//       // We'll track 'isPlaying' from status
+//       if (status.isLoaded) {
+//         setIsPlaying(status.isPlaying);
+//       }
+//     });
+//   }, [videoRef]);
+
+//   // Auto-play / auto-pause whenever `shouldPlay` toggles
+//   useEffect(() => {
+//     // Only proceed once we have a ref and the video is loaded
+//     if (!videoRef.current || !isPlayerReady) return;
+
+//     if (shouldPlay) {
+//       videoRef.current.playAsync().catch((err) => console.warn(err));
+//     } else {
+//       videoRef.current.pauseAsync().catch((err) => console.warn(err));
+//     }
+//   }, [shouldPlay, isPlayerReady]);
+
+//   // Vibe handler
+//   const handleVibe = async () => {
+//     try {
+//       const response = await axios.post(
+//         `${API_URL}/api/events/${item._id}/vibe`,
+//         {
+//           userId,
+//         }
+//       );
+//       if (response.status === 200) {
+//         const { vibesCount } = response.data;
+//         setVibesCount(vibesCount);
+//         setHasVibed((prev) => !prev);
+//       }
+//     } catch (error) {
+//       console.error("Error vibing event:", error);
+//     }
+//   };
+
+//   // Manual play/pause button
+//   const handlePlayPause = async () => {
+//     if (!videoRef.current) return;
+//     if (isPlaying) {
+//       await videoRef.current.pauseAsync();
+//     } else {
+//       await videoRef.current.playAsync();
+//     }
+//   };
+
+//   // useFocusEffect(
+//   //   React.useCallback(() => {
+//   //     // When the screen is focused, do nothing
+//   //     return () => {
+//   //       // When the screen is unfocused, pause the video
+//   //       if (videoRef.current && isPlaying) {
+//   //         videoRef.current
+//   //           .pauseAsync()
+//   //           .catch((err) => console.warn("Error pausing video on blur:", err));
+//   //       }
+//   //     };
+//   //   }, [videoRef, isPlaying])
+//   // );
+
+//   // You can optionally unmount the <Video> if `shouldPlay` is false:
+//   //   {shouldPlay && (<Video>...</Video>)}
+//   // This frees memory off-screen.
+//   // For demonstration, we'll KEEP the video mounted but just pause it if not active.
+//   // If you want to unmount, wrap <Video> in {shouldPlay && (...)}.
+
+//   return (
+//     <View style={[styles.videoContainer, { width, height: dynamicHeight }]}>
+//       {shouldPlay && (
+//         <Video
+//           ref={videoRef}
+//           source={{ uri: item.videoUrl }}
+//           // style={styles.video}
+//           style={StyleSheet.absoluteFill}
+//           // resizeMode="cover" // Similar to expo-video's 'cover'
+//           resizeMode={ResizeMode.CONTAIN}
+//           useNativeControls={false} // If you want default native controls or not
+//           isLooping={true} // Or true, if you prefer looping
+//           onReadyForDisplay={() => setIsPlayerReady(true)}
+//           // These next two only matter if you want PiP or background in expo-av
+//           // posterSource={...} // optional poster
+//           // shouldPlay={false} // We control it manually, so set false here
+//         />
+//       )}
+
+//       <View style={styles.bottom}>
+//         {/* Event Details */}
+//         <TouchableOpacity
+//           style={styles.overlay}
+//           onPress={() =>
+//             navigation.navigate("EventDetailsScreen", { eventId: item._id })
+//           }
+//         >
+//           <View style={styles.bottomInfo}>
+//             <Text style={styles.eventTitle}>{item.title}</Text>
+//             <Text style={styles.organizer}>By {item.organizer}</Text>
+//           </View>
+//         </TouchableOpacity>
+
+//         {/* Vibe Button */}
+//         <View style={{ flexDirection: "row", alignItems: "center" }}>
+//           <TouchableOpacity onPress={handleVibe} style={styles.vibeButton}>
+//             <Text style={styles.vibeButtonText}>
+//               {hasVibed ? "Vibed" : "Vibe it"}
+//             </Text>
+//           </TouchableOpacity>
+//           <Text style={{ marginLeft: 8, color: "#fff" }}>
+//             {vibesCount} vibes
+//           </Text>
+//         </View>
+
+//         {/* Play/Pause Button */}
+//         {/* <View style={styles.buttonContainer}>
+//           <TouchableOpacity
+//             onPress={handlePlayPause}
+//             style={styles.playPauseButton}
+//           >
+//             <MaterialCommunityIcons
+//               name={isPlaying ? "pause-circle" : "play-circle"}
+//               size={30}
+//               color="#fff"
+//             />
+//           </TouchableOpacity>
+//         </View> */}
+//       </View>
+//     </View>
+//   );
+// });
+
+// export default EventItem;
+
+// const styles = StyleSheet.create({
+//   // videoContainer: {
+//   //   width,
+//   //   height: containerHeight,
+//   //   position: "relative",
+//   //   overflow: "hidden",
+//   //   backgroundColor: "#fff",
+//   //   marginBottom: 20,
+//   //   borderWidth: 1,
+//   //   borderColor: "red",
+//   // },
+//   videoContainer: {
+//     position: "relative",
+//     overflow: "hidden",
+//     backgroundColor: "#fff",
+//   },
+//   video: {
+//     width,
+//     height: containerHeight,
+//   },
+//   bottom: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     justifyContent: "space-between",
+//     paddingHorizontal: 10,
+//     paddingVertical: 15,
+//     backgroundColor: "rgba(0, 0, 0, 0.7)",
+//     position: "absolute",
+//     bottom: 0,
+//     width: "100%",
+//   },
+//   overlay: {
+//     flex: 1,
+//     padding: 10,
+//   },
+//   bottomInfo: {
+//     flex: 1,
+//     paddingHorizontal: 10,
+//   },
+//   eventTitle: {
+//     color: "#fff",
+//     fontSize: 18,
+//     fontFamily: "CenturyGothicBold",
+//   },
+//   organizer: {
+//     color: "#ddd",
+//     fontSize: 14,
+//     fontFamily: "CenturyGothic",
+//   },
+//   vibeButton: {
+//     backgroundColor: "#f44336",
+//     paddingHorizontal: 12,
+//     paddingVertical: 8,
+//     borderRadius: 20,
+//   },
+//   vibeButtonText: {
+//     color: "#fff",
+//     fontFamily: "CenturyGothicBold",
+//     fontSize: 14,
+//   },
+//   buttonContainer: {
+//     paddingHorizontal: 10,
+//   },
+//   playPauseButton: {
+//     backgroundColor: "transparent",
+//     paddingHorizontal: 10,
+//     paddingVertical: 8,
+//     borderRadius: 5,
+//     alignItems: "center",
+//     justifyContent: "center",
+//   },
+// });
+
 import React, { useContext, useEffect, useState, useRef } from "react";
 import {
   View,
@@ -234,6 +503,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  StyleSheet as RNStyleSheet,
 } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -245,22 +515,35 @@ import { API_URL } from "@env";
 
 const { width, height } = Dimensions.get("window");
 
-// Adjust if needed:
+// Constants for header and tab bar heights
 const HEADER_HEIGHT = 60;
 const TAB_BAR_HEIGHT = 60;
-const containerHeight = height - HEADER_HEIGHT - TAB_BAR_HEIGHT;
 
-const EventItem = React.memo(function EventItem({ item, index, shouldPlay }) {
+const EventItem = React.memo(function EventItem({
+  item,
+  index,
+  shouldPlay,
+  hasTabBar = true, // New prop: defaults to true
+}) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+
+  // Calculate available height dynamically:
+  // Subtract the tab bar height only if hasTabBar is true.
+  const dynamicHeight =
+    height -
+    insets.top -
+    insets.bottom -
+    HEADER_HEIGHT -
+    (hasTabBar ? TAB_BAR_HEIGHT : 0);
 
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Create a ref to the <Video> component
+  // Create a ref for the Video component
   const videoRef = useRef(null);
 
-  // Access the user context for vibes, etc.
+  // Access user context (e.g., for vibes)
   const { userId } = useContext(UserContext);
 
   // State for vibes
@@ -269,31 +552,24 @@ const EventItem = React.memo(function EventItem({ item, index, shouldPlay }) {
     item.vibes?.includes(userId) || false
   );
 
-  // Keep hasVibed in sync with item.vibes
+  // Sync hasVibed with item.vibes
   useEffect(() => {
-    if (item.vibes?.includes(userId)) {
-      setHasVibed(true);
-    } else {
-      setHasVibed(false);
-    }
+    setHasVibed(item.vibes?.includes(userId) || false);
   }, [item.vibes, userId]);
 
-  // On mount, set up playback status updates
+  // Setup playback status updates on mount
   useEffect(() => {
     if (!videoRef.current) return;
 
-    // Listen for playback status changes
     videoRef.current.setOnPlaybackStatusUpdate((status) => {
-      // We'll track 'isPlaying' from status
       if (status.isLoaded) {
         setIsPlaying(status.isPlaying);
       }
     });
   }, [videoRef]);
 
-  // Auto-play / auto-pause whenever `shouldPlay` toggles
+  // Auto-play/pause based on shouldPlay prop
   useEffect(() => {
-    // Only proceed once we have a ref and the video is loaded
     if (!videoRef.current || !isPlayerReady) return;
 
     if (shouldPlay) {
@@ -303,14 +579,12 @@ const EventItem = React.memo(function EventItem({ item, index, shouldPlay }) {
     }
   }, [shouldPlay, isPlayerReady]);
 
-  // Vibe handler
+  // Handler for vibing
   const handleVibe = async () => {
     try {
       const response = await axios.post(
         `${API_URL}/api/events/${item._id}/vibe`,
-        {
-          userId,
-        }
+        { userId }
       );
       if (response.status === 200) {
         const { vibesCount } = response.data;
@@ -322,51 +596,17 @@ const EventItem = React.memo(function EventItem({ item, index, shouldPlay }) {
     }
   };
 
-  // Manual play/pause button
-  const handlePlayPause = async () => {
-    if (!videoRef.current) return;
-    if (isPlaying) {
-      await videoRef.current.pauseAsync();
-    } else {
-      await videoRef.current.playAsync();
-    }
-  };
-
-  useFocusEffect(
-    React.useCallback(() => {
-      // When the screen is focused, do nothing
-      return () => {
-        // When the screen is unfocused, pause the video
-        if (videoRef.current && isPlaying) {
-          videoRef.current
-            .pauseAsync()
-            .catch((err) => console.warn("Error pausing video on blur:", err));
-        }
-      };
-    }, [videoRef, isPlaying])
-  );
-
-  // You can optionally unmount the <Video> if `shouldPlay` is false:
-  //   {shouldPlay && (<Video>...</Video>)}
-  // This frees memory off-screen.
-  // For demonstration, we'll KEEP the video mounted but just pause it if not active.
-  // If you want to unmount, wrap <Video> in {shouldPlay && (...)}.
-
   return (
-    <View style={styles.videoContainer}>
+    <View style={[styles.videoContainer, { width, height: dynamicHeight }]}>
       {shouldPlay && (
         <Video
           ref={videoRef}
           source={{ uri: item.videoUrl }}
-          style={styles.video}
-          // resizeMode="cover" // Similar to expo-video's 'cover'
+          style={RNStyleSheet.absoluteFill}
           resizeMode={ResizeMode.CONTAIN}
-          useNativeControls={false} // If you want default native controls or not
-          isLooping={true} // Or true, if you prefer looping
+          useNativeControls={false}
+          isLooping={true}
           onReadyForDisplay={() => setIsPlayerReady(true)}
-          // These next two only matter if you want PiP or background in expo-av
-          // posterSource={...} // optional poster
-          // shouldPlay={false} // We control it manually, so set false here
         />
       )}
 
@@ -385,7 +625,13 @@ const EventItem = React.memo(function EventItem({ item, index, shouldPlay }) {
         </TouchableOpacity>
 
         {/* Vibe Button */}
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 20,
+          }}
+        >
           <TouchableOpacity onPress={handleVibe} style={styles.vibeButton}>
             <Text style={styles.vibeButtonText}>
               {hasVibed ? "Vibed" : "Vibe it"}
@@ -395,20 +641,6 @@ const EventItem = React.memo(function EventItem({ item, index, shouldPlay }) {
             {vibesCount} vibes
           </Text>
         </View>
-
-        {/* Play/Pause Button */}
-        {/* <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            onPress={handlePlayPause}
-            style={styles.playPauseButton}
-          >
-            <MaterialCommunityIcons
-              name={isPlaying ? "pause-circle" : "play-circle"}
-              size={30}
-              color="#fff"
-            />
-          </TouchableOpacity>
-        </View> */}
       </View>
     </View>
   );
@@ -418,18 +650,9 @@ export default EventItem;
 
 const styles = StyleSheet.create({
   videoContainer: {
-    width,
-    height: containerHeight,
     position: "relative",
     overflow: "hidden",
     backgroundColor: "#fff",
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "red",
-  },
-  video: {
-    width,
-    height: containerHeight,
   },
   bottom: {
     flexDirection: "row",
@@ -461,7 +684,7 @@ const styles = StyleSheet.create({
     fontFamily: "CenturyGothic",
   },
   vibeButton: {
-    backgroundColor: "#f44336",
+    backgroundColor: "#290F4C",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
@@ -470,16 +693,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontFamily: "CenturyGothicBold",
     fontSize: 14,
-  },
-  buttonContainer: {
-    paddingHorizontal: 10,
-  },
-  playPauseButton: {
-    backgroundColor: "transparent",
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 5,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

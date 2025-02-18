@@ -1319,10 +1319,11 @@ export default function FeedScreen({
         item={item}
         index={index}
         // activeIndex={activeIndex}
-        shouldPlay={index === activeIndex}
+        // shouldPlay={index === activeIndex}    1st working one
+        shouldPlay={shouldPlay && index === activeIndex}
       />
     ),
-    [activeIndex]
+    [shouldPlay, activeIndex]
   );
 
   const renderFooter = useCallback(() => {
@@ -1345,8 +1346,23 @@ export default function FeedScreen({
     }
   }, [token, userId, fetchCombinedEvents]);
 
+  /////////////////////////////////////////////////////////////////////////
+  useFocusEffect(
+    useCallback(() => {
+      // When the screen is focused, allow videos to play
+      setShouldPlay(true);
+
+      return () => {
+        // When the screen is unfocused, prevent videos from playing
+        setShouldPlay(false);
+      };
+    }, [])
+  );
+
+  ////////////////////////////////////////////////////////////////////////
   // Key extractor using only unique identifier
-  const keyExtractor = useCallback((item) => `${item._id}`, []);
+  // const keyExtractor = useCallback((item) => `${item._id}`, []); 1st working
+  const keyExtractor = useCallback((item) => item._id, []);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
@@ -1442,7 +1458,7 @@ const styles = StyleSheet.create({
     fontFamily: "CenturyGothicBold",
   },
   footerContainer: {
-    // paddingVertical: 20,
+    paddingVertical: 20,
     paddingBottom: 80,
     alignItems: "center",
     justifyContent: "center",

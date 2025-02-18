@@ -76,6 +76,7 @@ const CreateEventScreen = ({ navigation }) => {
   const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
   const [startDate, setStartDate] = useState(null);
   const [startTime, setStartTime] = useState(null);
+
   // Show/hide functions
 
   const [videoThumbnailUrl, setVideoThumbnailUrl] = useState(null);
@@ -103,6 +104,20 @@ const CreateEventScreen = ({ navigation }) => {
     };
 
     loadCountries();
+  }, []);
+
+  useEffect(() => {
+    // Request media library permissions when the component mounts
+    (async () => {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission required",
+          "We need camera roll permissions to make this work!"
+        );
+      }
+    })();
   }, []);
 
   const handleState = useCallback((countryCode) => {
@@ -138,54 +153,31 @@ const CreateEventScreen = ({ navigation }) => {
     setShowGenreDropdown((prev) => !prev);
   };
 
-  // const pickMedia = async (index, setImageArray, imageArray, type) => {
-  //   let options = {
-  //     mediaTypes: type,
-  //     allowsEditing: true,
-  //     quality: 1,
-  //   };
-  //   let result = await ImagePicker.launchImageLibraryAsync(options);
-  //   if (!result.canceled) {
-  //     const uri = result.assets[0]?.uri;
-  //     if (typeof uri === "string") {
-  //       const newImages = [...imageArray];
-  //       newImages[index] = uri;
-  //       setImageArray(newImages);
-  //     } else {
-  //       console.error("Invalid URI:", uri);
-  //     }
-  //   }
-  // };
-
-  const pickMedia = async (index, imageArray, type) => {
-    let options = {
-      mediaTypes: type,
-      allowsEditing: true,
-      quality: 1,
-    };
-    const result = await ImagePicker.launchImageLibraryAsync(options);
-    if (!result.canceled) {
-      const uri = result.assets[0]?.uri;
-      if (typeof uri === "string") {
-        // Update images array
-        const newImages = [...imageArray];
-        newImages[index] = uri;
-        setImages(newImages);
-      } else {
-        console.error("Invalid URI:", uri);
+  const pickImage = async (index) => {
+    try {
+      const options = {
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, // <-- Use MediaTypeOptions
+        allowsEditing: true,
+        quality: 1,
+      };
+      const result = await ImagePicker.launchImageLibraryAsync(options);
+      if (!result.canceled) {
+        const uri = result.assets[0].uri;
+        if (typeof uri === "string") {
+          // Update images array
+          const newImages = [...images];
+          newImages[index] = uri;
+          setImages(newImages);
+        }
       }
+    } catch (error) {
+      console.log("Error opening image picker:", error);
     }
   };
 
-  // const pickImage = (index) =>
-  //   pickMedia(index, setImages, images, ImagePicker.MediaType.Images);
-
-  const pickImage = (index) =>
-    pickMedia(index, images, ImagePicker.MediaType.Images);
-
   const pickVideo = async () => {
     let options = {
-      mediaTypes: ImagePicker.MediaType.Videos,
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
       allowsEditing: true,
       quality: 1,
     };
@@ -194,12 +186,11 @@ const CreateEventScreen = ({ navigation }) => {
       const uri = result.assets[0]?.uri;
       if (typeof uri === "string") {
         setVideoUrl(uri);
+        // Optionally generate a thumbnail using expo-av
         const { uri: thumbnailUri } = await Video.createThumbnailAsync(uri, {
-          time: 5000, // Time in milliseconds (e.g., 5000 for 5 seconds)
+          time: 5000,
         });
-        setVideoThumbnailUrl(thumbnailUri); // Store the thumbnail URL
-      } else {
-        console.error("Invalid video URL:", uri);
+        setVideoThumbnailUrl(thumbnailUri);
       }
     }
   };
@@ -227,46 +218,40 @@ const CreateEventScreen = ({ navigation }) => {
     hideTimePicker();
   };
 
-  const uploadFile = async (fileUri, type) => {
-    const data = new FormData();
-    data.append("file", {
-      uri: fileUri,
-      type: type === "image" ? "image/jpeg" : "video/mp4",
-      name: type === "image" ? "image.jpg" : "video.mp4",
-    });
-    data.append(
-      "upload_preset",
-      type === "image" ? "images_preset" : "videos_preset"
-    );
-
-    try {
-      let cloudName = CLOUDINARY_CLOUD_NAME;
-      let resourceType = type === "image" ? "image" : "video";
-      let api = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
-
-      const res = await axios.post(api, data);
-      const { secure_url } = res.data;
-      console.log(secure_url);
-      return secure_url;
-    } catch (error) {
-      console.log(error);
-      return null;
-    }
+  const generateUniqueFileName = (originalFileName, type) => {
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 8);
+    const extension = type === "image" ? "jpg" : "mp4";
+    return `${timestamp}-${randomString}.${extension}`;
   };
 
-  // const handleDeleteImage = (index) => {
-  //   // Create a copy of the current images array
-  //   const updatedImages = [...images];
+  const uploadFileToS3 = async (fileUri, type) => {
+    try {
+      const folder = type === "image" ? "mm_images" : "mm_videos";
+      const fileType = type === "image" ? "image/jpeg" : "video/mp4";
+      const originalFileName = fileUri.split("/").pop();
+      const uniqueFileName = generateUniqueFileName(originalFileName, type);
 
-  //   // Remove the image at the specified index
-  //   updatedImages.splice(index, 1);
+      const { data } = await axios.post(`${API_URL}/api/s3-presigned-url`, {
+        folder,
+        fileType,
+        fileName: uniqueFileName,
+      });
 
-  //   // Update the state with the new images array
-  //   setImages(updatedImages);
+      const { uploadUrl, key } = data;
+      const fileResponse = await fetch(fileUri);
+      const blob = await fileResponse.blob();
 
-  //   // Optionally, you can also hide the delete icon after deleting
-  //   setShowDeleteIcon(null);
-  // };
+      await axios.put(uploadUrl, blob, {
+        headers: { "Content-Type": fileType },
+      });
+
+      return key;
+    } catch (error) {
+      console.error("Error uploading to S3:", error);
+      throw error;
+    }
+  };
 
   const fetchLocationCoordinates = async (
     baseAddress,
@@ -333,20 +318,22 @@ const CreateEventScreen = ({ navigation }) => {
       }
 
       // Step 2: Prepare date and time in the required format
-      const formattedDate = startDate ? new Date(startDate).toISOString() : "";
-      const formattedTime = startTime
-        ? startTime.toTimeString().split(" ")[0]
-        : "";
+      // const formattedDate = startDate ? new Date(startDate).toISOString() : "";
+      // const formattedTime = startTime
+      //   ? startTime.toTimeString().split(" ")[0]
+      //   : "";
 
       // Step 3: Upload images and video if available
       const uploadedImages = await Promise.all(
         images.map(async (image) =>
-          image ? await uploadFile(image, "image") : null
+          image ? await uploadFileToS3(image, "image") : null
         )
       );
+
       const validImages = uploadedImages.filter(Boolean);
+
       const uploadedVideo = videoUrl
-        ? await uploadFile(videoUrl, "video")
+        ? await uploadFileToS3(videoUrl, "video")
         : null;
 
       // Step 4: Fetch coordinates based on baseAddress
@@ -372,6 +359,11 @@ const CreateEventScreen = ({ navigation }) => {
         longitude,
       };
 
+      const formattedDate = startDate ? new Date(startDate).toISOString() : "";
+      const formattedTime = startTime
+        ? startTime.toTimeString().split(" ")[0]
+        : "";
+
       // Step 5: Assemble event data
       const eventData = {
         userId,
@@ -383,7 +375,7 @@ const CreateEventScreen = ({ navigation }) => {
         artists: [{ name: artistName, role: "Artist" }],
         location: locationData,
         genre: eventGenre,
-        images: validImages.map((url) => ({ url })),
+        images: validImages.map((key) => ({ url: key })),
         videoUrl: uploadedVideo,
         ticketPrice: parseFloat(ticketPrice),
       };
