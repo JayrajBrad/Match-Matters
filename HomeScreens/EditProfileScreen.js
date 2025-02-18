@@ -56,12 +56,14 @@ const preferences = [
 ];
 
 const EditProfileScreen = () => {
+  const { user, userId, setUser } = useContext(UserContext);
+
   const navigation = useNavigation();
   const [username, setUsername] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [gender, setGender] = useState("");
   const [profileImages, setProfileImages] = useState([]);
-  const { user, userId } = useContext(UserContext);
+  const [objectKeys, setObjectKeys] = useState([]);
   // const [userId, setUserId] = useState("");
   const [selectedPreferences, setSelectedPreferences] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -95,10 +97,10 @@ const EditProfileScreen = () => {
   const { height } = Dimensions.get("screen");
 
   const bottomSheetRef = useRef(null);
-  const bottomSheetRef2 = useRef(null);
+  // const bottomSheetRef2 = useRef(null);
 
   const [currentField, setCurrentField] = useState("");
-  const [currentValue, setCurrentValue] = useState("");
+  // const [currentValue, setCurrentValue] = useState("");
   const [options, setOptions] = useState([]);
 
   const predefinedOptions = {
@@ -286,8 +288,29 @@ const EditProfileScreen = () => {
       setLoading(true);
       try {
         const response = await axios.get(`${API_URL}/user/${userId}`);
+        console.log("fetched user:", response.data);
         if (response.status === 200) {
           const userDataFromDB = response.data;
+
+          const s3Keys = userDataFromDB.images || [];
+
+          // 2) For each key, fetch a read pre-signed URL from your backend
+          const readUrls = await Promise.all(
+            s3Keys.map(async (key) => {
+              const { data } = await axios.get(
+                `${API_URL}/api/s3-presigned-url?key=${encodeURIComponent(key)}`
+              );
+              console.log(
+                "Pre-signed GET URL for",
+                key,
+                ":",
+                data.preSignedUrl
+              );
+              return data.preSignedUrl; // short-lived GET URL
+            })
+          );
+          setProfileImages(readUrls);
+          setObjectKeys(s3Keys);
 
           setUserData({
             lookingFor: userDataFromDB.aboutYou?.lookingFor || "Not specified",
@@ -311,7 +334,7 @@ const EditProfileScreen = () => {
             userDataFromDB.phoneNumber ? String(userDataFromDB.phoneNumber) : ""
           );
           setGender(userDataFromDB.gender || "");
-          setProfileImages(userDataFromDB.images || []);
+
           setSelectedPreferences(userDataFromDB.selectedPreferences || []);
 
           // Country, state, city
@@ -347,51 +370,109 @@ const EditProfileScreen = () => {
     );
   }
 
+  // const changeProfileImage = async () => {
+  //   const result = await ImagePicker.launchImageLibraryAsync({
+  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //     allowsEditing: true,
+  //     aspect: [4, 3],
+  //     quality: 1,
+  //   });
+  //   if (!result.canceled) {
+  //     setProfileImages([...profileImages, result.assets[0].uri]);
+  //   }
+  // };
+
+  // const handleDeleteImage = (index) => {
+  //   const updatedImages = [...profileImages];
+  //   updatedImages.splice(index, 1);
+  //   setProfileImages(updatedImages);
+  // };
+
+  const handleDeleteImage = (index) => {
+    // Remove the object key
+    const newKeys = [...objectKeys];
+    newKeys.splice(index, 1);
+    setObjectKeys(newKeys);
+
+    // Remove the displayed pre-signed URL
+    const newUrls = [...profileImages];
+    newUrls.splice(index, 1);
+    setProfileImages(newUrls);
+  };
+
   const changeProfileImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-    if (!result.canceled) {
-      setProfileImages([...profileImages, result.assets[0].uri]);
+    try {
+      // Ask user to pick an image
+      const pickerResult = await ImagePicker.launchImageLibraryAsync({
+        // If your expo-image-picker version is old, use MediaTypeOptions.Images
+        // or the new "photo" string:
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!pickerResult.canceled) {
+        // 1) Upload to S3. Suppose your function returns { key, readUrl }
+        const localUri = pickerResult.assets[0].uri;
+        const { key, readUrl } = await uploadToS3(localUri);
+
+        // 2) Add the new key + readUrl to our state
+        setObjectKeys([...objectKeys, key]);
+        setProfileImages([...profileImages, readUrl]);
+      }
+    } catch (error) {
+      console.error("Error picking/uploading image:", error);
     }
   };
 
-  const handleDeleteImage = (index) => {
-    const updatedImages = [...profileImages];
-    updatedImages.splice(index, 1);
-    setProfileImages(updatedImages);
+  const uploadToS3 = async (localUri) => {
+    // 1) call an endpoint for a pre-signed *upload* URL
+    // (the logic is similar to your other screens)
+    const folder = "mm_profilePic";
+    const fileType = "image/jpeg";
+    const uniqueFileName = Date.now() + ".jpg";
+
+    const { data } = await axios.post(`${API_URL}/api/s3-presigned-url`, {
+      folder,
+      fileType,
+      fileName: uniqueFileName,
+    });
+    const { uploadUrl, key } = data;
+
+    console.log("Pre-signed upload URL:", uploadUrl);
+    console.log("fileType", fileType);
+
+    // 2) do the PUT
+    const fileResponse = await fetch(localUri);
+    const blob = await fileResponse.blob();
+
+    console.log("Upload URL:", uploadUrl);
+    console.log("Blob before upload:", blob);
+    console.log("Blob size:", blob.size);
+
+    // 6) Upload to S3 using the pre-signed URL
+    await fetch(uploadUrl, {
+      method: "PUT",
+      body: blob, // Use blob directly
+      headers: {
+        "Content-Type": fileType,
+        "Content-Length": blob.size, // Make sure MIME type is correct
+      },
+    });
+
+    // await axios.put(uploadUrl, blob, { headers: { "Content-Type": fileType } });
+
+    // 3) get a read pre-signed URL for immediate display
+    const getRes = await axios.get(
+      `${API_URL}/api/s3-presigned-url?key=${encodeURIComponent(key)}`
+    );
+    return { key, readUrl: getRes.data.preSignedUrl };
   };
 
   const handleUpdateProfile = async () => {
     setLoading(true);
     try {
-      const uploadedImageUrls = await Promise.all(
-        profileImages.map(async (imageUri) => {
-          if (!imageUri.startsWith("http")) {
-            const formData = new FormData();
-            formData.append("file", {
-              uri: imageUri,
-              type: "image/png",
-              name: "photo.png",
-            });
-            formData.append("upload_preset", "profilepic_preset");
-            formData.append("folder", "profile_pictures");
-
-            const uploadResponse = await axios.post(
-              `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-              formData,
-              { headers: { "Content-Type": "multipart/form-data" } }
-            );
-            return uploadResponse.data.secure_url;
-          }
-          return imageUri;
-        })
-      );
-
-      // Sanitize userData
       const sanitizedUserData = {
         ...userData,
 
@@ -427,23 +508,32 @@ const EditProfileScreen = () => {
         phoneNumber,
         gender,
         selectedPreferences,
-        images: uploadedImageUrls,
+        images: objectKeys,
         countryName,
         stateName,
         cityName,
         userData: sanitizedUserData,
       });
 
-      // console.log("Update user :", response);
+      console.log("Update user :", response);
 
       if (response.status === 200) {
-        await AsyncStorage.setItem("username", username);
-        await AsyncStorage.setItem("phoneNumber", phoneNumber);
-        await AsyncStorage.setItem("gender", gender);
-        await AsyncStorage.setItem(
-          "selectedPreferences",
-          JSON.stringify(selectedPreferences)
-        );
+        console.log("Profile updated successfully!");
+
+        console.log("Before updating setUser, user is:", user);
+        setUser((prevUser) => ({
+          ...prevUser,
+          username,
+          phoneNumber,
+          gender,
+          selectedPreferences,
+          images: objectKeys, // Ensure images update
+          countryName,
+          stateName,
+          cityName,
+          userData,
+        }));
+
         Alert.alert("Success", "Profile updated successfully!");
         navigation.goBack();
       } else {
@@ -473,30 +563,10 @@ const EditProfileScreen = () => {
     <GestureHandlerRootView style={styles.container}>
       {/* <KeyboardAvoidingView style={styles.keycontainer} behavior="padding"> */}
       <ScrollView style={styles.scrollContainer}>
-        {/* <View
-          style={{
-            // padding: 10,
-            // backgroundColor: "#0F3460",
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-        >
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={{
-              backgroundColor: "#0F3460",
-              padding: 10,
-              borderRadius: 20,
-              alignItems: "center",
-              justifyContent: "center",
-              marginRight: 10,
-            }}
-          >
-            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View> */}
         <View style={styles.card}>
           <View style={styles.imageSection}>
+            {/* {console.log("profileImages:", profileImages)} */}
+
             {profileImages.map((uri, index) => (
               <TouchableOpacity
                 key={index}
@@ -504,7 +574,8 @@ const EditProfileScreen = () => {
                 onPress={() => setShowDeleteIcon(null)}
                 style={styles.profileImageWrapper}
               >
-                <Image source={{ uri }} style={styles.profileImage} />
+                <Image source={{ uri: uri }} style={styles.profileImage} />
+
                 {showDeleteIcon === index && (
                   <TouchableOpacity
                     style={styles.deleteIconWrapper}
@@ -839,6 +910,8 @@ const styles = StyleSheet.create({
     margin: 10,
     borderRadius: 10,
     overflow: "hidden",
+    backgroundColor: "grey",
+
     // elevation: 3,
   },
   profileImage: {

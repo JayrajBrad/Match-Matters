@@ -14,7 +14,7 @@ const userSchema = new Schema({
   },
   countryCode: {
     type: String,
-    required: true,
+    required: false,
   },
   emailId: {
     type: String,
@@ -156,7 +156,7 @@ const userSchema = new Schema({
   pushToken: {
     type: String,
     default: null, // Ensures the field exists even if no value is set
-  }
+  },
 });
 
 const User = mongoose.model("User", userSchema);

@@ -859,6 +859,10 @@ const Filter = ({
             search
             onChange={handleCountryChange}
             containerStyle={styles.dropdown}
+            // placeholderStyle={styles.placeholderStyle}
+            // selectedTextStyle={styles.selectedTextStyle}
+            // inputSearchStyle={styles.inputSearchStyle}
+            // iconStyle={styles.iconStyle}
           />
         )}
 

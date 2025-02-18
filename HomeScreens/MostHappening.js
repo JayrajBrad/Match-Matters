@@ -261,9 +261,6 @@
 //   },
 // });
 
-
-
-
 // MostHappeningScreen.js
 
 // import React, { useEffect, useState, useRef, useContext, useCallback } from "react";
@@ -611,11 +608,15 @@
 // //   },
 // // });
 
-
-
 // MostHappeningScreen.js
 
-import React, { useEffect, useState, useRef, useContext, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useContext,
+  useCallback,
+} from "react";
 import {
   View,
   Text,
@@ -717,16 +718,23 @@ export default function MostHappeningScreen({
           setIsLoadingMore(true);
         }
 
-        const response = await axios.get(`${API_URL}/api/events/most-happening`, {
-          params: {
-            page,
-            limit: EVENTS_PER_PAGE,
-          },
-        });
+        const response = await axios.get(
+          `${API_URL}/api/events/most-happening`,
+          {
+            params: {
+              page,
+              limit: EVENTS_PER_PAGE,
+            },
+          }
+        );
 
         if (response.status === 200 && response.data) {
-          const { events: newEvents, totalCount, currentPage, totalPages } =
-            response.data;
+          const {
+            events: newEvents,
+            totalCount,
+            currentPage,
+            totalPages,
+          } = response.data;
 
           if (page === 1) {
             setEvents(newEvents);
@@ -780,7 +788,13 @@ export default function MostHappeningScreen({
         setIsLoadingMore(false);
       }
     }
-  }, [loading, isLoadingMore, hasMoreEvents, currentPage, fetchMostHappeningEvents]);
+  }, [
+    loading,
+    isLoadingMore,
+    hasMoreEvents,
+    currentPage,
+    fetchMostHappeningEvents,
+  ]);
 
   // Track viewable items to determine activeIndex
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
@@ -801,6 +815,7 @@ export default function MostHappeningScreen({
         item={item}
         index={index}
         shouldPlay={shouldPlay && index === activeIndex} // Updated line
+        hasTabBar={false}
       />
     ),
     [shouldPlay, activeIndex]
@@ -844,30 +859,6 @@ export default function MostHappeningScreen({
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
-      {/* Modal for Filter */}
-      {/* <Modal
-        visible={filterVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={toggleFilterModal}
-      >
-        <View style={modalStyles.modalOverlay}>
-          <View style={modalStyles.modalContent}>
-            <Filter
-              setFilteredEvents={setFilteredEvents}
-              loadEvents={fetchMostHappeningEvents}
-              // setGenre, etc. if needed
-            />
-            <TouchableOpacity
-              style={modalStyles.closeButton}
-              onPress={toggleFilterModal}
-            >
-              <Text style={modalStyles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal> */}
-
       {/* Display a loader if loading */}
       {loading && events.length === 0 && (
         <View style={styles.loaderContainer}>
@@ -910,7 +901,7 @@ export default function MostHappeningScreen({
 
 // Styles
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: "#000" },
   loaderContainer: {
     flex: 1,
     justifyContent: "center",
@@ -945,4 +936,3 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
 });
-

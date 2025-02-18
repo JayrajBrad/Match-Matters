@@ -1,16 +1,49 @@
 const User = require("../models/user");
 
+// exports.sendRequest = async (req, res) => {
+//   const { senderId, receiverId } = req.body;
+//   const receiver = await User.findById(receiverId);
+
+//   if (!receiver) {
+//     return res.status(404).json({ error: "Receiver not found" });
+//   }
+//   receiver.requests.push({ from: senderId });
+//   await receiver.save();
+
+//   res.status(200).json({ message: "Request sent successfully" });
+// };
+
 exports.sendRequest = async (req, res) => {
   const { senderId, receiverId } = req.body;
-  const receiver = await User.findById(receiverId);
+  console.log("senderId:", senderId, "receiverId:", receiverId);
+  try {
+    const receiver = await User.findById(receiverId);
+    if (!receiver) {
+      return res.status(404).json({ message: "Receiver not found" });
+    }
 
-  if (!receiver) {
-    return res.status(404).json({ error: "Receiver not found" });
+    // 1) Check if they are already friends
+    if (receiver.friends.includes(senderId)) {
+      return res.status(200).json({ message: "already_friends" });
+    }
+
+    // 2) Check if a request from this user already exists
+    const existingRequest = receiver.requests.find(
+      (r) => r.from && r.from.toString() === senderId
+    );
+    if (existingRequest) {
+      return res.status(200).json({ message: "request_already_sent" });
+    }
+
+    // 3) Otherwise, push a new friend request
+    receiver.requests.push({ from: senderId });
+    await receiver.save();
+
+    return res.status(200).json({ message: "request_sent_successfully" });
+  } catch (error) {
+    console.error("Error sending request:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
-  receiver.requests.push({ from: senderId });
-  await receiver.save();
-
-  res.status(200).json({ message: "Request sent successfully" });
 };
 
 exports.getRequests = async (req, res) => {

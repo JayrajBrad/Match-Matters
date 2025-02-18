@@ -316,12 +316,6 @@
 //   },
 // });
 
-
-
-
-
-
-
 import {
   Pressable,
   StyleSheet,
@@ -410,16 +404,25 @@ const ChatScreen = () => {
       const chatsWithLatestMessages = await Promise.all(
         chatsData.map(async (chat) => {
           try {
-            const latestMessageResponse = await axios.get(`${API_URL}/api/latestMessage`, {
-              params: { senderId: userId, receiverId: chat._id },
-            });
+            const latestMessageResponse = await axios.get(
+              `${API_URL}/api/latestMessage`,
+              {
+                params: { senderId: userId, receiverId: chat._id },
+              }
+            );
             return {
               ...chat,
-              latestMessage: latestMessageResponse.data.message || "No messages yet",
-              latestMessageTime: latestMessageResponse.data.timeStamp || new Date(0),
+              latestMessage:
+                latestMessageResponse.data.message || "No messages yet",
+              latestMessageTime:
+                latestMessageResponse.data.timeStamp || new Date(0),
             };
           } catch (error) {
-            console.error("Error fetching latest message for chat ID:", chat._id, error);
+            console.error(
+              "Error fetching latest message for chat ID:",
+              chat._id,
+              error
+            );
             return {
               ...chat,
               latestMessage: "Error fetching message",
@@ -459,19 +462,31 @@ const ChatScreen = () => {
         if (newFriend) {
           // Fetch the latest message for the new friend
           try {
-            const latestMessageResponse = await axios.get(`${API_URL}/api/latestMessage`, {
-              params: { senderId: userId, receiverId: newFriend._id },
-            });
+            const latestMessageResponse = await axios.get(
+              `${API_URL}/api/latestMessage`,
+              {
+                params: { senderId: userId, receiverId: newFriend._id },
+              }
+            );
             const newFriendWithMessage = {
               ...newFriend,
-              latestMessage: latestMessageResponse.data.message || "No messages yet",
-              latestMessageTime: latestMessageResponse.data.timeStamp || new Date(0),
+              latestMessage:
+                latestMessageResponse.data.message || "No messages yet",
+              latestMessageTime:
+                latestMessageResponse.data.timeStamp || new Date(0),
             };
             setChats((prevChats) => [newFriendWithMessage, ...prevChats]);
           } catch (error) {
-            console.error("Error fetching latest message for new friend:", error);
+            console.error(
+              "Error fetching latest message for new friend:",
+              error
+            );
             setChats((prevChats) => [
-              { ...newFriend, latestMessage: "No messages yet", latestMessageTime: new Date(0) },
+              {
+                ...newFriend,
+                latestMessage: "No messages yet",
+                latestMessageTime: new Date(0),
+              },
               ...prevChats,
             ]);
           }
@@ -514,7 +529,8 @@ const ChatScreen = () => {
       // Ensure the message is relevant to the current user
       if (
         (latestMessage.senderId === userId && latestMessage.receiverId) ||
-        (latestMessage.senderId !== userId && latestMessage.receiverId === userId)
+        (latestMessage.senderId !== userId &&
+          latestMessage.receiverId === userId)
       ) {
         setChats((prevChats) => {
           // Determine the other user's ID
@@ -524,7 +540,9 @@ const ChatScreen = () => {
               : latestMessage.senderId;
 
           // Find the chat that corresponds to this message
-          const chatIndex = prevChats.findIndex((chat) => chat._id === otherUserId);
+          const chatIndex = prevChats.findIndex(
+            (chat) => chat._id === otherUserId
+          );
 
           if (chatIndex !== -1) {
             // Update the latest message and timestamp
@@ -716,4 +734,3 @@ const styles = StyleSheet.create({
     paddingTop: -50,
   },
 });
-

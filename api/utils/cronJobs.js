@@ -62,8 +62,6 @@
 
 // module.exports = initializeCronJobs;
 
-
-
 // utils/cronJobs.js
 
 const cron = require("node-cron");
@@ -117,7 +115,7 @@ const updateMostHappening = async () => {
  */
 const initializeCronJobs = () => {
   // Schedule the job to run at midnight every day
-  cron.schedule("* * * * *", () => {
+  cron.schedule("0 0 * * *", () => {
     updateMostHappening();
   });
 
@@ -128,7 +126,3 @@ const initializeCronJobs = () => {
 updateMostHappening();
 
 module.exports = initializeCronJobs;
-
-
-
-

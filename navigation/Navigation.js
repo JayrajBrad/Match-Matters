@@ -227,11 +227,6 @@ const BottomTabs = () => {
 
           headerTitle: () => (
             <View style={styles.logoContainer}>
-              <Image
-                source={require("../assets/MM - PNG.png")}
-                style={styles.logo}
-              />
-
               <TouchableOpacity
                 onPress={() => navigation.navigate("MostHappening")}
                 style={styles.filterIcon}
@@ -242,6 +237,12 @@ const BottomTabs = () => {
                   size={24}
                 />
               </TouchableOpacity>
+
+              <Image
+                source={require("../assets/MM - PNG.png")}
+                style={styles.logo}
+              />
+
               <TouchableOpacity
                 onPress={toggleFilterModal}
                 style={styles.filterIcon}

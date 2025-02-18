@@ -11,6 +11,8 @@ const requestRoutes = require("./routes/requestRoutes");
 const forgetPasswordRoutes = require("./routes/forgetPasswordRoutes");
 const authenticateToken = require("./middlewares/authenticateToken");
 const cloudinaryApp = require("./utils/cloudinary");
+const s3Routes = require("./utils/s3");
+
 const app = express();
 const port = 4000;
 
@@ -47,6 +49,7 @@ mongoose
   });
 
 app.use("/api", cloudinaryApp);
+app.use("/api", s3Routes);
 
 app.use("/user", userRoutes);
 app.use("/user", forgetPasswordRoutes);

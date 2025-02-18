@@ -154,9 +154,6 @@
 
 // export default Chat;
 
-
-
-
 import { useEffect, useState, useContext } from "react";
 import { Text, View, Pressable, Image, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -265,8 +262,8 @@ const styles = StyleSheet.create({
     borderBottomColor: "#f0f0f0",
   },
   avatar: {
-    width: 50,
-    height: 50,
+    width: 60,
+    height: 60,
     borderRadius: 25,
     marginRight: 10,
   },

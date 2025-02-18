@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   scrollView: {
-    padding: 10,
+    padding: 15,
   },
   backButton: {
     position: "absolute",
@@ -183,17 +183,17 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   profileImage: {
-    width: 50,
-    height: 50,
+    width: 60,
+    height: 60,
     borderRadius: 25,
-    marginRight: 15,
+    marginRight: 10,
   },
   infoContainer: {
     flex: 1,
   },
   nameText: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "CenturyGothicBold",
     color: "#333",
   },
   interestsText: {
@@ -203,14 +203,14 @@ const styles = StyleSheet.create({
   },
   addButton: {
     paddingVertical: 6,
-    paddingHorizontal: 35,
+    paddingHorizontal: 20,
     backgroundColor: "#000",
     borderRadius: 15,
-    marginRight: 20,
+    marginRight: 15,
   },
   addButtonText: {
     color: "#fff",
-    fontWeight: "600",
+    fontFamily: "CenturyGothic",
     fontSize: 14,
     textAlign: "center",
   },
