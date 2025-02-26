@@ -74,6 +74,7 @@ import ResetPasswordScreen from "../Screens/LoginScreens/ResetPasswordScreen";
 // import * as Linking from "expo-linking";
 import { navigationRef } from "./NavigationService";
 import { color } from "react-native-elements/dist/helpers";
+import CheckoutWebViewScreen from "../HomeScreens/CheckoutWebViewScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -716,6 +717,10 @@ const AppStack = () => {
         component={CheckoutPage}
         options={{ headerShown: false }}
       />
+      {/* <Stack.Screen
+        name="CheckoutWebViewScreen"
+        component={CheckoutWebViewScreen}
+      /> */}
       <Stack.Screen
         name="MyBookingsScreen"
         component={MyBookingsScreen}

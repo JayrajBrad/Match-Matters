@@ -15,51 +15,38 @@
 // import * as ImagePicker from "expo-image-picker";
 // import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 // import axios from "axios";
-// import { jwtDecode } from "jwt-decode"; // Corrected import
 // import { Video } from "expo-av";
 // import { Dropdown } from "react-native-element-dropdown";
-// import { Country, State, City } from "country-state-city";
-// import {
-//   API_URL,
-//   OLA_MAPS_API_KEY,
-//   CLOUDINARY_CLOUD_NAME,
-//   CLOUDINARY_API_KEY,
-// } from "@env";
-// import FormData from "form-data";
+// import { API_URL, OLA_MAPS_API_KEY } from "@env";
 // import DateTimePickerModal from "react-native-modal-datetime-picker";
 // import { UserContext } from "../navigation/UserProvider";
 
 // const EditEventScreen = ({ route, navigation }) => {
-//   const { eventId } = route.params; // Receive eventId via navigation
-//   const { userId, token } = useContext(UserContext);
+//   const { eventId } = route.params; // passed from navigation
+//   const { userId, token } = useContext(UserContext); // if needed for server requests
 
 //   const [loading, setLoading] = useState(true);
 //   const [event, setEvent] = useState(null);
 
-//   // State variables for event details
+//   // Event detail states
 //   const [images, setImages] = useState([null, null, null]);
 //   const [title, setTitle] = useState("");
 //   const [organizerName, setOrganizerName] = useState("");
 //   const [description, setDescription] = useState("");
 //   const [eventGenre, setEventGenre] = useState("");
 //   const [baseAddress, setBaseAddress] = useState("");
-//   const [latitude, setLatitude] = useState("");
-//   const [longitude, setLongitude] = useState("");
-//   const [showGenreDropdown, setShowGenreDropdown] = useState(false);
-
-//   const [countryName, setCountryName] = useState(null);
-//   const [stateName, setStateName] = useState(null);
-//   const [cityName, setCityName] = useState(null);
+//   const [countryName, setCountryName] = useState("");
+//   const [stateName, setStateName] = useState("");
+//   const [cityName, setCityName] = useState("");
 //   const [artistName, setArtistName] = useState("");
 //   const [videoUrl, setVideoUrl] = useState("");
 //   const [ticketPrice, setTicketPrice] = useState("");
 //   const [startDate, setStartDate] = useState(null);
 //   const [startTime, setStartTime] = useState(null);
 
-//   const [isFocus, setIsFocus] = useState(false);
 //   const [showDeleteIcon, setShowDeleteIcon] = useState(null);
 
-//   // State variables to manage edit mode for each field
+//   // Editing toggles
 //   const [isEditingTitle, setIsEditingTitle] = useState(false);
 //   const [isEditingOrganizer, setIsEditingOrganizer] = useState(false);
 //   const [isEditingDescription, setIsEditingDescription] = useState(false);
@@ -83,51 +70,34 @@
 //     "Travel Meetup",
 //   ];
 
-//   // Fetch event details once component mounts
+//   // -------------------------------------------------------------
+//   // 1) On mount, fetch event details from your server
+//   // -------------------------------------------------------------
 //   useEffect(() => {
 //     const fetchEventDetails = async () => {
 //       try {
-//         if (!token) {
-//           Alert.alert("Error", "No access token found. Please log in.");
+//         // If you don't need a token, you can remove this check
+//         if (!userId) {
+//           Alert.alert("Error", "No user ID found. Please log in.");
 //           navigation.goBack();
 //           return;
 //         }
 
-//         // Decode token to check expiration
-//         const decodedToken = jwtDecode(token);
-//         const currentTimeInSeconds = Math.floor(Date.now() / 1000);
-
-//         if (decodedToken.exp < currentTimeInSeconds) {
-//           Alert.alert("Session Expired", "Please log in again.");
-//           navigation.navigate("LoginScreen");
-//           return;
-//         }
-
+//         // GET from your server
 //         const response = await axios.get(`${API_URL}/api/events/${eventId}`, {
+//           // If your server needs an Authorization header, you can keep it
 //           headers: { Authorization: `Bearer ${token}` },
 //         });
 
-//         console.log("API Response:", response.data);
-
 //         if (response.status === 200) {
 //           const eventData = response.data;
-
 //           if (!eventData) {
 //             Alert.alert("Error", "Event data is missing.");
 //             navigation.goBack();
 //             return;
 //           }
 
-//           // **Ownership Check**
-//           if (eventData.userId !== userId) {
-//             Alert.alert(
-//               "Unauthorized",
-//               "You do not have permission to edit this event."
-//             );
-//             navigation.goBack();
-//             return;
-//           }
-
+//           // Fill states
 //           setEvent(eventData);
 //           setTitle(eventData.title);
 //           setOrganizerName(eventData.organizer);
@@ -137,28 +107,29 @@
 //           setCountryName(eventData.location.country);
 //           setStateName(eventData.location.state);
 //           setCityName(eventData.location.city);
-//           setLatitude(eventData.location.coordinates[0]);
-//           setLongitude(eventData.location.coordinates[1]);
 //           setArtistName(eventData.artists[0]?.name || "");
 //           setVideoUrl(eventData.videoUrl || "");
-//           setTicketPrice(eventData.ticketPrice.toString());
+//           setTicketPrice(eventData.ticketPrice?.toString() || "0");
 //           setStartDate(new Date(eventData.date));
 //           setStartTime(new Date(`1970-01-01T${eventData.time}Z`));
 
-//           // Set images
+//           // Images up to 3
 //           const initialImages = [null, null, null];
-//           eventData.images.forEach((img, index) => {
-//             if (index < 3) {
-//               initialImages[index] = img.url;
+//           eventData.images?.forEach((img, idx) => {
+//             if (idx < 3) {
+//               initialImages[idx] = img.url;
 //             }
 //           });
 //           setImages(initialImages);
 //         } else {
-//           Alert.alert("Error", "Failed to fetch event details.");
+//           Alert.alert(
+//             "Error",
+//             `Failed to fetch event details (${response.status})`
+//           );
 //           navigation.goBack();
 //         }
 //       } catch (error) {
-//         console.error("Error fetching event details:", error.message);
+//         console.error("Error fetching event details:", error);
 //         Alert.alert("Error", "An error occurred while fetching event details.");
 //         navigation.goBack();
 //       } finally {
@@ -166,409 +137,224 @@
 //       }
 //     };
 
-//     // Fetch event details once component mounts
 //     fetchEventDetails();
-//   }, [
-//     eventId,
-//     token,
-//     userId,
-//     navigation,
-//     // Removed countryData, handleState, handleCity from dependencies
-//   ]);
+//   }, [eventId, userId, token, navigation]);
 
-//   // Handle genre selection
-//   const handleGenreSelect = (genre) => {
-//     setEventGenre(genre);
-//     setShowGenreDropdown(false); // Close the dropdown after selection
-//     setIsEditingGenre(false); // Exit edit mode
-//   };
-
-//   const toggleGenreDropdown = () => {
-//     setShowGenreDropdown((prev) => !prev);
-//   };
-
-//   // Image Picker
-//   const pickMedia = async (index, imageArray, type) => {
-//     let options = {
-//       mediaTypes: type,
-//       allowsEditing: true,
-//       quality: 1,
-//     };
-//     const result = await ImagePicker.launchImageLibraryAsync(options);
-//     if (!result.canceled) {
-//       const uri = result.assets[0]?.uri;
-//       if (typeof uri === "string") {
-//         // Update images array
-//         const newImages = [...imageArray];
-//         newImages[index] = uri;
-//         setImages(newImages);
-//       } else {
-//         console.error("Invalid URI:", uri);
-//       }
+//   // -------------------------------------------------------------
+//   // 2) S3 upload (like in create event)
+//   // -------------------------------------------------------------
+//   const guessMimeType = (fileUri) => {
+//     const ext = fileUri.split(".").pop().toLowerCase();
+//     switch (ext) {
+//       case "jpg":
+//       case "jpeg":
+//         return "image/jpeg";
+//       case "png":
+//         return "image/png";
+//       case "gif":
+//         return "image/gif";
+//       case "mp4":
+//         return "video/mp4";
+//       default:
+//         return "application/octet-stream";
 //     }
 //   };
 
-//   const pickImage = (index) =>
-//     pickMedia(index, images, ImagePicker.MediaType.Images);
-
-//   // Video Picker (Optional)
-//   const pickVideo = async () => {
-//     let options = {
-//       mediaTypes: ImagePicker.MediaType.Videos,
-//       allowsEditing: true,
-//       quality: 1,
-//     };
-//     let result = await ImagePicker.launchImageLibraryAsync(options);
-//     if (!result.canceled) {
-//       const uri = result.assets[0]?.uri;
-//       if (typeof uri === "string") {
-//         setVideoUrl(uri);
-//         try {
-//           const { uri: thumbnailUri } = await Video.createThumbnailAsync(uri, {
-//             time: 5000, // Time in milliseconds (e.g., 5000 for 5 seconds)
-//           });
-//           // setVideoThumbnailUrl(thumbnailUri); // Optionally, handle thumbnail
-//         } catch (thumbnailError) {
-//           console.error("Error creating video thumbnail:", thumbnailError);
-//         }
-//       } else {
-//         console.error("Invalid video URL:", uri);
-//       }
-//     }
-//   };
-
-//   // Handle deleting an image
-//   const handleDeleteImage = (index) => {
-//     const updatedImages = [...images];
-//     updatedImages[index] = null; // Remove the image at that index
-//     setImages(updatedImages);
-//     setShowDeleteIcon(null);
-//   };
-
-//   // Show/hide date and time pickers
-//   const showDatePickerModal = () => setIsEditingDate(true);
-//   const hideDatePickerModal = () => setIsEditingDate(false);
-//   const showTimePickerModal = () => setIsEditingTime(true);
-//   const hideTimePickerModal = () => setIsEditingTime(false);
-
-//   // Confirm date and time
-//   const handleConfirmDate = (date) => {
-//     setStartDate(date);
-//     hideDatePickerModal();
-//   };
-
-//   const handleConfirmTime = (time) => {
-//     setStartTime(time);
-//     hideTimePickerModal();
-//   };
-
-//   // Upload files to Cloudinary
-//   const uploadFile = async (fileUri, type) => {
-//     const data = new FormData();
-//     data.append("file", {
-//       uri: fileUri,
-//       type: type === "image" ? "image/jpeg" : "video/mp4",
-//       name: type === "image" ? "image.jpg" : "video.mp4",
-//     });
-//     data.append(
-//       "upload_preset",
-//       type === "image" ? "images_preset" : "videos_preset"
-//     );
-
+//   const uploadFileToS3 = async (fileUri) => {
 //     try {
-//       let cloudName = CLOUDINARY_CLOUD_NAME;
-//       let resourceType = type === "image" ? "image" : "video";
-//       let api = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
+//       const fileType = guessMimeType(fileUri);
+//       const folder = fileType.startsWith("video/") ? "mm_videos" : "mm_images";
 
-//       const res = await axios.post(api, data);
-//       const { secure_url } = res.data;
-//       console.log("Uploaded URL:", secure_url);
-//       return secure_url;
+//       // Unique name
+//       const originalFileName = fileUri.split("/").pop() || "unknown.file";
+//       const uniqueFileName = `${Date.now()}-${Math.random()
+//         .toString(36)
+//         .substring(2, 8)}-${originalFileName}`;
+
+//       // 1) ask server for presigned URL
+//       const { data } = await axios.post(`${API_URL}/api/s3-presigned-url`, {
+//         folder,
+//         fileType,
+//         fileName: uniqueFileName,
+//       });
+//       const { uploadUrl, key } = data;
+
+//       // 2) PUT the file
+//       const fileResponse = await fetch(fileUri);
+//       const blob = await fileResponse.blob();
+//       await fetch(uploadUrl, {
+//         method: "PUT",
+//         body: blob, // Use blob directly
+//         headers: {
+//           "Content-Type": fileType,
+//           "Content-Length": blob.size, // Make sure MIME type is correct
+//         },
+//       });
+
+//       return key; // e.g. "mm_images/..."
 //     } catch (error) {
-//       console.log("Error uploading file to Cloudinary:", error);
+//       console.error("Error uploading to S3:", error);
 //       return null;
 //     }
 //   };
 
-//   // Fetch location coordinates using OLA Maps API
-//   const fetchLocationCoordinates = async (
-//     baseAddress,
-//     city,
-//     state,
-//     country
-//   ) => {
+//   // -------------------------------------------------------------
+//   // 3) Image pickers
+//   // -------------------------------------------------------------
+//   const pickImage = async (index) => {
 //     try {
-//       console.log("OLA API Key:", OLA_MAPS_API_KEY);
-//       const locationString = `${baseAddress}, ${city}, ${state}, ${country}`;
-//       console.log("Location String:", locationString);
-
-//       const generateId = () => Math.random().toString(36).substring(2, 15);
-//       const requestId = generateId();
-//       console.log("Request ID:", requestId);
-
-//       const geocodeUrl = `https://api.olamaps.io/places/v1/geocode?address=${encodeURIComponent(
-//         locationString
-//       )}&api_key=${OLA_MAPS_API_KEY}`;
-//       const response = await axios.get(geocodeUrl, {
-//         headers: { "X-Request-Id": requestId },
-//       });
-
-//       console.log("Geocode API Response:", response.data);
-
-//       if (
-//         response.data.geocodingResults &&
-//         response.data.geocodingResults.length > 0
-//       ) {
-//         const { lat, lng } =
-//           response.data.geocodingResults[0].geometry.location;
-//         console.log("Coordinates:", { latitude: lat, longitude: lng });
-//         return { latitude: lat, longitude: lng }; // Return coordinates
-//       } else {
-//         console.error("No results found for the provided location.");
-//         return null; // Return null if no results found
+//       const options = {
+//         mediaTypes: ImagePicker.MediaTypeOptions.Images,
+//         allowsEditing: true,
+//         quality: 1,
+//       };
+//       const result = await ImagePicker.launchImageLibraryAsync(options);
+//       if (!result.canceled) {
+//         const uri = result.assets[0]?.uri;
+//         if (typeof uri === "string") {
+//           const newImages = [...images];
+//           newImages[index] = uri;
+//           setImages(newImages);
+//         }
 //       }
 //     } catch (error) {
-//       console.error(
-//         "Error fetching coordinates:",
-//         error.response || error.message
-//       );
-//       return null; // Return null on error
+//       console.error("Error opening image picker:", error);
 //     }
 //   };
 
-//   //   const handleUpdate = async () => {
-//   //     try {
-//   //       if (!token) {
-//   //         Alert.alert("Error", "No access token found. Please log in.");
-//   //         return;
-//   //       }
+//   const handleDeleteImage = (index) => {
+//     const newImgs = [...images];
+//     newImgs[index] = null;
+//     setImages(newImgs);
+//     setShowDeleteIcon(null);
+//   };
 
-//   //       // Decode token to check expiration
-//   //       const decodedToken = jwtDecode(token);
-//   //       const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+//   // -------------------------------------------------------------
+//   // 4) Date & Time pickers
+//   // -------------------------------------------------------------
+//   const [isEditingDatePicker, setIsEditingDatePicker] = useState(false);
+//   const [isEditingTimePicker, setIsEditingTimePicker] = useState(false);
 
-//   //       if (decodedToken.exp < currentTimeInSeconds) {
-//   //         Alert.alert("Session Expired", "Please log in again.");
-//   //         navigation.navigate("LoginScreen");
-//   //         return;
-//   //       }
+//   const handleConfirmDate = (date) => {
+//     setStartDate(date);
+//     setIsEditingDatePicker(false);
+//   };
+//   const handleConfirmTime = (time) => {
+//     setStartTime(time);
+//     setIsEditingTimePicker(false);
+//   };
 
-//   //       // Prepare partial data
-//   //       const updatedFields = {};
+//   // -------------------------------------------------------------
+//   // 5) fetch location coords with OLA
+//   // -------------------------------------------------------------
+//   const fetchLocationCoordinates = async (addr, city, st, cnt) => {
+//     try {
+//       const locStr = `${addr}, ${city}, ${st}, ${cnt}`;
+//       const geocodeUrl = `https://api.olamaps.io/places/v1/geocode?address=${encodeURIComponent(
+//         locStr
+//       )}&api_key=${OLA_MAPS_API_KEY}`;
+//       const response = await axios.get(geocodeUrl);
+//       const results = response.data.geocodingResults;
+//       if (results && results.length > 0) {
+//         const { lat, lng } = results[0].geometry.location;
+//         return { latitude: lat, longitude: lng };
+//       } else {
+//         console.error("No results for location:", locStr);
+//         return null;
+//       }
+//     } catch (error) {
+//       console.error("Error fetching location coords:", error);
+//       return null;
+//     }
+//   };
 
-//   //       if (isEditingTitle) updatedFields.title = title;
-//   //       if (isEditingOrganizer) updatedFields.organizer = organizerName;
-//   //       if (isEditingDescription) updatedFields.eventDetails = description;
-//   //       if (isEditingGenre) updatedFields.genre = eventGenre;
-//   //       //   if (isEditingAddress) updatedFields.location = { baseAddress };
-//   //       if (isEditingArtist)
-//   //         updatedFields.artists = [{ name: artistName, role: "Artist" }];
-//   //       if (isEditingTicketPrice)
-//   //         updatedFields.ticketPrice = parseFloat(ticketPrice);
-//   //       if (isEditingDate) updatedFields.date = startDate.toISOString();
-//   //       if (isEditingTime)
-//   //         updatedFields.time = startTime.toLocaleTimeString("en-GB", {
-//   //           hour12: false,
-//   //         });
-
-//   //       // Add other fields as necessary
-
-//   //       // Handle location coordinates if address-related fields are updated
-//   //       if (isEditingAddress) {
-//   //         const locationCoordinates = await fetchLocationCoordinates(
-//   //           baseAddress,
-//   //           cityName,
-//   //           stateName,
-//   //           countryName
-//   //         );
-
-//   //         if (!locationCoordinates) {
-//   //           Alert.alert("Error", "Failed to fetch location coordinates.");
-//   //           return;
-//   //         }
-
-//   //         updatedFields.location = {
-//   //           baseAddress,
-//   //           country: countryName,
-//   //           state: stateName,
-//   //           city: cityName,
-//   //           coordinates: [
-//   //             locationCoordinates.longitude,
-//   //             locationCoordinates.latitude,
-//   //           ], // [lng, lat]
-//   //         };
-//   //       }
-
-//   //       // Upload images and video if changed
-//   //       const uploadedImages = await Promise.all(
-//   //         images.map(async (image) =>
-//   //           image ? await uploadFile(image, "image") : null
-//   //         )
-//   //       );
-//   //       const validImages = uploadedImages.filter(Boolean);
-//   //       const uploadedVideo = videoUrl
-//   //         ? await uploadFile(videoUrl, "video")
-//   //         : null;
-
-//   //       if (validImages.length > 0) {
-//   //         updatedFields.images = validImages.map((url) => ({ url }));
-//   //       }
-
-//   //       if (uploadedVideo) {
-//   //         updatedFields.videoUrl = uploadedVideo;
-//   //       }
-
-//   //       console.log("Partial Updated Event Data:", updatedFields);
-
-//   //       // Make the PATCH request
-//   //       const response = await axios.patch(
-//   //         `${API_URL}/api/events/updateEvent/${eventId}`,
-//   //         updatedFields,
-//   //         {
-//   //           headers: {
-//   //             Authorization: `Bearer ${token}`,
-//   //             "Content-Type": "application/json",
-//   //           },
-//   //           timeout: 20000,
-//   //         }
-//   //       );
-
-//   //       console.log("Update Event Response:", response.data);
-
-//   //       if (response.status === 200 || response.status === 204) {
-//   //         Alert.alert("Success", "Event successfully updated!");
-//   //         navigation.navigate("MyEvents");
-//   //       } else {
-//   //         Alert.alert(
-//   //           "Error",
-//   //           `Failed to update event. Status: ${response.status}`
-//   //         );
-//   //       }
-//   //     } catch (error) {
-//   //       console.error("Error updating event:", error.message);
-//   //       Alert.alert("Error", "An error occurred. Please try again.");
-//   //     }
-//   //   };
-
+//   // -------------------------------------------------------------
+//   // 6) handleUpdate
+//   // -------------------------------------------------------------
 //   const handleUpdate = async () => {
 //     try {
-//       if (!token) {
-//         Alert.alert("Error", "No access token found. Please log in.");
-//         return;
-//       }
-
-//       // Decode token to check expiration
-//       const decodedToken = jwtDecode(token);
-//       const currentTimeInSeconds = Math.floor(Date.now() / 1000);
-
-//       if (decodedToken.exp < currentTimeInSeconds) {
-//         Alert.alert("Session Expired", "Please log in again.");
-//         navigation.navigate("LoginScreen");
-//         return;
-//       }
-
-//       // Fetch location coordinates if any location field has changed
-//       const locationChanged =
-//         baseAddress !== event.location.baseAddress ||
-//         countryName !== event.location.country ||
-//         stateName !== event.location.state ||
-//         cityName !== event.location.city;
-
-//       let locationData = event.location; // Default to existing location data
-
-//       if (locationChanged) {
-//         const locationCoordinates = await fetchLocationCoordinates(
-//           baseAddress,
-//           cityName,
-//           stateName,
-//           countryName
-//         );
-
-//         if (!locationCoordinates) {
-//           Alert.alert("Error", "Failed to fetch location coordinates.");
-//           return;
-//         }
-
-//         locationData = {
-//           baseAddress,
-//           country: countryName,
-//           state: stateName,
-//           city: cityName,
-//           coordinates: [
-//             locationCoordinates.longitude,
-//             locationCoordinates.latitude,
-//           ], // [lng, lat]
-//         };
-//       }
-
-//       // Upload images and video if changed
-//       const uploadedImages = await Promise.all(
-//         images.map(async (image) =>
-//           image ? await uploadFile(image, "image") : null
-//         )
-//       );
-//       const validImages = uploadedImages.filter(Boolean);
-//       const uploadedVideo = videoUrl
-//         ? await uploadFile(videoUrl, "video")
-//         : null;
-
-//       // Assemble updated event data
-//       const updatedEventData = {
-//         title, // Always include title
-//         organizer: organizerName, // Always include organizer
-//         eventDetails: description, // Always include description
-//         genre: eventGenre, // Always include genre
-//         artists: [{ name: artistName, role: "Artist" }], // Always include artists
-//         ticketPrice: parseFloat(ticketPrice), // Always include ticket price
-//         date: startDate ? startDate.toISOString() : event.date.toISOString(), // Include updated date or existing date
+//       // gather updated fields
+//       const updatedFields = {
+//         title,
+//         organizer: organizerName,
+//         eventDetails: description,
+//         genre: eventGenre,
+//         ticketPrice: parseFloat(ticketPrice) || 0,
+//         date: startDate ? startDate.toISOString() : undefined,
 //         time: startTime
 //           ? startTime.toLocaleTimeString("en-GB", { hour12: false })
-//           : event.time, // Include updated time or existing time
-//         location: locationData, // Include updated or existing location
-//         images:
-//           validImages.length > 0
-//             ? validImages.map((url) => ({ url }))
-//             : event.images, // Include updated images or existing images
-//         videoUrl: uploadedVideo || event.videoUrl, // Include updated video or existing video
-//         eventStatus: event.eventStatus, // Include existing event status
+//           : undefined,
+//         artists: artistName ? [{ name: artistName, role: "Artist" }] : [],
 //       };
 
-//       console.log("Updated Event Data:", updatedEventData);
+//       // fetch location
+//       const coords = await fetchLocationCoordinates(
+//         baseAddress,
+//         cityName,
+//         stateName,
+//         countryName
+//       );
+//       if (!coords) {
+//         Alert.alert("Error", "Failed to fetch location coords.");
+//         return;
+//       }
+//       updatedFields.location = {
+//         baseAddress: baseAddress,
+//         country: countryName,
+//         state: stateName,
+//         city: cityName,
+//         coordinates: [coords.longitude, coords.latitude],
+//       };
 
-//       // Make the PATCH request
+//       // upload new images
+//       const newKeys = await Promise.all(
+//         images.map(async (imgUri) => {
+//           if (
+//             imgUri &&
+//             !imgUri.startsWith("mm_images") &&
+//             !imgUri.startsWith("mm_videos")
+//           ) {
+//             return await uploadFileToS3(imgUri);
+//           } else {
+//             return imgUri;
+//           }
+//         })
+//       );
+//       const validKeys = newKeys.filter((k) => k);
+//       updatedFields.images = validKeys.map((key) => ({ url: key }));
+
+//       // video is optional, etc.
+//       // if you want to handle it similarly with pickVideo -> uploadFileToS3 -> updatedFields.videoUrl
+
+//       // Patch event
 //       const response = await axios.patch(
 //         `${API_URL}/api/events/updateEvent/${eventId}`,
-//         updatedEventData,
+//         updatedFields,
 //         {
+//           // if your server requires an Authorization
 //           headers: {
 //             Authorization: `Bearer ${token}`,
 //             "Content-Type": "application/json",
 //           },
-//           timeout: 20000,
 //         }
 //       );
-
-//       console.log("Update Event Response:", response.data);
-
 //       if (response.status === 200 || response.status === 204) {
-//         Alert.alert("Success", "Event successfully updated!");
+//         Alert.alert("Success", "Event updated successfully!");
 //         navigation.navigate("MyEvents");
 //       } else {
-//         Alert.alert(
-//           "Error",
-//           `Failed to update event. Status: ${response.status}`
-//         );
+//         Alert.alert("Error", `Failed to update event (${response.status})`);
 //       }
 //     } catch (error) {
-//       console.error("Error updating event:", error.message);
+//       console.error("Error updating event:", error);
 //       Alert.alert("Error", "An error occurred. Please try again.");
 //     }
 //   };
 
 //   if (loading) {
 //     return (
-//       <View style={styles.loadingContainer}>
+//       <View style={styles.loaderContainer}>
 //         <ActivityIndicator size="large" color="#814C68" />
+//         <Text style={styles.loadingText}>Loading your event details...</Text>
 //       </View>
 //     );
 //   }
@@ -576,27 +362,26 @@
 //   return (
 //     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 //       <ScrollView contentContainerStyle={styles.scrollContainer}>
-//         {/* Event Photos */}
 //         <Text style={styles.label}>Event Photos</Text>
 //         <ScrollView
 //           horizontal
 //           showsHorizontalScrollIndicator={false}
 //           style={styles.photosScrollContainer}
 //         >
-//           {images.map((image, index) => (
+//           {images.map((image, idx) => (
 //             <TouchableOpacity
-//               key={`edit-img-${index}`}
+//               key={`edit-img-${idx}`}
 //               style={styles.imageItem}
-//               onPress={() => pickImage(index)}
-//               onLongPress={() => setShowDeleteIcon(index)}
+//               onPress={() => pickImage(idx)}
+//               onLongPress={() => setShowDeleteIcon(idx)}
 //             >
 //               {image ? (
 //                 <>
 //                   <Image source={{ uri: image }} style={styles.image} />
-//                   {showDeleteIcon === index && (
+//                   {showDeleteIcon === idx && (
 //                     <TouchableOpacity
 //                       style={styles.deleteIconWrapper}
-//                       onPress={() => handleDeleteImage(index)}
+//                       onPress={() => handleDeleteImage(idx)}
 //                     >
 //                       <Ionicons name="trash" size={24} color="red" />
 //                     </TouchableOpacity>
@@ -609,7 +394,7 @@
 //           ))}
 //         </ScrollView>
 
-//         {/* Title Field */}
+//         {/* Title */}
 //         <View style={styles.fieldContainer}>
 //           <Text style={styles.label}>Title</Text>
 //           {isEditingTitle ? (
@@ -618,8 +403,8 @@
 //                 style={styles.input}
 //                 value={title}
 //                 onChangeText={setTitle}
-//                 placeholder="Enter event title"
-//                 placeholderTextColor="#fff"
+//                 placeholder="Event title"
+//                 placeholderTextColor="#999"
 //               />
 //               <TouchableOpacity onPress={() => setIsEditingTitle(false)}>
 //                 <Ionicons name="checkmark-circle" size={24} color="#814C68" />
@@ -635,7 +420,7 @@
 //           )}
 //         </View>
 
-//         {/* Organizer Name Field */}
+//         {/* Organizer */}
 //         <View style={styles.fieldContainer}>
 //           <Text style={styles.label}>Organizer Name</Text>
 //           {isEditingOrganizer ? (
@@ -644,8 +429,8 @@
 //                 style={styles.input}
 //                 value={organizerName}
 //                 onChangeText={setOrganizerName}
-//                 placeholder="Enter organizer name"
-//                 placeholderTextColor="#000"
+//                 placeholder="Organizer name"
+//                 placeholderTextColor="#999"
 //               />
 //               <TouchableOpacity onPress={() => setIsEditingOrganizer(false)}>
 //                 <Ionicons name="checkmark-circle" size={24} color="#814C68" />
@@ -661,7 +446,7 @@
 //           )}
 //         </View>
 
-//         {/* Description Field */}
+//         {/* Description */}
 //         <View style={styles.fieldContainer}>
 //           <Text style={styles.label}>Description</Text>
 //           {isEditingDescription ? (
@@ -670,8 +455,6 @@
 //                 style={styles.textArea}
 //                 value={description}
 //                 onChangeText={setDescription}
-//                 placeholder="Enter event details"
-//                 placeholderTextColor="#fff"
 //                 multiline
 //               />
 //               <TouchableOpacity onPress={() => setIsEditingDescription(false)}>
@@ -688,7 +471,7 @@
 //           )}
 //         </View>
 
-//         {/* Genre Field */}
+//         {/* Genre */}
 //         <View style={styles.fieldContainer}>
 //           <Text style={styles.label}>Genre</Text>
 //           {isEditingGenre ? (
@@ -699,10 +482,7 @@
 //                 selectedTextStyle={styles.selectedTextStyle}
 //                 inputSearchStyle={styles.inputSearchStyle}
 //                 iconStyle={styles.iconStyle}
-//                 data={eventGenres.map((genre) => ({
-//                   label: genre,
-//                   value: genre,
-//                 }))}
+//                 data={eventGenres.map((g) => ({ label: g, value: g }))}
 //                 search
 //                 maxHeight={300}
 //                 labelField="label"
@@ -710,9 +490,9 @@
 //                 placeholder="Select Genre"
 //                 searchPlaceholder="Search..."
 //                 value={eventGenre}
-//                 onFocus={() => {}}
-//                 onBlur={() => {}}
-//                 onChange={(item) => handleGenreSelect(item.value)}
+//                 onChange={(item) => {
+//                   setEventGenre(item.value);
+//                 }}
 //               />
 //               <TouchableOpacity onPress={() => setIsEditingGenre(false)}>
 //                 <Ionicons name="checkmark-circle" size={24} color="#814C68" />
@@ -728,7 +508,7 @@
 //           )}
 //         </View>
 
-//         {/* Base Address Field */}
+//         {/* Base Address */}
 //         <View style={styles.fieldContainer}>
 //           <Text style={styles.label}>Base Address</Text>
 //           {isEditingAddress ? (
@@ -737,8 +517,8 @@
 //                 style={styles.input}
 //                 value={baseAddress}
 //                 onChangeText={setBaseAddress}
-//                 placeholder="Enter event address"
-//                 placeholderTextColor="#fff"
+//                 placeholder="Event address"
+//                 placeholderTextColor="#999"
 //               />
 //               <TouchableOpacity onPress={() => setIsEditingAddress(false)}>
 //                 <Ionicons name="checkmark-circle" size={24} color="#814C68" />
@@ -754,49 +534,36 @@
 //           )}
 //         </View>
 
-//         {/* Location Input Fields */}
+//         {/* City/State/Country */}
 //         <View style={styles.fieldContainer}>
-//           <Text style={styles.label}>Location</Text>
-//           <View style={styles.inputContainer}>
-//             {/* Country Input */}
-//             <View style={styles.inputField}>
-//               <Text style={styles.subLabel}>Country:</Text>
-//               <TextInput
-//                 style={styles.textInput}
-//                 value={countryName}
-//                 onChangeText={setCountryName}
-//                 placeholder="Enter country"
-//                 placeholderTextColor="#814C68"
-//               />
-//             </View>
-
-//             {/* State Input */}
-//             <View style={styles.inputField}>
-//               <Text style={styles.subLabel}>State:</Text>
-//               <TextInput
-//                 style={styles.textInput}
-//                 value={stateName}
-//                 onChangeText={setStateName}
-//                 placeholder="Enter state"
-//                 placeholderTextColor="#814C68"
-//               />
-//             </View>
-
-//             {/* City Input */}
-//             <View style={styles.inputField}>
-//               <Text style={styles.subLabel}>City:</Text>
-//               <TextInput
-//                 style={styles.textInput}
-//                 value={cityName}
-//                 onChangeText={setCityName}
-//                 placeholder="Enter city"
-//                 placeholderTextColor="#814C68"
-//               />
-//             </View>
+//           <Text style={styles.label}>Location Details</Text>
+//           <View style={styles.inputField}>
+//             <Text style={styles.subLabel}>Country:</Text>
+//             <TextInput
+//               style={styles.textInput}
+//               value={countryName}
+//               onChangeText={setCountryName}
+//             />
+//           </View>
+//           <View style={styles.inputField}>
+//             <Text style={styles.subLabel}>State:</Text>
+//             <TextInput
+//               style={styles.textInput}
+//               value={stateName}
+//               onChangeText={setStateName}
+//             />
+//           </View>
+//           <View style={styles.inputField}>
+//             <Text style={styles.subLabel}>City:</Text>
+//             <TextInput
+//               style={styles.textInput}
+//               value={cityName}
+//               onChangeText={setCityName}
+//             />
 //           </View>
 //         </View>
 
-//         {/* Date and Time Fields */}
+//         {/* Date & Time */}
 //         <View style={styles.fieldContainer}>
 //           <Text style={styles.label}>Date & Time</Text>
 //           <View style={styles.dateTimeRow}>
@@ -804,9 +571,10 @@
 //             <View style={styles.dateTimeField}>
 //               <Text style={styles.subLabel}>Date:</Text>
 //               {isEditingDate ? (
+//                 // Edit mode
 //                 <View style={styles.editableDateTime}>
 //                   <TouchableOpacity
-//                     onPress={showDatePickerModal}
+//                     onPress={() => {}}
 //                     style={styles.dateTimeButton}
 //                   >
 //                     <Text style={styles.dateTimeButtonText}>
@@ -833,6 +601,7 @@
 //                   </TouchableOpacity>
 //                 </View>
 //               ) : (
+//                 // Display mode
 //                 <View style={styles.displayDateTime}>
 //                   <Text style={styles.fieldText}>
 //                     {startDate ? startDate.toLocaleDateString() : "Not Set"}
@@ -850,7 +619,7 @@
 //               {isEditingTime ? (
 //                 <View style={styles.editableDateTime}>
 //                   <TouchableOpacity
-//                     onPress={showTimePickerModal}
+//                     onPress={() => {}}
 //                     style={styles.dateTimeButton}
 //                   >
 //                     <Text style={styles.dateTimeButtonText}>
@@ -896,26 +665,28 @@
 //               )}
 //             </View>
 //           </View>
-
-//           {/* Date and Time Pickers */}
+//           {/* Actual date/time pickers */}
 //           <DateTimePickerModal
 //             isVisible={isEditingDate}
 //             mode="date"
-//             onConfirm={handleConfirmDate}
-//             onCancel={hideDatePickerModal}
-//             textColor="#000"
+//             onConfirm={(d) => {
+//               setStartDate(d);
+//               setIsEditingDate(false);
+//             }}
+//             onCancel={() => setIsEditingDate(false)}
 //           />
-
 //           <DateTimePickerModal
 //             isVisible={isEditingTime}
 //             mode="time"
-//             onConfirm={handleConfirmTime}
-//             onCancel={hideTimePickerModal}
-//             textColor="#000"
+//             onConfirm={(t) => {
+//               setStartTime(t);
+//               setIsEditingTime(false);
+//             }}
+//             onCancel={() => setIsEditingTime(false)}
 //           />
 //         </View>
 
-//         {/* Artist Name Field */}
+//         {/* Artist Name */}
 //         <View style={styles.fieldContainer}>
 //           <Text style={styles.label}>Artist Name</Text>
 //           {isEditingArtist ? (
@@ -924,8 +695,6 @@
 //                 style={styles.input}
 //                 value={artistName}
 //                 onChangeText={setArtistName}
-//                 placeholder="Enter artist name"
-//                 placeholderTextColor="#fff"
 //               />
 //               <TouchableOpacity onPress={() => setIsEditingArtist(false)}>
 //                 <Ionicons name="checkmark-circle" size={24} color="#814C68" />
@@ -941,36 +710,7 @@
 //           )}
 //         </View>
 
-//         {/* Video Field */}
-//         <View style={styles.fieldContainer}>
-//           <Text style={styles.label}>Video</Text>
-//           <View style={styles.videoField}>
-//             <TouchableOpacity onPress={pickVideo} style={styles.videoUpload}>
-//               {videoUrl ? (
-//                 <>
-//                   <Video
-//                     source={{ uri: videoUrl }}
-//                     rate={1.0}
-//                     volume={1.0}
-//                     isMuted={false}
-//                     resizeMode="cover"
-//                     shouldPlay={false}
-//                     isLooping
-//                     style={styles.videoThumbnail}
-//                   />
-//                   <Text style={styles.videoText}>Video Selected</Text>
-//                 </>
-//               ) : (
-//                 <>
-//                   <Ionicons name="videocam-outline" size={36} color="#fff" />
-//                   <Text style={styles.videoText}>Upload Video</Text>
-//                 </>
-//               )}
-//             </TouchableOpacity>
-//           </View>
-//         </View>
-
-//         {/* Ticket Price Field */}
+//         {/* Ticket Price */}
 //         <View style={styles.fieldContainer}>
 //           <Text style={styles.label}>Ticket Price</Text>
 //           {isEditingTicketPrice ? (
@@ -981,7 +721,6 @@
 //                 onChangeText={setTicketPrice}
 //                 placeholder="Enter ticket price"
 //                 keyboardType="numeric"
-//                 placeholderTextColor="#fff"
 //               />
 //               <TouchableOpacity onPress={() => setIsEditingTicketPrice(false)}>
 //                 <Ionicons name="checkmark-circle" size={24} color="#814C68" />
@@ -989,7 +728,7 @@
 //             </View>
 //           ) : (
 //             <View style={styles.displayField}>
-//               <Text style={styles.fieldText}>₹ {ticketPrice}</Text>
+//               <Text style={styles.fieldText}>{ticketPrice}</Text>
 //               <TouchableOpacity onPress={() => setIsEditingTicketPrice(true)}>
 //                 <Ionicons name="pencil" size={20} color="#814C68" />
 //               </TouchableOpacity>
@@ -997,7 +736,7 @@
 //           )}
 //         </View>
 
-//         {/* Update Event Button */}
+//         {/* Update Button */}
 //         <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
 //           <Text style={styles.updateButtonText}>Update Event</Text>
 //         </TouchableOpacity>
@@ -1006,6 +745,9 @@
 //   );
 // };
 
+// export default EditEventScreen;
+
+// /** STYLES **/
 // const styles = StyleSheet.create({
 //   scrollContainer: {
 //     backgroundColor: "#fff",
@@ -1013,17 +755,23 @@
 //     paddingTop: 20,
 //     paddingBottom: 40,
 //   },
+//   loaderContainer: {
+//     flex: 1,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     backgroundColor: "#fff",
+//   },
+//   loadingText: {
+//     marginTop: 10,
+//     fontSize: 16,
+//     color: "#290F4C",
+//     fontFamily: "CenturyGothic",
+//   },
 //   label: {
 //     fontSize: 16,
 //     fontFamily: "CenturyGothicBold",
 //     marginVertical: 8,
 //     color: "#814C68",
-//   },
-//   subLabel: {
-//     fontSize: 14,
-//     fontFamily: "CenturyGothic",
-//     color: "#814C68",
-//     marginBottom: 4,
 //   },
 //   fieldContainer: {
 //     marginBottom: 20,
@@ -1056,8 +804,8 @@
 //   input: {
 //     flex: 1,
 //     height: 40,
-//     fontFamily: "CenturyGothic",
 //     color: "#000",
+//     fontFamily: "CenturyGothic",
 //   },
 //   textArea: {
 //     flex: 1,
@@ -1066,67 +814,6 @@
 //     color: "#000",
 //     paddingVertical: 10,
 //     paddingHorizontal: 10,
-//   },
-//   dropdownField: {
-//     flex: 1,
-//     marginRight: 10,
-//   },
-//   dropdownContainerRow: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//   },
-//   dropdown: {
-//     flex: 1,
-//     backgroundColor: "#814C68",
-//     height: 40,
-//     borderColor: "#ccc",
-//     borderWidth: 1,
-//     borderRadius: 8,
-//     paddingHorizontal: 10,
-//     marginBottom: 10,
-//   },
-//   placeholderStyle: {
-//     color: "#fff",
-//     fontSize: 14,
-//     fontFamily: "CenturyGothic",
-//   },
-//   selectedTextStyle: {
-//     color: "#fff",
-//     fontSize: 14,
-//     fontFamily: "CenturyGothic",
-//   },
-//   inputSearchStyle: {
-//     fontSize: 16,
-//     color: "#fff",
-//     fontFamily: "CenturyGothic",
-//   },
-//   iconStyle: {
-//     width: 20,
-//     height: 20,
-//   },
-//   dropdowngenreContainer: {
-//     backgroundColor: "#814C68",
-//     borderColor: "#ced4da",
-//     borderWidth: 1,
-//     borderRadius: 5,
-//     marginTop: 5,
-//     elevation: 2,
-//     shadowColor: "#000",
-//     shadowOffset: { width: 0, height: 2 },
-//     shadowOpacity: 0.1,
-//     shadowRadius: 4,
-//     maxHeight: 200,
-//   },
-//   dropdownItem: {
-//     padding: 10,
-//     borderBottomColor: "#ced4da",
-//     borderBottomWidth: 1,
-//     backgroundColor: "#814C68",
-//   },
-//   dropdownItemText: {
-//     fontSize: 16,
-//     color: "#fff",
-//     fontFamily: "CenturyGothic",
 //   },
 //   photosScrollContainer: {
 //     marginBottom: 16,
@@ -1157,32 +844,6 @@
 //     borderRadius: 15,
 //     padding: 3,
 //   },
-//   videoField: {
-//     alignItems: "center",
-//     justifyContent: "center",
-//     marginTop: 10,
-//   },
-//   videoUpload: {
-//     backgroundColor: "#814C68",
-//     borderRadius: 10,
-//     height: 150,
-//     width: "100%",
-//     justifyContent: "center",
-//     alignItems: "center",
-//     position: "relative",
-//   },
-//   videoThumbnail: {
-//     width: "100%",
-//     height: "100%",
-//     borderRadius: 10,
-//   },
-//   videoText: {
-//     position: "absolute",
-//     bottom: 10,
-//     color: "#fff",
-//     fontFamily: "CenturyGothicBold",
-//     fontSize: 16,
-//   },
 //   dateTimeRow: {
 //     flexDirection: "row",
 //     justifyContent: "space-between",
@@ -1195,17 +856,10 @@
 //     flexDirection: "row",
 //     alignItems: "center",
 //   },
-//   displayDateTime: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     justifyContent: "space-between",
-//   },
 //   dateTimeButton: {
 //     backgroundColor: "#814C68",
 //     borderRadius: 15,
 //     padding: 10,
-//     borderWidth: 1,
-//     borderColor: "#ced4da",
 //     flexDirection: "row",
 //     alignItems: "center",
 //     flex: 1,
@@ -1216,8 +870,10 @@
 //     fontFamily: "CenturyGothic",
 //     flex: 1,
 //   },
-//   checkIcon: {
-//     marginLeft: 10,
+//   displayDateTime: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     justifyContent: "space-between",
 //   },
 //   updateButton: {
 //     backgroundColor: "#814C68",
@@ -1225,25 +881,20 @@
 //     borderRadius: 15,
 //     alignItems: "center",
 //     marginTop: 20,
-//     marginBottom: 40,
 //   },
 //   updateButtonText: {
 //     color: "#fff",
 //     fontSize: 18,
 //     fontFamily: "CenturyGothicBold",
 //   },
-//   loadingContainer: {
-//     flex: 1,
-//     justifyContent: "center",
-//     alignItems: "center",
-//     backgroundColor: "#fff",
-//   },
-//   inputContainer: {
-//     // New style for input container
-//     marginTop: 10,
-//   },
 //   inputField: {
 //     marginBottom: 15,
+//   },
+//   subLabel: {
+//     fontSize: 14,
+//     fontFamily: "CenturyGothic",
+//     color: "#814C68",
+//     marginBottom: 4,
 //   },
 //   textInput: {
 //     borderWidth: 1,
@@ -1252,10 +903,28 @@
 //     padding: 10,
 //     fontSize: 16,
 //     color: "#814C68",
+//     fontFamily: "CenturyGothic",
+//   },
+//   placeholderStyle: {
+//     color: "#fff",
+//     fontSize: 14,
+//     fontFamily: "CenturyGothic",
+//   },
+//   selectedTextStyle: {
+//     color: "#fff",
+//     fontSize: 14,
+//     fontFamily: "CenturyGothic",
+//   },
+//   inputSearchStyle: {
+//     fontSize: 16,
+//     color: "#fff",
+//     fontFamily: "CenturyGothic",
+//   },
+//   iconStyle: {
+//     width: 20,
+//     height: 20,
 //   },
 // });
-
-// export default EditEventScreen;
 
 import React, { useState, useEffect, useContext } from "react";
 import {
@@ -1274,29 +943,26 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
-import { jwtDecode } from "jwt-decode"; // Corrected import
-import { Video } from "expo-av";
 import { Dropdown } from "react-native-element-dropdown";
-import { Country, State, City } from "country-state-city";
-import {
-  API_URL,
-  OLA_MAPS_API_KEY,
-  CLOUDINARY_CLOUD_NAME,
-  CLOUDINARY_API_KEY,
-} from "@env";
-import FormData from "form-data";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+
+import { API_URL, OLA_MAPS_API_KEY } from "@env";
 import { UserContext } from "../navigation/UserProvider";
 
 const EditEventScreen = ({ route, navigation }) => {
-  const { eventId } = route.params; // Receive eventId via navigation
+  const { eventId } = route.params;
   const { userId, token } = useContext(UserContext);
 
   const [loading, setLoading] = useState(true);
   const [event, setEvent] = useState(null);
 
-  // State variables for event details
+  // Two arrays for images
+  // imageKeys[] => original S3 keys or null if replaced
+  // images[] => the displayed URI (pre-signed GET or local path)
+  const [imageKeys, setImageKeys] = useState([null, null, null]);
   const [images, setImages] = useState([null, null, null]);
+
+  // Basic event info
   const [title, setTitle] = useState("");
   const [organizerName, setOrganizerName] = useState("");
   const [description, setDescription] = useState("");
@@ -1306,14 +972,13 @@ const EditEventScreen = ({ route, navigation }) => {
   const [stateName, setStateName] = useState("");
   const [cityName, setCityName] = useState("");
   const [artistName, setArtistName] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
   const [ticketPrice, setTicketPrice] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [startTime, setStartTime] = useState(null);
 
   const [showDeleteIcon, setShowDeleteIcon] = useState(null);
 
-  // State variables to manage edit mode for each field
+  // Edit toggles
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingOrganizer, setIsEditingOrganizer] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
@@ -1337,80 +1002,56 @@ const EditEventScreen = ({ route, navigation }) => {
     "Travel Meetup",
   ];
 
-  // Fetch event details once component mounts
+  // ===== Fetch existing event on mount =====
   useEffect(() => {
     const fetchEventDetails = async () => {
       try {
-        if (!token) {
-          Alert.alert("Error", "No access token found. Please log in.");
-          navigation.goBack();
-          return;
-        }
-
-        // Decode token to check expiration
-        const decodedToken = jwtDecode(token);
-        const currentTimeInSeconds = Math.floor(Date.now() / 1000);
-
-        if (decodedToken.exp < currentTimeInSeconds) {
-          Alert.alert("Session Expired", "Please log in again.");
-          navigation.navigate("LoginScreen");
-          return;
-        }
-
         const response = await axios.get(`${API_URL}/api/events/${eventId}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}` }, // if needed
         });
-
-        // console.log("API Response:", response.data);
 
         if (response.status === 200) {
           const eventData = response.data;
 
-          if (!eventData) {
-            Alert.alert("Error", "Event data is missing.");
-            navigation.goBack();
-            return;
-          }
-
-          // **Ownership Check**
-          if (eventData.userId !== userId) {
-            Alert.alert(
-              "Unauthorized",
-              "You do not have permission to edit this event."
-            );
-            navigation.goBack();
-            return;
-          }
-
           setEvent(eventData);
-          setTitle(eventData.title);
-          setOrganizerName(eventData.organizer);
-          setDescription(eventData.eventDetails);
-          setEventGenre(eventData.genre);
-          setBaseAddress(eventData.location.baseAddress);
-          setCountryName(eventData.location.country);
-          setStateName(eventData.location.state);
-          setCityName(eventData.location.city);
-          setArtistName(eventData.artists[0]?.name || "");
-          setVideoUrl(eventData.videoUrl || "");
-          setTicketPrice(eventData.ticketPrice.toString());
+          setTitle(eventData.title || "");
+          setOrganizerName(eventData.organizer || "");
+          setDescription(eventData.eventDetails || "");
+          setEventGenre(eventData.genre || "");
+          setBaseAddress(eventData.location?.baseAddress || "");
+          setCountryName(eventData.location?.country || "");
+          setStateName(eventData.location?.state || "");
+          setCityName(eventData.location?.city || "");
+          setArtistName(eventData.artists?.[0]?.name || "");
+          setTicketPrice(eventData.ticketPrice?.toString() || "0");
           setStartDate(new Date(eventData.date));
           setStartTime(new Date(`1970-01-01T${eventData.time}Z`));
 
-          // Set images
-          const initialImages = [null, null, null];
-          eventData.images.forEach((img, index) => {
-            if (index < 3) {
-              initialImages[index] = img.url;
+          // Prepare arrays for images
+          const initKeys = [null, null, null];
+          const initImages = [null, null, null];
+
+          // Map up to 3 images
+          const eventImages = eventData.images || [];
+          for (let i = 0; i < 3; i++) {
+            if (eventImages[i]) {
+              initKeys[i] = eventImages[i].url; // "mm_images/someKey.jpg"
+              // We'll fetch a pre-signed GET URL to show the image
+              const presigned = await fetchPresignedGetUrl(eventImages[i].url);
+              initImages[i] = presigned;
             }
-          });
-          setImages(initialImages);
+          }
+          setImageKeys(initKeys);
+          setImages(initImages);
         } else {
-          Alert.alert("Error", "Failed to fetch event details.");
+          Alert.alert(
+            "Error",
+            `Failed to fetch event details (${response.status})`
+          );
           navigation.goBack();
         }
       } catch (error) {
-        console.error("Error fetching event details:", error.message);
+        console.error("Error fetching event details:", error);
         Alert.alert("Error", "An error occurred while fetching event details.");
         navigation.goBack();
       } finally {
@@ -1418,251 +1059,213 @@ const EditEventScreen = ({ route, navigation }) => {
       }
     };
 
-    // Fetch event details once component mounts
     fetchEventDetails();
-  }, [
-    eventId,
-    token,
-    userId,
-    navigation,
-    // Removed countryData, handleState, handleCity from dependencies
-  ]);
+  }, [eventId, token, navigation]);
 
-  // Handle genre selection
-  const handleGenreSelect = (genre) => {
-    setEventGenre(genre);
-    setIsEditingGenre(false); // Exit edit mode
-  };
-
-  // Image Picker
-  const pickMedia = async (index, imageArray, type) => {
-    let options = {
-      mediaTypes: type,
-      allowsEditing: true,
-      quality: 1,
-    };
-    const result = await ImagePicker.launchImageLibraryAsync(options);
-    if (!result.canceled) {
-      const uri = result.assets[0]?.uri;
-      if (typeof uri === "string") {
-        // Update images array
-        const newImages = [...imageArray];
-        newImages[index] = uri;
-        setImages(newImages);
-      } else {
-        console.error("Invalid URI:", uri);
-      }
-    }
-  };
-
-  const pickImage = (index) =>
-    pickMedia(index, images, ImagePicker.MediaType.Images);
-
-  // Video Picker (Optional)
-  const pickVideo = async () => {
-    let options = {
-      mediaTypes: ImagePicker.MediaType.Videos,
-      allowsEditing: true,
-      quality: 1,
-    };
-    let result = await ImagePicker.launchImageLibraryAsync(options);
-    if (!result.canceled) {
-      const uri = result.assets[0]?.uri;
-      if (typeof uri === "string") {
-        setVideoUrl(uri);
-        try {
-          const { uri: thumbnailUri } = await Video.createThumbnailAsync(uri, {
-            time: 5000, // Time in milliseconds (e.g., 5000 for 5 seconds)
-          });
-          // setVideoThumbnailUrl(thumbnailUri); // Optionally, handle thumbnail
-        } catch (thumbnailError) {
-          console.error("Error creating video thumbnail:", thumbnailError);
-        }
-      } else {
-        console.error("Invalid video URL:", uri);
-      }
-    }
-  };
-
-  // Handle deleting an image
-  const handleDeleteImage = (index) => {
-    const updatedImages = [...images];
-    updatedImages[index] = null; // Remove the image at that index
-    setImages(updatedImages);
-    setShowDeleteIcon(null);
-  };
-
-  // Show/hide date and time pickers
-  const showDatePickerModal = () => setIsEditingDate(true);
-  const hideDatePickerModal = () => setIsEditingDate(false);
-  const showTimePickerModal = () => setIsEditingTime(true);
-  const hideTimePickerModal = () => setIsEditingTime(false);
-
-  // Confirm date and time
-  const handleConfirmDate = (date) => {
-    setStartDate(date);
-    hideDatePickerModal();
-  };
-
-  const handleConfirmTime = (time) => {
-    setStartTime(time);
-    hideTimePickerModal();
-  };
-
-  // Upload files to Cloudinary
-  const uploadFile = async (fileUri, type) => {
-    const data = new FormData();
-    data.append("file", {
-      uri: fileUri,
-      type: type === "image" ? "image/jpeg" : "video/mp4",
-      name: type === "image" ? "image.jpg" : "video.mp4",
-    });
-    data.append(
-      "upload_preset",
-      type === "image" ? "images_preset" : "videos_preset"
-    );
-
+  // ===== Helper to GET presigned URL for existing S3 image =====
+  const fetchPresignedGetUrl = async (s3Key) => {
     try {
-      let cloudName = CLOUDINARY_CLOUD_NAME;
-      let resourceType = type === "image" ? "image" : "video";
-      let api = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
-
-      const res = await axios.post(api, data);
-      const { secure_url } = res.data;
-      console.log("Uploaded URL:", secure_url);
-      return secure_url;
+      const response = await fetch(
+        `${API_URL}/api/s3-presigned-url?key=${encodeURIComponent(s3Key)}`
+      );
+      if (!response.ok) {
+        throw new Error(
+          `Failed to get pre-signed URL, status: ${response.status}`
+        );
+      }
+      const data = await response.json();
+      return data.preSignedUrl; // short-lived URL to display
     } catch (error) {
-      console.log("Error uploading file to Cloudinary:", error);
+      console.error("Error fetching pre-signed URL for key:", s3Key, error);
       return null;
     }
   };
 
-  // Fetch location coordinates using OLA Maps API
-  const fetchLocationCoordinates = async (
-    baseAddress,
-    city,
-    state,
-    country
-  ) => {
-    try {
-      console.log("OLA API Key:", OLA_MAPS_API_KEY);
-      const locationString = `${baseAddress}, ${city}, ${state}, ${country}`;
-      console.log("Location String:", locationString);
-
-      const generateId = () => Math.random().toString(36).substring(2, 15);
-      const requestId = generateId();
-      console.log("Request ID:", requestId);
-
-      const geocodeUrl = `https://api.olamaps.io/places/v1/geocode?address=${encodeURIComponent(
-        locationString
-      )}&api_key=${OLA_MAPS_API_KEY}`;
-      const response = await axios.get(geocodeUrl, {
-        headers: { "X-Request-Id": requestId },
-      });
-
-      console.log("Geocode API Response:", response.data);
-
-      if (
-        response.data.geocodingResults &&
-        response.data.geocodingResults.length > 0
-      ) {
-        const { lat, lng } =
-          response.data.geocodingResults[0].geometry.location;
-        console.log("Coordinates:", { latitude: lat, longitude: lng });
-        return { latitude: lat, longitude: lng }; // Return coordinates
-      } else {
-        console.error("No results found for the provided location.");
-        return null; // Return null if no results found
-      }
-    } catch (error) {
-      console.error(
-        "Error fetching coordinates:",
-        error.response || error.message
-      );
-      return null; // Return null on error
+  // ===== S3 upload logic (for newly picked images) =====
+  const guessMimeType = (fileUri) => {
+    const ext = fileUri.split(".").pop().toLowerCase();
+    switch (ext) {
+      case "jpg":
+      case "jpeg":
+        return "image/jpeg";
+      case "png":
+        return "image/png";
+      case "gif":
+        return "image/gif";
+      case "mp4":
+        return "video/mp4";
+      default:
+        return "application/octet-stream";
     }
   };
 
+  const uploadFileToS3 = async (fileUri) => {
+    try {
+      const fileType = guessMimeType(fileUri);
+      const folder = fileType.startsWith("video/") ? "mm_videos" : "mm_images";
+
+      const originalFileName = fileUri.split("/").pop() || "unknown.file";
+      const uniqueFileName = `${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 8)}-${originalFileName}`;
+
+      const { data } = await axios.post(`${API_URL}/api/s3-presigned-url`, {
+        folder,
+        fileType,
+        fileName: uniqueFileName,
+      });
+      const { uploadUrl, key } = data;
+
+      const fileResponse = await fetch(fileUri);
+      const blob = await fileResponse.blob();
+      await fetch(uploadUrl, {
+        method: "PUT",
+        body: blob, // Use blob directly
+        headers: {
+          "Content-Type": fileType,
+          "Content-Length": blob.size, // Make sure MIME type is correct
+        },
+      });
+
+      return key; // e.g. "mm_images/...jpg"
+    } catch (error) {
+      console.error("Error uploading to S3:", error);
+      return null;
+    }
+  };
+
+  // ===== Image picking logic =====
+  const pickImage = async (index) => {
+    try {
+      const options = {
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      };
+      const result = await ImagePicker.launchImageLibraryAsync(options);
+      if (!result.canceled) {
+        const uri = result.assets[0]?.uri;
+        if (typeof uri === "string") {
+          // user picked new image
+          const newImages = [...images];
+          newImages[index] = uri; // local path
+          setImages(newImages);
+
+          const newKeys = [...imageKeys];
+          newKeys[index] = null; // We no longer use the old S3 key
+          setImageKeys(newKeys);
+        }
+      }
+    } catch (error) {
+      console.error("Error opening image picker:", error);
+    }
+  };
+
+  const handleDeleteImage = (index) => {
+    const newImgs = [...images];
+    newImgs[index] = null;
+    setImages(newImgs);
+
+    const newKeys = [...imageKeys];
+    newKeys[index] = null;
+    setImageKeys(newKeys);
+
+    setShowDeleteIcon(null);
+  };
+
+  // ===== Date/time pickers =====
+  const [isEditingDatePicker, setIsEditingDatePicker] = useState(false);
+  const [isEditingTimePicker, setIsEditingTimePicker] = useState(false);
+
+  // if user picks date/time, store them
+  const handleConfirmDate = (date) => {
+    setStartDate(date);
+    setIsEditingDatePicker(false);
+  };
+  const handleConfirmTime = (time) => {
+    setStartTime(time);
+    setIsEditingTimePicker(false);
+  };
+
+  // ===== Location coords =====
+  const fetchLocationCoordinates = async (addr, city, st, cnt) => {
+    try {
+      const locStr = `${addr}, ${city}, ${st}, ${cnt}`;
+      const geocodeUrl = `https://api.olamaps.io/places/v1/geocode?address=${encodeURIComponent(
+        locStr
+      )}&api_key=${OLA_MAPS_API_KEY}`;
+      const response = await axios.get(geocodeUrl);
+      const results = response.data.geocodingResults;
+      if (results && results.length > 0) {
+        const { lat, lng } = results[0].geometry.location;
+        return { latitude: lat, longitude: lng };
+      } else {
+        console.error("No results for location:", locStr);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error fetching location coords:", error);
+      return null;
+    }
+  };
+
+  // ===== On update, decide whether to reupload or keep old S3 keys =====
   const handleUpdate = async () => {
     try {
-      if (!token) {
-        Alert.alert("Error", "No access token found. Please log in.");
-        return;
-      }
-
-      // Decode token to check expiration
-      const decodedToken = jwtDecode(token);
-      const currentTimeInSeconds = Math.floor(Date.now() / 1000);
-
-      if (decodedToken.exp < currentTimeInSeconds) {
-        Alert.alert("Session Expired", "Please log in again.");
-        navigation.navigate("LoginScreen");
-        return;
-      }
-
-      // Prepare all fields for update
+      // 1) Build partial update object
       const updatedFields = {
         title,
         organizer: organizerName,
         eventDetails: description,
         genre: eventGenre,
-        ticketPrice: parseFloat(ticketPrice),
+        ticketPrice: parseFloat(ticketPrice) || 0,
         date: startDate ? startDate.toISOString() : undefined,
         time: startTime
           ? startTime.toLocaleTimeString("en-GB", { hour12: false })
           : undefined,
-        artists: artistName
-          ? [{ name: artistName, role: "Artist" }]
-          : undefined,
-        videoUrl: videoUrl || undefined,
+        artists: artistName ? [{ name: artistName, role: "Artist" }] : [],
       };
 
-      // Handle location updates
-      if (baseAddress || cityName || stateName || countryName) {
-        const locationCoordinates = await fetchLocationCoordinates(
-          baseAddress,
-          cityName,
-          stateName,
-          countryName
-        );
-
-        if (!locationCoordinates) {
-          Alert.alert("Error", "Failed to fetch location coordinates.");
-          return;
-        }
-
-        updatedFields.location = {
-          baseAddress: baseAddress || event.location.baseAddress,
-          country: countryName || event.location.country,
-          state: stateName || event.location.state,
-          city: cityName || event.location.city,
-          coordinates: [
-            locationCoordinates.longitude,
-            locationCoordinates.latitude,
-          ], // [lng, lat]
-        };
-      }
-
-      // Upload images and videos if changed
-      const uploadedImages = await Promise.all(
-        images.map(async (image) =>
-          image ? await uploadFile(image, "image") : null
-        )
+      // 2) location
+      const coords = await fetchLocationCoordinates(
+        baseAddress,
+        cityName,
+        stateName,
+        countryName
       );
-      const validImages = uploadedImages.filter(Boolean);
-
-      if (validImages.length > 0) {
-        updatedFields.images = validImages.map((url) => ({ url }));
+      if (!coords) {
+        Alert.alert("Error", "Failed to fetch location coords.");
+        return;
       }
+      updatedFields.location = {
+        baseAddress,
+        country: countryName,
+        state: stateName,
+        city: cityName,
+        coordinates: [coords.longitude, coords.latitude],
+      };
 
-      // Optionally, handle video upload if a new video is selected
-      if (videoUrl) {
-        updatedFields.videoUrl = videoUrl; // Assuming videoUrl is already the uploaded URL
+      // 3) For each image slot, if local path => upload => store new key
+      // if still presigned URL => keep old key from imageKeys
+      const finalImageKeys = [];
+      for (let i = 0; i < 3; i++) {
+        if (!images[i]) {
+          // user deleted that image
+          // do nothing, skip
+        } else if (images[i].startsWith("file:/")) {
+          // new local image => upload
+          const newKey = await uploadFileToS3(images[i]);
+          if (newKey) finalImageKeys.push({ url: newKey });
+        } else {
+          // existing presigned URL => keep old key
+          if (imageKeys[i]) {
+            finalImageKeys.push({ url: imageKeys[i] });
+          }
+        }
       }
+      updatedFields.images = finalImageKeys;
 
-      // console.log("Partial Updated Event Data:", updatedFields);
-
-      // Make the PATCH request
+      // 4) Patch event
       const response = await axios.patch(
         `${API_URL}/api/events/updateEvent/${eventId}`,
         updatedFields,
@@ -1671,23 +1274,16 @@ const EditEventScreen = ({ route, navigation }) => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          timeout: 20000,
         }
       );
-
-      // console.log("Update Event Response:", response.data);
-
       if (response.status === 200 || response.status === 204) {
-        Alert.alert("Success", "Event successfully updated!");
+        Alert.alert("Success", "Event updated successfully!");
         navigation.navigate("MyEvents");
       } else {
-        Alert.alert(
-          "Error",
-          `Failed to update event. Status: ${response.status}`
-        );
+        Alert.alert("Error", `Failed to update event (${response.status})`);
       }
     } catch (error) {
-      console.error("Error updating event:", error.message);
+      console.error("Error updating event:", error);
       Alert.alert("Error", "An error occurred. Please try again.");
     }
   };
@@ -1704,27 +1300,26 @@ const EditEventScreen = ({ route, navigation }) => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Event Photos */}
         <Text style={styles.label}>Event Photos</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.photosScrollContainer}
         >
-          {images.map((image, index) => (
+          {images.map((image, idx) => (
             <TouchableOpacity
-              key={`edit-img-${index}`}
+              key={`edit-img-${idx}`}
               style={styles.imageItem}
-              onPress={() => pickImage(index)}
-              onLongPress={() => setShowDeleteIcon(index)}
+              onPress={() => pickImage(idx)}
+              onLongPress={() => setShowDeleteIcon(idx)}
             >
               {image ? (
                 <>
                   <Image source={{ uri: image }} style={styles.image} />
-                  {showDeleteIcon === index && (
+                  {showDeleteIcon === idx && (
                     <TouchableOpacity
                       style={styles.deleteIconWrapper}
-                      onPress={() => handleDeleteImage(index)}
+                      onPress={() => handleDeleteImage(idx)}
                     >
                       <Ionicons name="trash" size={24} color="red" />
                     </TouchableOpacity>
@@ -1737,7 +1332,7 @@ const EditEventScreen = ({ route, navigation }) => {
           ))}
         </ScrollView>
 
-        {/* Title Field */}
+        {/* Title */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Title</Text>
           {isEditingTitle ? (
@@ -1746,8 +1341,8 @@ const EditEventScreen = ({ route, navigation }) => {
                 style={styles.input}
                 value={title}
                 onChangeText={setTitle}
-                placeholder="Enter event title"
-                placeholderTextColor="#fff"
+                placeholder="Event title"
+                placeholderTextColor="#999"
               />
               <TouchableOpacity onPress={() => setIsEditingTitle(false)}>
                 <Ionicons name="checkmark-circle" size={24} color="#814C68" />
@@ -1763,7 +1358,7 @@ const EditEventScreen = ({ route, navigation }) => {
           )}
         </View>
 
-        {/* Organizer Name Field */}
+        {/* Organizer */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Organizer Name</Text>
           {isEditingOrganizer ? (
@@ -1772,8 +1367,8 @@ const EditEventScreen = ({ route, navigation }) => {
                 style={styles.input}
                 value={organizerName}
                 onChangeText={setOrganizerName}
-                placeholder="Enter organizer name"
-                placeholderTextColor="#000"
+                placeholder="Organizer name"
+                placeholderTextColor="#999"
               />
               <TouchableOpacity onPress={() => setIsEditingOrganizer(false)}>
                 <Ionicons name="checkmark-circle" size={24} color="#814C68" />
@@ -1789,7 +1384,7 @@ const EditEventScreen = ({ route, navigation }) => {
           )}
         </View>
 
-        {/* Description Field */}
+        {/* Description */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Description</Text>
           {isEditingDescription ? (
@@ -1798,8 +1393,6 @@ const EditEventScreen = ({ route, navigation }) => {
                 style={styles.textArea}
                 value={description}
                 onChangeText={setDescription}
-                placeholder="Enter event details"
-                placeholderTextColor="#fff"
                 multiline
               />
               <TouchableOpacity onPress={() => setIsEditingDescription(false)}>
@@ -1816,7 +1409,7 @@ const EditEventScreen = ({ route, navigation }) => {
           )}
         </View>
 
-        {/* Genre Field */}
+        {/* Genre */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Genre</Text>
           {isEditingGenre ? (
@@ -1827,10 +1420,7 @@ const EditEventScreen = ({ route, navigation }) => {
                 selectedTextStyle={styles.selectedTextStyle}
                 inputSearchStyle={styles.inputSearchStyle}
                 iconStyle={styles.iconStyle}
-                data={eventGenres.map((genre) => ({
-                  label: genre,
-                  value: genre,
-                }))}
+                data={eventGenres.map((g) => ({ label: g, value: g }))}
                 search
                 maxHeight={300}
                 labelField="label"
@@ -1838,9 +1428,9 @@ const EditEventScreen = ({ route, navigation }) => {
                 placeholder="Select Genre"
                 searchPlaceholder="Search..."
                 value={eventGenre}
-                onFocus={() => {}}
-                onBlur={() => {}}
-                onChange={(item) => handleGenreSelect(item.value)}
+                onChange={(item) => {
+                  setEventGenre(item.value);
+                }}
               />
               <TouchableOpacity onPress={() => setIsEditingGenre(false)}>
                 <Ionicons name="checkmark-circle" size={24} color="#814C68" />
@@ -1856,7 +1446,7 @@ const EditEventScreen = ({ route, navigation }) => {
           )}
         </View>
 
-        {/* Base Address Field */}
+        {/* Base Address */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Base Address</Text>
           {isEditingAddress ? (
@@ -1865,8 +1455,8 @@ const EditEventScreen = ({ route, navigation }) => {
                 style={styles.input}
                 value={baseAddress}
                 onChangeText={setBaseAddress}
-                placeholder="Enter event address"
-                placeholderTextColor="#fff"
+                placeholder="Event address"
+                placeholderTextColor="#999"
               />
               <TouchableOpacity onPress={() => setIsEditingAddress(false)}>
                 <Ionicons name="checkmark-circle" size={24} color="#814C68" />
@@ -1882,49 +1472,36 @@ const EditEventScreen = ({ route, navigation }) => {
           )}
         </View>
 
-        {/* Location Input Fields */}
+        {/* City/State/Country */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Location Details</Text>
-          <View style={styles.inputContainer}>
-            {/* Country Input */}
-            <View style={styles.inputField}>
-              <Text style={styles.subLabel}>Country:</Text>
-              <TextInput
-                style={styles.textInput}
-                value={countryName}
-                onChangeText={setCountryName}
-                placeholder="Enter country"
-                placeholderTextColor="#814C68"
-              />
-            </View>
-
-            {/* State Input */}
-            <View style={styles.inputField}>
-              <Text style={styles.subLabel}>State:</Text>
-              <TextInput
-                style={styles.textInput}
-                value={stateName}
-                onChangeText={setStateName}
-                placeholder="Enter state"
-                placeholderTextColor="#814C68"
-              />
-            </View>
-
-            {/* City Input */}
-            <View style={styles.inputField}>
-              <Text style={styles.subLabel}>City:</Text>
-              <TextInput
-                style={styles.textInput}
-                value={cityName}
-                onChangeText={setCityName}
-                placeholder="Enter city"
-                placeholderTextColor="#814C68"
-              />
-            </View>
+          <View style={styles.inputField}>
+            <Text style={styles.subLabel}>Country:</Text>
+            <TextInput
+              style={styles.textInput}
+              value={countryName}
+              onChangeText={setCountryName}
+            />
+          </View>
+          <View style={styles.inputField}>
+            <Text style={styles.subLabel}>State:</Text>
+            <TextInput
+              style={styles.textInput}
+              value={stateName}
+              onChangeText={setStateName}
+            />
+          </View>
+          <View style={styles.inputField}>
+            <Text style={styles.subLabel}>City:</Text>
+            <TextInput
+              style={styles.textInput}
+              value={cityName}
+              onChangeText={setCityName}
+            />
           </View>
         </View>
 
-        {/* Date and Time Fields */}
+        {/* Date & Time */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Date & Time</Text>
           <View style={styles.dateTimeRow}>
@@ -1934,7 +1511,7 @@ const EditEventScreen = ({ route, navigation }) => {
               {isEditingDate ? (
                 <View style={styles.editableDateTime}>
                   <TouchableOpacity
-                    onPress={showDatePickerModal}
+                    onPress={() => {}}
                     style={styles.dateTimeButton}
                   >
                     <Text style={styles.dateTimeButtonText}>
@@ -1978,7 +1555,7 @@ const EditEventScreen = ({ route, navigation }) => {
               {isEditingTime ? (
                 <View style={styles.editableDateTime}>
                   <TouchableOpacity
-                    onPress={showTimePickerModal}
+                    onPress={() => {}}
                     style={styles.dateTimeButton}
                   >
                     <Text style={styles.dateTimeButtonText}>
@@ -2024,26 +1601,28 @@ const EditEventScreen = ({ route, navigation }) => {
               )}
             </View>
           </View>
-
-          {/* Date and Time Pickers */}
+          {/* Real date/time pickers */}
           <DateTimePickerModal
             isVisible={isEditingDate}
             mode="date"
-            onConfirm={handleConfirmDate}
-            onCancel={hideDatePickerModal}
-            textColor="#000"
+            onConfirm={(d) => {
+              setStartDate(d);
+              setIsEditingDate(false);
+            }}
+            onCancel={() => setIsEditingDate(false)}
           />
-
           <DateTimePickerModal
             isVisible={isEditingTime}
             mode="time"
-            onConfirm={handleConfirmTime}
-            onCancel={hideTimePickerModal}
-            textColor="#000"
+            onConfirm={(t) => {
+              setStartTime(t);
+              setIsEditingTime(false);
+            }}
+            onCancel={() => setIsEditingTime(false)}
           />
         </View>
 
-        {/* Artist Name Field */}
+        {/* Artist */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Artist Name</Text>
           {isEditingArtist ? (
@@ -2052,8 +1631,6 @@ const EditEventScreen = ({ route, navigation }) => {
                 style={styles.input}
                 value={artistName}
                 onChangeText={setArtistName}
-                placeholder="Enter artist name"
-                placeholderTextColor="#fff"
               />
               <TouchableOpacity onPress={() => setIsEditingArtist(false)}>
                 <Ionicons name="checkmark-circle" size={24} color="#814C68" />
@@ -2069,36 +1646,7 @@ const EditEventScreen = ({ route, navigation }) => {
           )}
         </View>
 
-        {/* Video Field */}
-        {/* <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Video</Text>
-          <View style={styles.videoField}>
-            <TouchableOpacity onPress={pickVideo} style={styles.videoUpload}>
-              {videoUrl ? (
-                <>
-                  <Video
-                    source={{ uri: videoUrl }}
-                    rate={1.0}
-                    volume={1.0}
-                    isMuted={false}
-                    resizeMode="cover"
-                    shouldPlay={false}
-                    isLooping
-                    style={styles.videoThumbnail}
-                  />
-                  <Text style={styles.videoText}>Video Selected</Text>
-                </>
-              ) : (
-                <>
-                  <Ionicons name="videocam-outline" size={36} color="#fff" />
-                  <Text style={styles.videoText}>Upload Video</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View> */}
-
-        {/* Ticket Price Field */}
+        {/* Ticket Price */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Ticket Price</Text>
           {isEditingTicketPrice ? (
@@ -2109,7 +1657,6 @@ const EditEventScreen = ({ route, navigation }) => {
                 onChangeText={setTicketPrice}
                 placeholder="Enter ticket price"
                 keyboardType="numeric"
-                placeholderTextColor="#fff"
               />
               <TouchableOpacity onPress={() => setIsEditingTicketPrice(false)}>
                 <Ionicons name="checkmark-circle" size={24} color="#814C68" />
@@ -2117,7 +1664,7 @@ const EditEventScreen = ({ route, navigation }) => {
             </View>
           ) : (
             <View style={styles.displayField}>
-              <Text style={styles.fieldText}>₹ {ticketPrice}</Text>
+              <Text style={styles.fieldText}>{ticketPrice}</Text>
               <TouchableOpacity onPress={() => setIsEditingTicketPrice(true)}>
                 <Ionicons name="pencil" size={20} color="#814C68" />
               </TouchableOpacity>
@@ -2125,7 +1672,7 @@ const EditEventScreen = ({ route, navigation }) => {
           )}
         </View>
 
-        {/* Update Event Button */}
+        {/* Update Button */}
         <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
           <Text style={styles.updateButtonText}>Update Event</Text>
         </TouchableOpacity>
@@ -2133,6 +1680,25 @@ const EditEventScreen = ({ route, navigation }) => {
     </TouchableWithoutFeedback>
   );
 };
+
+/** Helper to fetch a pre-signed GET URL for an existing S3 key. */
+async function fetchPresignedGetUrl(s3Key) {
+  try {
+    const res = await fetch(
+      `${API_URL}/api/s3-presigned-url?key=${encodeURIComponent(s3Key)}`
+    );
+    if (!res.ok) {
+      throw new Error(`Failed to get pre-signed URL: ${res.status}`);
+    }
+    const data = await res.json();
+    return data.preSignedUrl;
+  } catch (error) {
+    console.error("Error fetching pre-signed GET URL:", error);
+    return null;
+  }
+}
+
+export default EditEventScreen;
 
 const styles = StyleSheet.create({
   scrollContainer: {
@@ -2158,12 +1724,6 @@ const styles = StyleSheet.create({
     fontFamily: "CenturyGothicBold",
     marginVertical: 8,
     color: "#814C68",
-  },
-  subLabel: {
-    fontSize: 14,
-    fontFamily: "CenturyGothic",
-    color: "#814C68",
-    marginBottom: 4,
   },
   fieldContainer: {
     marginBottom: 20,
@@ -2196,8 +1756,8 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: 40,
-    fontFamily: "CenturyGothic",
     color: "#000",
+    fontFamily: "CenturyGothic",
   },
   textArea: {
     flex: 1,
@@ -2206,59 +1766,6 @@ const styles = StyleSheet.create({
     color: "#000",
     paddingVertical: 10,
     paddingHorizontal: 10,
-  },
-  dropdown: {
-    flex: 1,
-    backgroundColor: "#814C68",
-    height: 40,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 10,
-  },
-  placeholderStyle: {
-    color: "#fff",
-    fontSize: 14,
-    fontFamily: "CenturyGothic",
-  },
-  selectedTextStyle: {
-    color: "#fff",
-    fontSize: 14,
-    fontFamily: "CenturyGothic",
-  },
-  inputSearchStyle: {
-    fontSize: 16,
-    color: "#fff",
-    fontFamily: "CenturyGothic",
-  },
-  iconStyle: {
-    width: 20,
-    height: 20,
-  },
-  dropdowngenreContainer: {
-    backgroundColor: "#814C68",
-    borderColor: "#ced4da",
-    borderWidth: 1,
-    borderRadius: 5,
-    marginTop: 5,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    maxHeight: 200,
-  },
-  dropdownItem: {
-    padding: 10,
-    borderBottomColor: "#ced4da",
-    borderBottomWidth: 1,
-    backgroundColor: "#814C68",
-  },
-  dropdownItemText: {
-    fontSize: 16,
-    color: "#fff",
-    fontFamily: "CenturyGothic",
   },
   photosScrollContainer: {
     marginBottom: 16,
@@ -2289,32 +1796,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 3,
   },
-  videoField: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 10,
-  },
-  videoUpload: {
-    backgroundColor: "#814C68",
-    borderRadius: 10,
-    height: 150,
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-  },
-  videoThumbnail: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 10,
-  },
-  videoText: {
-    position: "absolute",
-    bottom: 10,
-    color: "#fff",
-    fontFamily: "CenturyGothicBold",
-    fontSize: 16,
-  },
   dateTimeRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -2327,17 +1808,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  displayDateTime: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
   dateTimeButton: {
     backgroundColor: "#814C68",
     borderRadius: 15,
     padding: 10,
-    borderWidth: 1,
-    borderColor: "#ced4da",
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
@@ -2348,8 +1822,10 @@ const styles = StyleSheet.create({
     fontFamily: "CenturyGothic",
     flex: 1,
   },
-  checkIcon: {
-    marginLeft: 10,
+  displayDateTime: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   updateButton: {
     backgroundColor: "#814C68",
@@ -2357,24 +1833,20 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     marginTop: 20,
-    // marginBottom: 40,
   },
   updateButtonText: {
     color: "#fff",
     fontSize: 18,
     fontFamily: "CenturyGothicBold",
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff",
-  },
-  inputContainer: {
-    marginTop: 10,
-  },
   inputField: {
     marginBottom: 15,
+  },
+  subLabel: {
+    fontSize: 14,
+    fontFamily: "CenturyGothic",
+    color: "#814C68",
+    marginBottom: 4,
   },
   textInput: {
     borderWidth: 1,
@@ -2385,6 +1857,23 @@ const styles = StyleSheet.create({
     color: "#814C68",
     fontFamily: "CenturyGothic",
   },
+  placeholderStyle: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "CenturyGothic",
+  },
+  selectedTextStyle: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "CenturyGothic",
+  },
+  inputSearchStyle: {
+    fontSize: 16,
+    color: "#fff",
+    fontFamily: "CenturyGothic",
+  },
+  iconStyle: {
+    width: 20,
+    height: 20,
+  },
 });
-
-export default EditEventScreen;
