@@ -60,24 +60,37 @@ const userSchema = new Schema({
       type: String,
     },
   ],
-  requests: [
-    {
-      from: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
+  // requests: [
+  //   {
+  //     from: {
+  //       type: mongoose.Schema.Types.ObjectId,
+  //       ref: "User",
+  //       required: true,
+  //     },
+  //     // message: {
+  //     //   type: String,
+  //     //   required: true,
+  //     // },
+  //     status: {
+  //       type: String,
+  //       enum: ["pending", "accepted", "rejected"],
+  //       default: "pending",
+  //     },
+  //   },
+  // ],
+  requests: {
+    type: [
+      {
+        from: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        status: {
+          type: String,
+          enum: ["pending", "accepted", "rejected"],
+          default: "pending",
+        },
       },
-      // message: {
-      //   type: String,
-      //   required: true,
-      // },
-      status: {
-        type: String,
-        enum: ["pending", "accepted", "rejected"],
-        default: "pending",
-      },
-    },
-  ],
+    ],
+    default: [], // Ensures a new user starts with an empty array
+  },
   friends: [
     {
       type: mongoose.Schema.Types.ObjectId,
