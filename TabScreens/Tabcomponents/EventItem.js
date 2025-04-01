@@ -496,6 +496,208 @@
 //   },
 // });
 
+////////////recent working code //////////////////
+
+// import React, { useContext, useEffect, useState, useRef } from "react";
+// import {
+//   View,
+//   Text,
+//   TouchableOpacity,
+//   StyleSheet,
+//   Dimensions,
+//   StyleSheet as RNStyleSheet,
+// } from "react-native";
+// import { Video, ResizeMode } from "expo-av";
+// import { useNavigation, useFocusEffect } from "@react-navigation/native";
+// import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+// import { useSafeAreaInsets } from "react-native-safe-area-context";
+// import { UserContext } from "../../navigation/UserProvider";
+// import axios from "axios";
+// import { API_URL } from "@env";
+
+// const { width, height } = Dimensions.get("window");
+
+// // Constants for header and tab bar heights
+// const HEADER_HEIGHT = 60;
+// const TAB_BAR_HEIGHT = 60;
+
+// const EventItem = React.memo(function EventItem({
+//   item,
+//   index,
+//   shouldPlay,
+//   hasTabBar = true, // New prop: defaults to true
+// }) {
+//   const navigation = useNavigation();
+//   const insets = useSafeAreaInsets();
+
+//   // Calculate available height dynamically:
+//   // Subtract the tab bar height only if hasTabBar is true.
+//   const dynamicHeight =
+//     height -
+//     insets.top -
+//     insets.bottom -
+//     HEADER_HEIGHT -
+//     (hasTabBar ? TAB_BAR_HEIGHT : 0);
+
+//   const [isPlayerReady, setIsPlayerReady] = useState(false);
+//   const [isPlaying, setIsPlaying] = useState(false);
+
+//   // Create a ref for the Video component
+//   const videoRef = useRef(null);
+
+//   // Access user context (e.g., for vibes)
+//   const { userId } = useContext(UserContext);
+
+//   // State for vibes
+//   const [vibesCount, setVibesCount] = useState(item.vibes?.length || 0);
+//   const [hasVibed, setHasVibed] = useState(
+//     item.vibes?.includes(userId) || false
+//   );
+
+//   // Sync hasVibed with item.vibes
+//   useEffect(() => {
+//     setHasVibed(item.vibes?.includes(userId) || false);
+//   }, [item.vibes, userId]);
+
+//   // Setup playback status updates on mount
+//   useEffect(() => {
+//     if (!videoRef.current) return;
+
+//     videoRef.current.setOnPlaybackStatusUpdate((status) => {
+//       if (status.isLoaded) {
+//         setIsPlaying(status.isPlaying);
+//       }
+//     });
+//   }, [videoRef]);
+
+//   // Auto-play/pause based on shouldPlay prop
+//   useEffect(() => {
+//     if (!videoRef.current || !isPlayerReady) return;
+
+//     if (shouldPlay) {
+//       videoRef.current.playAsync().catch((err) => console.warn(err));
+//     } else {
+//       videoRef.current.pauseAsync().catch((err) => console.warn(err));
+//     }
+//   }, [shouldPlay, isPlayerReady]);
+
+//   // Handler for vibing
+//   const handleVibe = async () => {
+//     try {
+//       const response = await axios.post(
+//         `${API_URL}/api/events/${item._id}/vibe`,
+//         { userId }
+//       );
+//       if (response.status === 200) {
+//         const { vibesCount } = response.data;
+//         setVibesCount(vibesCount);
+//         setHasVibed((prev) => !prev);
+//       }
+//     } catch (error) {
+//       console.error("Error vibing event:", error);
+//     }
+//   };
+
+//   return (
+//     <View style={[styles.videoContainer, { width, height: dynamicHeight }]}>
+//       {shouldPlay && (
+//         <Video
+//           ref={videoRef}
+//           source={{ uri: item.videoUrl }}
+//           style={RNStyleSheet.absoluteFill}
+//           resizeMode={ResizeMode.CONTAIN}
+//           useNativeControls={false}
+//           isLooping={true}
+//           onReadyForDisplay={() => setIsPlayerReady(true)}
+//         />
+//       )}
+
+//       <View style={styles.bottom}>
+//         {/* Event Details */}
+//         <TouchableOpacity
+//           style={styles.overlay}
+//           onPress={() =>
+//             navigation.navigate("EventDetailsScreen", { eventId: item._id })
+//           }
+//         >
+//           <View style={styles.bottomInfo}>
+//             <Text style={styles.eventTitle}>{item.title}</Text>
+//             <Text style={styles.organizer}>By {item.organizer}</Text>
+//           </View>
+//         </TouchableOpacity>
+
+//         {/* Vibe Button */}
+//         <View
+//           style={{
+//             flexDirection: "row",
+//             alignItems: "center",
+//             paddingHorizontal: 20,
+//           }}
+//         >
+//           <TouchableOpacity onPress={handleVibe} style={styles.vibeButton}>
+//             <Text style={styles.vibeButtonText}>
+//               {hasVibed ? "Vibed" : "Vibe it"}
+//             </Text>
+//           </TouchableOpacity>
+//           <Text style={{ marginLeft: 8, color: "#fff" }}>
+//             {vibesCount} vibes
+//           </Text>
+//         </View>
+//       </View>
+//     </View>
+//   );
+// });
+
+// export default EventItem;
+
+// const styles = StyleSheet.create({
+//   videoContainer: {
+//     position: "relative",
+//     overflow: "hidden",
+//     backgroundColor: "#fff",
+//   },
+//   bottom: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     justifyContent: "space-between",
+//     paddingHorizontal: 10,
+//     paddingVertical: 15,
+//     backgroundColor: "rgba(0, 0, 0, 0.7)",
+//     position: "absolute",
+//     bottom: 0,
+//     width: "100%",
+//   },
+//   overlay: {
+//     flex: 1,
+//     padding: 10,
+//   },
+//   bottomInfo: {
+//     flex: 1,
+//     paddingHorizontal: 10,
+//   },
+//   eventTitle: {
+//     color: "#fff",
+//     fontSize: 18,
+//     fontFamily: "CenturyGothicBold",
+//   },
+//   organizer: {
+//     color: "#ddd",
+//     fontSize: 14,
+//     fontFamily: "CenturyGothic",
+//   },
+//   vibeButton: {
+//     backgroundColor: "#290F4C",
+//     paddingHorizontal: 12,
+//     paddingVertical: 8,
+//     borderRadius: 20,
+//   },
+//   vibeButtonText: {
+//     color: "#fff",
+//     fontFamily: "CenturyGothicBold",
+//     fontSize: 14,
+//   },
+// });
+
 import React, { useContext, useEffect, useState, useRef } from "react";
 import {
   View,
@@ -503,10 +705,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  StyleSheet as RNStyleSheet,
 } from "react-native";
 import { Video, ResizeMode } from "expo-av";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { UserContext } from "../../navigation/UserProvider";
@@ -514,8 +715,6 @@ import axios from "axios";
 import { API_URL } from "@env";
 
 const { width, height } = Dimensions.get("window");
-
-// Constants for header and tab bar heights
 const HEADER_HEIGHT = 60;
 const TAB_BAR_HEIGHT = 60;
 
@@ -527,9 +726,9 @@ const EventItem = React.memo(function EventItem({
 }) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const { userId } = useContext(UserContext);
 
-  // Calculate available height dynamically:
-  // Subtract the tab bar height only if hasTabBar is true.
+  // Calculate the height available for the video
   const dynamicHeight =
     height -
     insets.top -
@@ -537,30 +736,35 @@ const EventItem = React.memo(function EventItem({
     HEADER_HEIGHT -
     (hasTabBar ? TAB_BAR_HEIGHT : 0);
 
+  // We'll store the final playable URL from the backend
+  const [presignedVideoUrl, setPresignedVideoUrl] = useState(
+    item.presignedVideoUrl || null
+  );
+
+  console.log(presignedVideoUrl);
+
+  // For controlling the video playback
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Create a ref for the Video component
   const videoRef = useRef(null);
 
-  // Access user context (e.g., for vibes)
-  const { userId } = useContext(UserContext);
-
-  // State for vibes
+  // For vibes
   const [vibesCount, setVibesCount] = useState(item.vibes?.length || 0);
   const [hasVibed, setHasVibed] = useState(
     item.vibes?.includes(userId) || false
   );
 
-  // Sync hasVibed with item.vibes
+  // If the event object updates with a new presignedVideoUrl, we can catch it here
   useEffect(() => {
-    setHasVibed(item.vibes?.includes(userId) || false);
-  }, [item.vibes, userId]);
+    if (item.presignedVideoUrl) {
+      setPresignedVideoUrl(item.presignedVideoUrl);
+    }
+  }, [item.presignedVideoUrl]);
 
-  // Setup playback status updates on mount
+  // Setup playback status updates
   useEffect(() => {
     if (!videoRef.current) return;
-
     videoRef.current.setOnPlaybackStatusUpdate((status) => {
       if (status.isLoaded) {
         setIsPlaying(status.isPlaying);
@@ -568,7 +772,7 @@ const EventItem = React.memo(function EventItem({
     });
   }, [videoRef]);
 
-  // Auto-play/pause based on shouldPlay prop
+  // Auto-play/pause based on shouldPlay & readiness
   useEffect(() => {
     if (!videoRef.current || !isPlayerReady) return;
 
@@ -579,7 +783,7 @@ const EventItem = React.memo(function EventItem({
     }
   }, [shouldPlay, isPlayerReady]);
 
-  // Handler for vibing
+  // Vibe handler
   const handleVibe = async () => {
     try {
       const response = await axios.post(
@@ -587,8 +791,8 @@ const EventItem = React.memo(function EventItem({
         { userId }
       );
       if (response.status === 200) {
-        const { vibesCount } = response.data;
-        setVibesCount(vibesCount);
+        const { vibesCount: updatedCount } = response.data;
+        setVibesCount(updatedCount);
         setHasVibed((prev) => !prev);
       }
     } catch (error) {
@@ -598,20 +802,28 @@ const EventItem = React.memo(function EventItem({
 
   return (
     <View style={[styles.videoContainer, { width, height: dynamicHeight }]}>
-      {shouldPlay && (
+      {/* If we have the presigned URL, show the video */}
+      {presignedVideoUrl ? (
         <Video
           ref={videoRef}
-          source={{ uri: item.videoUrl }}
-          style={RNStyleSheet.absoluteFill}
+          source={{ uri: presignedVideoUrl }}
+          style={StyleSheet.absoluteFill}
           resizeMode={ResizeMode.CONTAIN}
-          useNativeControls={false}
-          isLooping={true}
+          isLooping
           onReadyForDisplay={() => setIsPlayerReady(true)}
+          onLoadStart={() => console.log("Video is loading...")}
+          onLoad={() => console.log("Video loaded.")}
+          onError={(err) => console.log("Video error:", err)}
         />
+      ) : (
+        // Otherwise, a fallback for no video
+        <View style={[StyleSheet.absoluteFill, styles.loadingContainer]}>
+          <Text style={styles.loadingText}>No Video Available</Text>
+        </View>
       )}
 
+      {/* Overlay: event details & vibe button */}
       <View style={styles.bottom}>
-        {/* Event Details */}
         <TouchableOpacity
           style={styles.overlay}
           onPress={() =>
@@ -624,22 +836,13 @@ const EventItem = React.memo(function EventItem({
           </View>
         </TouchableOpacity>
 
-        {/* Vibe Button */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            paddingHorizontal: 20,
-          }}
-        >
+        <View style={styles.vibeContainer}>
           <TouchableOpacity onPress={handleVibe} style={styles.vibeButton}>
             <Text style={styles.vibeButtonText}>
               {hasVibed ? "Vibed" : "Vibe it"}
             </Text>
           </TouchableOpacity>
-          <Text style={{ marginLeft: 8, color: "#fff" }}>
-            {vibesCount} vibes
-          </Text>
+          <Text style={styles.vibeCount}>{vibesCount} vibes</Text>
         </View>
       </View>
     </View>
@@ -652,7 +855,16 @@ const styles = StyleSheet.create({
   videoContainer: {
     position: "relative",
     overflow: "hidden",
-    backgroundColor: "#fff",
+    backgroundColor: "#000",
+  },
+  loadingContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#000",
+  },
+  loadingText: {
+    color: "#fff",
+    fontSize: 16,
   },
   bottom: {
     flexDirection: "row",
@@ -683,6 +895,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "CenturyGothic",
   },
+  vibeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+  },
   vibeButton: {
     backgroundColor: "#290F4C",
     paddingHorizontal: 12,
@@ -692,6 +909,11 @@ const styles = StyleSheet.create({
   vibeButtonText: {
     color: "#fff",
     fontFamily: "CenturyGothicBold",
+    fontSize: 14,
+  },
+  vibeCount: {
+    marginLeft: 8,
+    color: "#fff",
     fontSize: 14,
   },
 });

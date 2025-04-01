@@ -367,6 +367,48 @@ const MyBookingsScreen = ({ navigation }) => {
   }, [userId]);
 
   // Fetch user's booked events from your backend
+  // const fetchBookedEvents = async () => {
+  //   try {
+  //     setLoading(true);
+  //     console.log("User ID:", userId);
+  //     const response = await axios.get(
+  //       `${API_URL}/user/users/${userId}/events`
+  //     );
+  //     // response.data is an array of events with images,
+  //     // e.g. event.images = [{ url: "mm_images/abc.jpg" }, ...]
+  //     const fetchedEvents = response.data;
+
+  //     // Convert each event's first image key to a real pre-signed URL
+  //     const eventsWithImages = await Promise.all(
+  //       fetchedEvents.map(async (event) => {
+  //         if (!event.images || event.images.length === 0) {
+  //           // No images
+  //           return event;
+  //         }
+
+  //         // Some backends return a simple string, others return an object with "url"
+  //         const firstImage = event.images[0];
+  //         const key =
+  //           typeof firstImage === "string" ? firstImage : firstImage.url;
+
+  //         // Fetch the pre-signed URL for the first image
+  //         const presignedUrl = await fetchPresignedUrl(key);
+  //         return {
+  //           ...event,
+  //           // We'll store the actual presignedUrl in, say, event.firstImageUrl
+  //           firstImageUrl: presignedUrl,
+  //         };
+  //       })
+  //     );
+
+  //     setEvents(eventsWithImages);
+  //   } catch (error) {
+  //     console.error("Error fetching booked events:", error.response || error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchBookedEvents = async () => {
     try {
       setLoading(true);
@@ -374,34 +416,31 @@ const MyBookingsScreen = ({ navigation }) => {
       const response = await axios.get(
         `${API_URL}/user/users/${userId}/events`
       );
-      // response.data is an array of events with images,
-      // e.g. event.images = [{ url: "mm_images/abc.jpg" }, ...]
       const fetchedEvents = response.data;
 
-      // Convert each event's first image key to a real pre-signed URL
-      const eventsWithImages = await Promise.all(
+      const eventsWithPresignedUrls = await Promise.all(
         fetchedEvents.map(async (event) => {
           if (!event.images || event.images.length === 0) {
-            // No images
             return event;
           }
 
-          // Some backends return a simple string, others return an object with "url"
           const firstImage = event.images[0];
           const key =
             typeof firstImage === "string" ? firstImage : firstImage.url;
-
-          // Fetch the pre-signed URL for the first image
           const presignedUrl = await fetchPresignedUrl(key);
+
+          if (presignedUrl) {
+            await Image.prefetch(presignedUrl); // Preload image
+          }
+
           return {
             ...event,
-            // We'll store the actual presignedUrl in, say, event.firstImageUrl
             firstImageUrl: presignedUrl,
           };
         })
       );
 
-      setEvents(eventsWithImages);
+      setEvents(eventsWithPresignedUrls);
     } catch (error) {
       console.error("Error fetching booked events:", error.response || error);
     } finally {
@@ -477,10 +516,12 @@ const MyBookingsScreen = ({ navigation }) => {
   }
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
+    // <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
+    <View style={styles.container}>
       <FlatList
         data={events}
         keyExtractor={(item) => item._id}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -489,12 +530,22 @@ const MyBookingsScreen = ({ navigation }) => {
             onPress={() => handleEventPress(item._id)}
             style={styles.eventItem}
           >
-            {/**
-             * We now display event.firstImageUrl, which is the pre-signed URL for the first image
-             */}
-            {item.firstImageUrl ? (
+            {/* {item.firstImageUrl ? (
               <Image
                 source={{ uri: item.firstImageUrl }}
+                style={styles.eventImage}
+                onError={(err) =>
+                  console.log("Image load error:", err.nativeEvent)
+                }
+              />
+            ) : (
+              <View style={[styles.eventImage, styles.noImageContainer]}>
+                <Text style={styles.noImageText}>No Image</Text>
+              </View>
+            )} */}
+            {item.firstImageUrl ? (
+              <Image
+                source={{ uri: item.firstImageUrl, cache: "force-cache" }}
                 style={styles.eventImage}
                 onError={(err) =>
                   console.log("Image load error:", err.nativeEvent)
@@ -547,7 +598,8 @@ const MyBookingsScreen = ({ navigation }) => {
           </TouchableOpacity>
         )}
       />
-    </Animated.View>
+    </View>
+    /* </Animated.View> */
   );
 };
 

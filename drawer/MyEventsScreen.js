@@ -436,10 +436,51 @@ const MyEventsScreen = ({ navigation }) => {
     }
   }, [userId]);
 
-  /**
-   * Fetch all events created by this user, then for each event, request a
-   * pre-signed URL from S3 for the *first* image, and store that in event.firstImageUrl.
-   */
+  // const fetchCreatedEvents = async () => {
+  //   try {
+  //     setLoading(true);
+  //     if (!userId) {
+  //       console.error("User ID not found");
+  //       return;
+  //     }
+
+  //     const response = await axios.get(`${API_URL}/user/${userId}/events`);
+  //     if (response.status === 404 || response.data.length === 0) {
+  //       setError("No events found");
+  //       setEvents([]);
+  //     } else {
+  //       const fetchedEvents = response.data;
+  //       // For each event, convert its first image into a real URL
+  //       const eventsWithPresignedUrls = await Promise.all(
+  //         fetchedEvents.map(async (event) => {
+  //           if (!event.images || event.images.length === 0) {
+  //             // No images
+  //             return event;
+  //           }
+
+  //           // Some backends return a string, others return an object with .url
+  //           const firstImage = event.images[0];
+  //           const key =
+  //             typeof firstImage === "string" ? firstImage : firstImage.url;
+
+  //           const presignedUrl = await fetchPresignedUrl(key);
+  //           return {
+  //             ...event,
+  //             firstImageUrl: presignedUrl,
+  //           };
+  //         })
+  //       );
+  //       setEvents(eventsWithPresignedUrls);
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to fetch created events:", error.message);
+  //     setError("Failed to fetch created events.");
+  //     setEvents([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchCreatedEvents = async () => {
     try {
       setLoading(true);
@@ -454,26 +495,29 @@ const MyEventsScreen = ({ navigation }) => {
         setEvents([]);
       } else {
         const fetchedEvents = response.data;
-        // For each event, convert its first image into a real URL
+
         const eventsWithPresignedUrls = await Promise.all(
           fetchedEvents.map(async (event) => {
             if (!event.images || event.images.length === 0) {
-              // No images
               return event;
             }
 
-            // Some backends return a string, others return an object with .url
             const firstImage = event.images[0];
             const key =
               typeof firstImage === "string" ? firstImage : firstImage.url;
-
             const presignedUrl = await fetchPresignedUrl(key);
+
+            if (presignedUrl) {
+              await Image.prefetch(presignedUrl); // Preload image
+            }
+
             return {
               ...event,
               firstImageUrl: presignedUrl,
             };
           })
         );
+
         setEvents(eventsWithPresignedUrls);
       }
     } catch (error) {
@@ -545,13 +589,24 @@ const MyEventsScreen = ({ navigation }) => {
           onLongPress={() => handleEventLongPress(item._id)}
           style={styles.eventTouchable}
         >
-          {/**
-           * We now show item.firstImageUrl instead of item.images[0]?.url
-           */}
-          {item.firstImageUrl ? (
+          {/* {item.firstImageUrl ? (
             <Image
               source={{ uri: item.firstImageUrl }}
               style={styles.eventImage}
+            />
+          ) : (
+            <View style={[styles.eventImage, styles.noImageContainer]}>
+              <Text style={styles.noImageText}>No Image</Text>
+            </View>
+          )} */}
+
+          {item.firstImageUrl ? (
+            <Image
+              source={{ uri: item.firstImageUrl, cache: "force-cache" }}
+              style={styles.eventImage}
+              onError={(err) =>
+                console.log("Image load error:", err.nativeEvent)
+              }
             />
           ) : (
             <View style={[styles.eventImage, styles.noImageContainer]}>
@@ -615,12 +670,14 @@ const MyEventsScreen = ({ navigation }) => {
   }
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
+    // <Animated.View style={[styles.container, { opacity: fadeAnimation }]}>
+    <View style={styles.container}>
       <FlatList
         data={events}
         keyExtractor={(item) => item._id}
         renderItem={renderEventItem}
         contentContainerStyle={{ paddingBottom: 60 }}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -644,7 +701,8 @@ const MyEventsScreen = ({ navigation }) => {
           <Text style={styles.deleteButtonText}>Delete Selected Events</Text>
         </TouchableOpacity>
       )}
-    </Animated.View>
+    </View>
+    /* </Animated.View> */
   );
 };
 
