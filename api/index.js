@@ -41,7 +41,7 @@ app.use(express.json());
 
 mongoose
   .connect(
-    "mongodb+srv://atharv:AtharvBrad@cluster0.lmx3gz5.mongodb.net/match_matters"
+    "ENTER YOUR MONGO URL"
   )
   .then(() => {
     console.log("Connected To MongoDB");
