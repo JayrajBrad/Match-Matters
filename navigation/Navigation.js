@@ -64,6 +64,8 @@ import EventParticipantsScreen from "../TabScreens/EventParticipants";
 import EmailLogin from "../Screens/LoginScreens/EmailLogin";
 import RequestScreen from "../TabScreens/RequestScreen";
 import CheckoutPage from "../HomeScreens/CheckoutPage";
+import TicketScreen from "../HomeScreens/TicketScreen";
+
 import EditEventScreen from "../drawer/EditEventScreen";
 import CouponScreen from "../TabScreens/Tabcomponents/CouponScreen";
 
@@ -711,6 +713,11 @@ const AppStack = () => {
           },
           headerTintColor: "#fff",
         }}
+      />
+      <Stack.Screen
+        name="TicketScreen"
+        component={TicketScreen}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="CheckoutPage"

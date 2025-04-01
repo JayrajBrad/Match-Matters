@@ -4,6 +4,18 @@ const User = require("../models/user");
 const cloudinary = require("../utils/cloudinary"); // Import your Cloudinary configuration
 const parser = require("../middlewares/upload");
 const moment = require("moment");
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const dotenv = require("dotenv");
+dotenv.config();
+
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 
 const getEventsByUserId = async (req, res) => {
   try {
@@ -144,8 +156,6 @@ const getNearbyEvents = async (req, res) => {
 
 const getCombinedEvents = async (req, res) => {
   try {
-    // Extract query parameters
-    // Example: /api/events/combined?city=Delhi&state=Delhi&country=India&latitude=28.7041&longitude=77.1025&maxDistance=300000&page=1&limit=10
     const {
       city,
       state,
@@ -160,7 +170,6 @@ const getCombinedEvents = async (req, res) => {
     console.log("Reached getCombinedEvents route");
     console.log("Incoming query:", req.query);
 
-    // Convert to proper data types
     const parsedPage = Math.max(parseInt(page, 10), 1);
     const parsedLimit = Math.max(parseInt(limit, 10), 1);
     const skip = (parsedPage - 1) * parsedLimit;
@@ -168,7 +177,6 @@ const getCombinedEvents = async (req, res) => {
     let combinedEvents = [];
 
     // 1) Query #1: user-location events
-    // Only if city/state/country exist
     const locationQuery = {};
     if (city) locationQuery["location.city"] = city;
     if (state) locationQuery["location.state"] = state;
@@ -176,7 +184,6 @@ const getCombinedEvents = async (req, res) => {
 
     let locationEvents = [];
     if (Object.keys(locationQuery).length > 0) {
-      // Just fetch them all for now (we’ll merge and do final skip/limit after)
       locationEvents = await Event.find(locationQuery).lean();
     }
 
@@ -188,7 +195,7 @@ const getCombinedEvents = async (req, res) => {
       const dist = parseInt(maxDistance, 10);
 
       // Convert meters to radians for $centerSphere
-      const distanceInRadians = dist / 6378137; // Earth radius in meters
+      const distanceInRadians = dist / 6378137;
 
       const nearbyQuery = {
         "location.coordinates": {
@@ -198,7 +205,7 @@ const getCombinedEvents = async (req, res) => {
         },
       };
 
-      // If city/state/country also need to match, you can combine them:
+      // Optionally also filter by city/state/country
       if (city) nearbyQuery["location.city"] = city;
       if (state) nearbyQuery["location.state"] = state;
       if (country) nearbyQuery["location.country"] = country;
@@ -208,26 +215,49 @@ const getCombinedEvents = async (req, res) => {
 
     // 3) Merge the two arrays and remove duplicates (by _id)
     const mergedArray = [...locationEvents, ...nearbyEvents];
-
-    // Convert to a Map keyed by _id for uniqueness
     const uniqueMap = new Map();
     mergedArray.forEach((eventObj) => {
       uniqueMap.set(String(eventObj._id), eventObj);
     });
-
-    // Convert Map back to array
     combinedEvents = Array.from(uniqueMap.values());
 
-    // 4) (Optional) Sort combined events if needed (e.g., by date ascending)
+    // 4) Sort if needed
     combinedEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // 5) Apply final pagination on the merged array
+    // 5) Paginate
     const totalCount = combinedEvents.length;
     const pagedEvents = combinedEvents.slice(skip, skip + parsedLimit);
 
-    // 6) Return paginated results
+    // 5.1) Generate presigned GET URLs for each event’s videoUrl
+    const eventsWithPresigned = await Promise.all(
+      pagedEvents.map(async (eventObj) => {
+        if (eventObj.videoUrl) {
+          try {
+            const command = new GetObjectCommand({
+              Bucket: process.env.S3_BUCKET_NAME,
+              Key: eventObj.videoUrl, // e.g. "mm_videos/abc123.mp4"
+            });
+            const presignedUrl = await getSignedUrl(s3Client, command, {
+              expiresIn: 86400, // 24 hours
+            });
+            // Attach it to the event
+            eventObj.presignedVideoUrl = presignedUrl;
+            console.log(eventObj.presignedVideoUrl);
+          } catch (err) {
+            console.error(
+              "Error generating presigned URL for:",
+              eventObj.videoUrl,
+              err
+            );
+          }
+        }
+        return eventObj;
+      })
+    );
+
+    // 6) Return updated array
     return res.status(200).json({
-      events: pagedEvents,
+      events: eventsWithPresigned,
       totalCount,
       currentPage: parsedPage,
       totalPages: Math.ceil(totalCount / parsedLimit),
@@ -240,14 +270,15 @@ const getCombinedEvents = async (req, res) => {
 
 // const getCombinedEvents = async (req, res) => {
 //   try {
-//     // 1) Extract query parameters
+//     // Extract query parameters
+//     // Example: /api/events/combined?city=Delhi&state=Delhi&country=India&latitude=28.7041&longitude=77.1025&maxDistance=300000&page=1&limit=10
 //     const {
 //       city,
 //       state,
 //       country,
 //       latitude,
 //       longitude,
-//       maxDistance = 300000, // meters
+//       maxDistance = 300000, // in meters
 //       page = 1,
 //       limit = 10,
 //     } = req.query;
@@ -255,90 +286,169 @@ const getCombinedEvents = async (req, res) => {
 //     console.log("Reached getCombinedEvents route");
 //     console.log("Incoming query:", req.query);
 
-//     // 2) Convert page/limit to integers & compute skip
+//     // Convert to proper data types
 //     const parsedPage = Math.max(parseInt(page, 10), 1);
 //     const parsedLimit = Math.max(parseInt(limit, 10), 1);
 //     const skip = (parsedPage - 1) * parsedLimit;
 
-//     // 3) Build an array of possible filters to combine with $or
-//     //    a) location-based filter by city/state/country
-//     //    b) geospatial filter for nearby
-//     const orFilters = [];
+//     let combinedEvents = [];
 
-//     // a) City/State/Country filter (if provided)
-//     const locationFilter = {};
-//     if (city) locationFilter["location.city"] = city;
-//     if (state) locationFilter["location.state"] = state;
-//     if (country) locationFilter["location.country"] = country;
+//     // 1) Query #1: user-location events
+//     // Only if city/state/country exist
+//     const locationQuery = {};
+//     if (city) locationQuery["location.city"] = city;
+//     if (state) locationQuery["location.state"] = state;
+//     if (country) locationQuery["location.country"] = country;
 
-//     // If user sent at least one location field, add to orFilters
-//     if (Object.keys(locationFilter).length > 0) {
-//       orFilters.push(locationFilter);
+//     let locationEvents = [];
+//     if (Object.keys(locationQuery).length > 0) {
+//       // Just fetch them all for now (we’ll merge and do final skip/limit after)
+//       locationEvents = await Event.find(locationQuery).lean();
 //     }
 
-//     // b) Geospatial filter (if latitude & longitude provided)
+//     // 2) Query #2: nearby events
+//     let nearbyEvents = [];
 //     if (latitude && longitude) {
 //       const lat = parseFloat(latitude);
 //       const lng = parseFloat(longitude);
 //       const dist = parseInt(maxDistance, 10);
 
-//       // Convert distance in meters to radians for $centerSphere
-//       const distanceInRadians = dist / 6378137; // Earth's radius ~6,378,137m
+//       // Convert meters to radians for $centerSphere
+//       const distanceInRadians = dist / 6378137; // Earth radius in meters
 
-//       const geoFilter = {
+//       const nearbyQuery = {
 //         "location.coordinates": {
 //           $geoWithin: {
 //             $centerSphere: [[lng, lat], distanceInRadians],
 //           },
 //         },
 //       };
-//       orFilters.push(geoFilter);
+
+//       // If city/state/country also need to match, you can combine them:
+//       if (city) nearbyQuery["location.city"] = city;
+//       if (state) nearbyQuery["location.state"] = state;
+//       if (country) nearbyQuery["location.country"] = country;
+
+//       nearbyEvents = await Event.find(nearbyQuery).lean();
 //     }
 
-//     // 4) Construct the final query object
-//     // If we have both filters, we do: { $or: [locationFilter, geoFilter] }
-//     // If we have only one filter, we can use it directly
-//     // If we have none, that means no filters => (decide what to return, e.g. empty or all)
-//     let combinedQuery = {};
-//     if (orFilters.length === 1) {
-//       combinedQuery = orFilters[0]; // e.g. just city/state/country, or just geo
-//     } else if (orFilters.length > 1) {
-//       combinedQuery = { $or: orFilters };
-//     } else {
-//       // No filters provided—if you want an empty response or all events
-//       // Return empty array or handle however you prefer:
-//       return res.status(200).json({
-//         events: [],
-//         totalCount: 0,
-//         currentPage: parsedPage,
-//         totalPages: 0,
-//       });
+//     // 3) Merge the two arrays and remove duplicates (by _id)
+//     const mergedArray = [...locationEvents, ...nearbyEvents];
+
+//     // Convert to a Map keyed by _id for uniqueness
+//     const uniqueMap = new Map();
+//     mergedArray.forEach((eventObj) => {
+//       uniqueMap.set(String(eventObj._id), eventObj);
+//     });
+
+//     // Convert Map back to array
+//     combinedEvents = Array.from(uniqueMap.values());
+
+//     // 4) (Optional) Sort combined events if needed (e.g., by date ascending)
+//     combinedEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+//     // 5) Apply final pagination on the merged array
+//     const totalCount = combinedEvents.length;
+//     const pagedEvents = combinedEvents.slice(skip, skip + parsedLimit);
+
+//     // 6) Return paginated results
+//     return res.status(200).json({
+//       events: pagedEvents,
+//       totalCount,
+//       currentPage: parsedPage,
+//       totalPages: Math.ceil(totalCount / parsedLimit),
+//     });
+//   } catch (error) {
+//     console.error("Error in getCombinedEvents:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
+
+// const getEventsByDateRange = async (req, res) => {
+//   try {
+//     const { startDate, endDate } = req.params;
+//     if (!startDate || !endDate) {
+//       return res
+//         .status(400)
+//         .json({ error: "Both startDate and endDate are required" });
 //     }
 
-//     // 5) Count total documents that match
-//     const totalCount = await Event.countDocuments(combinedQuery);
+//     const { page = 1, limit = 10 } = req.query;
+//     const parsedPage = Math.max(parseInt(page, 10), 1);
+//     const parsedLimit = Math.max(parseInt(limit, 10), 1);
+//     const skip = (parsedPage - 1) * parsedLimit;
 
-//     // 6) Query for the actual documents, applying skip/limit & optional sorting
-//     //    Sort by date ascending if needed (adjust field as appropriate)
-//     const events = await Event.find(combinedQuery)
-//       .sort({ date: 1 }) // Optional: if you'd like events sorted by date
-//       .skip(skip)
-//       .limit(parsedLimit)
-//       .lean(); // lean() returns plain JS objects (faster)
+//     const start = moment(startDate).startOf("day").toDate();
+//     const end = moment(endDate).endOf("day").toDate();
 
-//     // 7) Prepare pagination metadata
-//     const totalPages = Math.ceil(totalCount / parsedLimit);
+//     // Parallel queries again for efficiency
+//     const [events, totalCount] = await Promise.all([
+//       Event.find({
+//         date: { $gte: start, $lte: end },
+//       })
+//         .lean()
+//         .skip(skip)
+//         .limit(parsedLimit)
+//         .sort({ date: 1 }),
+//       Event.countDocuments({
+//         date: { $gte: start, $lte: end },
+//       }),
+//     ]);
 
-//     // 8) Return results
 //     return res.status(200).json({
 //       events,
 //       totalCount,
 //       currentPage: parsedPage,
-//       totalPages,
+//       totalPages: Math.ceil(totalCount / parsedLimit),
 //     });
 //   } catch (error) {
-//     console.error("Error in getCombinedEvents:", error);
-//     return res.status(500).json({ error: "Internal server error" });
+//     console.error("Error fetching events by date range:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
+// const getEventsByLocationAndDateRange = async (req, res) => {
+//   try {
+//     const { city, state, country, startDate, endDate } = req.params;
+//     const { page = 1, limit = 10 } = req.query;
+//     const parsedPage = Math.max(parseInt(page, 10), 1);
+//     const parsedLimit = Math.max(parseInt(limit, 10), 1);
+//     const skip = (parsedPage - 1) * parsedLimit;
+
+//     // Build location query
+//     const locationQuery = {};
+//     if (city) locationQuery["location.city"] = city;
+//     if (state) locationQuery["location.state"] = state;
+//     if (country) locationQuery["location.country"] = country;
+
+//     // Build date query
+//     const dateQuery = {};
+//     if (startDate && endDate) {
+//       const start = new Date(startDate);
+//       const end = new Date(endDate);
+//       end.setHours(23, 59, 59, 999);
+//       dateQuery.date = { $gte: start, $lte: end };
+//     }
+
+//     const query = { ...locationQuery, ...dateQuery };
+
+//     const [events, totalCount] = await Promise.all([
+//       Event.find(query).lean().skip(skip).limit(parsedLimit),
+//       Event.countDocuments(query),
+//     ]);
+
+//     return res.status(200).json({
+//       events,
+//       totalCount,
+//       currentPage: parsedPage,
+//       totalPages: Math.ceil(totalCount / parsedLimit),
+//     });
+//   } catch (error) {
+//     console.error(
+//       "Error fetching events by location and date range:",
+//       error.message
+//     );
+//     res.status(500).json({ message: "Internal server error." });
 //   }
 // };
 
@@ -359,7 +469,6 @@ const getEventsByDateRange = async (req, res) => {
     const start = moment(startDate).startOf("day").toDate();
     const end = moment(endDate).endOf("day").toDate();
 
-    // Parallel queries again for efficiency
     const [events, totalCount] = await Promise.all([
       Event.find({
         date: { $gte: start, $lte: end },
@@ -373,8 +482,54 @@ const getEventsByDateRange = async (req, res) => {
       }),
     ]);
 
+    // ✅ Generate presigned URLs for event media
+    const eventsWithPresignedUrls = await Promise.all(
+      events.map(async (event) => {
+        let presignedVideoUrl = null;
+        let presignedImageUrl = null;
+
+        if (event.videoUrl) {
+          try {
+            const videoCommand = new GetObjectCommand({
+              Bucket: process.env.S3_BUCKET_NAME,
+              Key: event.videoUrl,
+            });
+            presignedVideoUrl = await getSignedUrl(s3Client, videoCommand, {
+              expiresIn: 86400, // 24 hours
+            });
+          } catch (err) {
+            console.error("Error generating presigned URL for video:", err);
+          }
+        }
+
+        if (event.images && event.images.length > 0) {
+          try {
+            const firstImage = event.images[0];
+            const imageKey =
+              typeof firstImage === "string" ? firstImage : firstImage.url;
+
+            const imageCommand = new GetObjectCommand({
+              Bucket: process.env.S3_BUCKET_NAME,
+              Key: imageKey,
+            });
+            presignedImageUrl = await getSignedUrl(s3Client, imageCommand, {
+              expiresIn: 86400, // 24 hours
+            });
+          } catch (err) {
+            console.error("Error generating presigned URL for image:", err);
+          }
+        }
+
+        return {
+          ...event,
+          presignedVideoUrl,
+          presignedImageUrl,
+        };
+      })
+    );
+
     return res.status(200).json({
-      events,
+      events: eventsWithPresignedUrls,
       totalCount,
       currentPage: parsedPage,
       totalPages: Math.ceil(totalCount / parsedLimit),
@@ -385,6 +540,7 @@ const getEventsByDateRange = async (req, res) => {
   }
 };
 
+// ✅ Controller: Fetch events by location and date range with presigned URLs
 const getEventsByLocationAndDateRange = async (req, res) => {
   try {
     const { city, state, country, startDate, endDate } = req.params;
@@ -393,13 +549,11 @@ const getEventsByLocationAndDateRange = async (req, res) => {
     const parsedLimit = Math.max(parseInt(limit, 10), 1);
     const skip = (parsedPage - 1) * parsedLimit;
 
-    // Build location query
     const locationQuery = {};
     if (city) locationQuery["location.city"] = city;
     if (state) locationQuery["location.state"] = state;
     if (country) locationQuery["location.country"] = country;
 
-    // Build date query
     const dateQuery = {};
     if (startDate && endDate) {
       const start = new Date(startDate);
@@ -415,8 +569,54 @@ const getEventsByLocationAndDateRange = async (req, res) => {
       Event.countDocuments(query),
     ]);
 
+    // ✅ Generate presigned URLs for event media
+    const eventsWithPresignedUrls = await Promise.all(
+      events.map(async (event) => {
+        let presignedVideoUrl = null;
+        let presignedImageUrl = null;
+
+        if (event.videoUrl) {
+          try {
+            const videoCommand = new GetObjectCommand({
+              Bucket: process.env.S3_BUCKET_NAME,
+              Key: event.videoUrl,
+            });
+            presignedVideoUrl = await getSignedUrl(s3Client, videoCommand, {
+              expiresIn: 86400, // 24 hours
+            });
+          } catch (err) {
+            console.error("Error generating presigned URL for video:", err);
+          }
+        }
+
+        if (event.images && event.images.length > 0) {
+          try {
+            const firstImage = event.images[0];
+            const imageKey =
+              typeof firstImage === "string" ? firstImage : firstImage.url;
+
+            const imageCommand = new GetObjectCommand({
+              Bucket: process.env.S3_BUCKET_NAME,
+              Key: imageKey,
+            });
+            presignedImageUrl = await getSignedUrl(s3Client, imageCommand, {
+              expiresIn: 86400, // 24 hours
+            });
+          } catch (err) {
+            console.error("Error generating presigned URL for image:", err);
+          }
+        }
+
+        return {
+          ...event,
+          presignedVideoUrl,
+          presignedImageUrl,
+        };
+      })
+    );
+
     return res.status(200).json({
-      events,
+      events: eventsWithPresignedUrls,
       totalCount,
       currentPage: parsedPage,
       totalPages: Math.ceil(totalCount / parsedLimit),

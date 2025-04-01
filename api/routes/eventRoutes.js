@@ -144,9 +144,9 @@
 
 // module.exports = router;
 
-
 const express = require("express");
 const router = express.Router();
+const Event = require("../models/event");
 const authenticateToken = require("../middlewares/authenticateToken");
 
 // Controllers
@@ -235,6 +235,34 @@ router.get(
   "/events/locationAndDateRange/:city/:state/:country/:startDate/:endDate",
   getEventsByLocationAndDateRange
 );
+
+router.get("/events/:eventId/booked", async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({ error: "Missing userId query parameter" });
+    }
+
+    // 1) Find the event by eventId
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    // 2) Check if userId is in event.participants
+    const isBooked = event.participants.some(
+      (participantId) => participantId.toString() === userId
+    );
+
+    // 3) Respond with a boolean, or an object indicating booked = true/false
+    return res.json({ booked: isBooked });
+  } catch (err) {
+    console.error("Error checking booking:", err);
+    return res.status(500).json({ error: "Server error checking booking" });
+  }
+});
 
 // MOST HAPPENING //
 // "Vibe" an event

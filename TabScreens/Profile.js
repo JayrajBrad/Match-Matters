@@ -790,30 +790,30 @@
 //   itemContainer: {
 //     marginTop: 30,
 //   },
-//   quickActions: {
-//     flexDirection: "column",
-//     justifyContent: "space-around",
-//     padding: 20,
-//   },
-//   quickActionRow: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     marginBottom: 10,
-//   },
-//   actionButton: {
-//     backgroundColor: "#814C68",
-//     padding: 10,
-//     borderRadius: 10,
-//     width: "48%",
-//     alignItems: "center",
-//     flexDirection: "row",
-//     justifyContent: "center",
-//   },
-//   actionButtonText: {
-//     color: "#fff",
-//     marginLeft: 5,
-//     fontFamily: "CenturyGothic",
-//   },
+// quickActions: {
+//   flexDirection: "column",
+//   justifyContent: "space-around",
+//   padding: 20,
+// },
+// quickActionRow: {
+//   flexDirection: "row",
+//   justifyContent: "space-between",
+//   marginBottom: 10,
+// },
+// actionButton: {
+//   backgroundColor: "#814C68",
+//   padding: 10,
+//   borderRadius: 10,
+//   width: "48%",
+//   alignItems: "center",
+//   flexDirection: "row",
+//   justifyContent: "center",
+// },
+// actionButtonText: {
+//   color: "#fff",
+//   marginLeft: 5,
+//   fontFamily: "CenturyGothic",
+// },
 //   activitySection: {
 //     padding: 20,
 //     backgroundColor: "#fff",
@@ -1019,14 +1019,74 @@ const ProfileScreen = () => {
         </View>
       </View>
 
-      {/* Example activity section */}
+      {/* Quick Actions */}
+      <View style={styles.quickActions}>
+        <View style={styles.quickActionRow}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate("MyEvents")}
+          >
+            <Icon name="shopping-bag" size={20} color="#fff" />
+            <Text style={styles.actionButtonText}>My Events</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate("MyBookingsScreen")}
+          >
+            <Icon name="favorite" size={20} color="#fff" />
+            <Text style={styles.actionButtonText}>My Bookings</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Activity Section */}
       <View style={styles.activitySection}>
         <Text style={styles.boxTitle}>Activity</Text>
-        <TouchableOpacity style={styles.activityButton}>
+        <TouchableOpacity
+          style={styles.activityButton}
+          onPress={() => navigation.navigate("CouponScreen")}
+        >
           <Text style={styles.buttonText}>My Coupons</Text>
           <Icon name="arrow-forward-ios" size={15} color="#000" />
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.activityButton}
+          onPress={() => navigation.navigate("TicketScreen")}
+        >
+          <Text style={styles.buttonText}>My Ticket</Text>
+          <Icon name="arrow-forward-ios" size={15} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.activityButton}
+          onPress={() => navigation.navigate("HelpScreen")}
+        >
+          <Text style={styles.buttonText}>Help</Text>
+          <Icon name="arrow-forward-ios" size={15} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.activityButton}
+          onPress={() => navigation.navigate("PrivacyCenterScreen")}
+        >
+          <Text style={styles.buttonText}>Privacy</Text>
+          <Icon name="arrow-forward-ios" size={15} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.activityButton}
+          onPress={() => navigation.navigate("ContactUsScreen")}
+        >
+          <Text style={styles.buttonText}>Contact Us</Text>
+          <Icon name="arrow-forward-ios" size={15} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.activityButton}
+          onPress={() => navigation.navigate("FAQScreen")}
+        >
+          <Text style={styles.buttonText}>FAQ</Text>
+          <Icon name="arrow-forward-ios" size={15} color="#000" />
+        </TouchableOpacity>
       </View>
+
+      {/* Example activity section */}
 
       {/* Logout Button */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -1071,9 +1131,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileName: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 24,
     color: "#290F4C",
+    fontFamily: "CenturyGothic",
   },
   editProfileButton: {
     marginTop: 10,
@@ -1087,6 +1147,32 @@ const styles = StyleSheet.create({
   },
   editProfileText: {
     color: "#290F4C",
+    fontFamily: "CenturyGothic",
+  },
+  quickActions: {
+    flexDirection: "column",
+    justifyContent: "space-around",
+    padding: 10,
+    paddingHorizontal: 20,
+  },
+  quickActionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  actionButton: {
+    backgroundColor: "#814C68",
+    padding: 10,
+    borderRadius: 10,
+    width: "48%",
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  actionButtonText: {
+    color: "#fff",
+    marginLeft: 5,
+    fontFamily: "CenturyGothic",
   },
   activitySection: {
     padding: 20,
@@ -1094,14 +1180,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
     borderRadius: 10,
-    margin: 10,
+    margin: 15,
   },
   boxTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: "CenturyGothicBold",
+
     color: "#814C68",
     textAlign: "center",
-    marginBottom: 10,
+    // marginBottom: 10,
   },
   activityButton: {
     borderBottomWidth: 1,
@@ -1114,6 +1201,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#814C68",
     fontSize: 16,
+    fontFamily: "CenturyGothic",
   },
   logoutButton: {
     backgroundColor: "#814C68",
@@ -1124,5 +1212,6 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: "#fff",
+    fontFamily: "CenturyGothic",
   },
 });

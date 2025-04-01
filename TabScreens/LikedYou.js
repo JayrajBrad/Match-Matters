@@ -699,15 +699,59 @@ export default function Profile({ navigation }) {
     }
   };
 
-  /**
-   * Fetch booked events for the user, then convert each
-   * S3 key to a pre-signed URL so it can be displayed in <Image />.
-   */
+  // const fetchBookedEvents = async () => {
+  //   try {
+  //     console.log("Fetching events for user ID:", userId);
+
+  //     // 1) Fetch the events
+  //     const response = await fetch(`${API_URL}/user/users/${userId}/events`, {
+  //       method: "GET",
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error(
+  //         `Failed to fetch user events, status: ${response.status}`
+  //       );
+  //     }
+
+  //     const fetchedEvents = await response.json();
+
+  //     // 2) For each event, fetch pre-signed URLs for all its images
+  //     const eventsWithPresignedUrls = await Promise.all(
+  //       fetchedEvents.map(async (event) => {
+  //         if (!event.images || event.images.length === 0) {
+  //           return event; // No images to process
+  //         }
+
+  //         const updatedImages = await Promise.all(
+  //           event.images.map(async (imgObj) => {
+  //             // Some backends return a simple string, others return an object with `url`.
+  //             const key = typeof imgObj === "string" ? imgObj : imgObj.url;
+  //             const presignedURL = await fetchPresignedUrl(key);
+  //             console.log(presignedURL);
+  //             return presignedURL; // could be null if fetch fails
+  //           })
+  //         );
+
+  //         return {
+  //           ...event,
+  //           images: updatedImages,
+  //         };
+  //       })
+  //     );
+
+  //     // 3) Update state with the final data
+  //     setEvents(eventsWithPresignedUrls);
+  //   } catch (error) {
+  //     console.error("Error fetching booked events:", error);
+  //   }
+  // };
+
+  // Handle pull-to-refresh
+
   const fetchBookedEvents = async () => {
     try {
       console.log("Fetching events for user ID:", userId);
-
-      // 1) Fetch the events
       const response = await fetch(`${API_URL}/user/users/${userId}/events`, {
         method: "GET",
       });
@@ -720,38 +764,33 @@ export default function Profile({ navigation }) {
 
       const fetchedEvents = await response.json();
 
-      // 2) For each event, fetch pre-signed URLs for all its images
       const eventsWithPresignedUrls = await Promise.all(
         fetchedEvents.map(async (event) => {
-          if (!event.images || event.images.length === 0) {
-            return event; // No images to process
-          }
+          if (!event.images || event.images.length === 0) return event;
 
           const updatedImages = await Promise.all(
             event.images.map(async (imgObj) => {
-              // Some backends return a simple string, others return an object with `url`.
               const key = typeof imgObj === "string" ? imgObj : imgObj.url;
               const presignedURL = await fetchPresignedUrl(key);
-              console.log(presignedURL);
-              return presignedURL; // could be null if fetch fails
+
+              if (presignedURL) {
+                await Image.prefetch(presignedURL); // Preload image
+              }
+
+              return presignedURL;
             })
           );
 
-          return {
-            ...event,
-            images: updatedImages,
-          };
+          return { ...event, images: updatedImages };
         })
       );
 
-      // 3) Update state with the final data
       setEvents(eventsWithPresignedUrls);
     } catch (error) {
       console.error("Error fetching booked events:", error);
     }
   };
 
-  // Handle pull-to-refresh
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchBookedEvents();
@@ -769,13 +808,14 @@ export default function Profile({ navigation }) {
   }
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        { paddingTop: insets.top },
-        { opacity: fadeAnimation },
-      ]}
-    >
+    // <Animated.View
+    //   style={[
+    //     styles.container,
+    //     { paddingTop: insets.top },
+    //     { opacity: fadeAnimation },
+    //   ]}
+    // >
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <FlatList
         data={events}
         renderItem={({ item }) => (
@@ -788,8 +828,15 @@ export default function Profile({ navigation }) {
              * Use item.images[0] if you only want the first image.
              */}
             {item.images && item.images[0] ? (
+              // <Image
+              //   source={{ uri: item.images[0] }}
+              //   style={styles.eventImage}
+              //   onError={(err) =>
+              //     console.log("Image load error:", err.nativeEvent)
+              //   }
+              // />
               <Image
-                source={{ uri: item.images[0] }}
+                source={{ uri: item.images[0], cache: "force-cache" }} // Add cache option
                 style={styles.eventImage}
                 onError={(err) =>
                   console.log("Image load error:", err.nativeEvent)
@@ -850,7 +897,8 @@ export default function Profile({ navigation }) {
           </View>
         )}
       />
-    </Animated.View>
+    </View>
+    /* </Animated.View> */
   );
 }
 
